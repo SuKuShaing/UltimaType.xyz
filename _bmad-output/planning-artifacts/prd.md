@@ -327,6 +327,8 @@ Nivel básico. Detalle en **Non-Functional Requirements > Accessibility** (NFR22
 - **FR2:** Un usuario puede registrarse e iniciar sesión usando OAuth de GitHub
 - **FR3:** Un usuario autenticado puede ver su perfil (avatar, nombre, estadísticas)
 - **FR4:** Un usuario puede mantener sesión persistida entre visitas
+- **FR33:** El sistema realiza la detección del país del usuario vía Geo API
+- **FR34:** Un usuario puede realizar un cambio manual de su país desde el perfil
 
 ### Room Management
 
@@ -367,6 +369,7 @@ Nivel básico. Detalle en **Non-Functional Requirements > Accessibility** (NFR22
 - **FR27:** Un usuario puede ver el leaderboard global con los mejores WPM
 - **FR28:** Un usuario puede filtrar el leaderboard por nivel de dificultad
 - **FR29:** El sistema actualiza el leaderboard automáticamente al finalizar cada partida
+- **FR35:** Un usuario puede filtrar el leaderboard por país
 
 ### Historical Scores
 
