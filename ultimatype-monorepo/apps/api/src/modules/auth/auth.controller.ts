@@ -1,0 +1,96 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { GithubAuthGuard } from './guards/github-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+
+@Controller('auth')
+export class AuthController {
+  constructor(
+    private authService: AuthService,
+    private usersService: UsersService,
+    private configService: ConfigService,
+  ) {}
+
+  // ---- Google OAuth ----
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  googleLogin() {
+    // Guard redirects to Google
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleCallback(@Req() req: any, @Res() res: any) {
+    return this.handleOAuthCallback(req, res);
+  }
+
+  // ---- GitHub OAuth ----
+
+  @Get('github')
+  @UseGuards(GithubAuthGuard)
+  githubLogin() {
+    // Guard redirects to GitHub
+  }
+
+  @Get('github/callback')
+  @UseGuards(GithubAuthGuard)
+  async githubCallback(@Req() req: any, @Res() res: any) {
+    return this.handleOAuthCallback(req, res);
+  }
+
+  // ---- Token Refresh ----
+
+  @Post('refresh')
+  @UseGuards(JwtRefreshGuard)
+  async refresh(@Req() req: any) {
+    const userId = req.user.userId;
+    const tokens = await this.authService.refreshTokens(userId);
+    return tokens;
+  }
+
+  // ---- Current User Profile ----
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Req() req: any) {
+    const userId = req.user.userId;
+    return this.usersService.findById(userId);
+  }
+
+  // ---- Private Helpers ----
+
+  /**
+   * Generates a short-lived auth code (JWT 60s) and redirects the browser
+   * to the frontend callback URL. The frontend must immediately exchange the
+   * code for real tokens via POST /auth/code.
+   * This avoids exposing long-lived tokens in the URL / browser history.
+   */
+  private async handleOAuthCallback(req: any, res: any) {
+    const user = await this.authService.validateOAuthUser(req.user);
+    const code = await this.authService.generateAuthCode(user);
+    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
+    res.redirect(`${frontendUrl}/auth/callback?code=${encodeURIComponent(code)}`);
+  }
+
+  /**
+   * Exchanges a short-lived auth code for real access + refresh tokens.
+   * The code is a JWT (60s TTL) issued by handleOAuthCallback.
+   */
+  @Post('code')
+  async exchangeCode(@Body('code') code: string) {
+    return this.authService.exchangeAuthCode(code);
+  }
+}

@@ -9,7 +9,13 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "es2021"
+    "target": "es2021",
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@ultimatype-monorepo/shared": ["../../libs/shared/src/index.ts"],
+      "@ultimatype-monorepo/prisma-client": ["./generated/prisma/index.ts"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": []

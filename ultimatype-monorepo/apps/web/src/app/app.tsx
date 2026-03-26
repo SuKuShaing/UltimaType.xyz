@@ -1,50 +1,75 @@
-// Uncomment this line to use CSS modules
-// import styles from './app.module.css';
-import NxWelcome from './nx-welcome';
-
-import { Route, Routes, Link } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
+import { useAuth } from '../hooks/use-auth';
+import { AuthButtons } from '../components/ui/auth-buttons';
+import { AuthCallback } from '../components/auth/auth-callback';
 
 export function App() {
+  const { user, isAuthenticated, isFetchingProfile, logout } = useAuth();
+
   return (
     <div>
-      <NxWelcome title="@ultimatype-monorepo/web" />
-
-      {/* START: routes */}
-      {/* These routes and navigation have been generated for you */}
-      {/* Feel free to move and update them to fit your needs */}
-      <br />
-      <hr />
-      <br />
-      <div role="navigation">
-        <ul>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/page-2">Page 2</Link>
-          </li>
-        </ul>
-      </div>
       <Routes>
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
-          path="/"
+          path="*"
           element={
-            <div>
-              This is the generated root route.{' '}
-              <Link to="/page-2">Click here for page 2.</Link>
-            </div>
-          }
-        />
-        <Route
-          path="/page-2"
-          element={
-            <div>
-              <Link to="/">Click here to go back to root page.</Link>
+            <div
+              style={{
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}
+            >
+              <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+                UltimaType
+              </h1>
+
+              {isFetchingProfile && (
+                <span style={{ opacity: 0.5 }}>_</span>
+              )}
+
+              {!isFetchingProfile && !isAuthenticated && (
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ marginBottom: '24px', color: '#999' }}>
+                    Inicia sesión para competir
+                  </p>
+                  <AuthButtons />
+                </div>
+              )}
+
+              {isAuthenticated && user && (
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: '1.2rem', marginBottom: '8px' }}>
+                    ¡Hola, {user.displayName}!
+                  </p>
+                  <p style={{ color: '#999', marginBottom: '24px' }}>
+                    {user.email}
+                  </p>
+                  <button
+                    id="logout"
+                    onClick={logout}
+                    style={{
+                      padding: '8px 24px',
+                      fontSize: '14px',
+                      border: '1px solid #333',
+                      borderRadius: '8px',
+                      backgroundColor: 'transparent',
+                      color: '#999',
+                      cursor: 'pointer',
+                    }}
+                    aria-label="Cerrar sesión"
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
             </div>
           }
         />
       </Routes>
-      {/* END: routes */}
     </div>
   );
 }

@@ -1,0 +1,32 @@
+// This is the UltimaType Prisma schema
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AuthProvider {
+  GOOGLE
+  GITHUB
+}
+
+model User {
+  id          String       @id @default(uuid())
+  provider    AuthProvider
+  providerId  String       @map("provider_id")
+  email       String
+  displayName String       @map("display_name")
+  avatarUrl   String?      @map("avatar_url")
+  countryCode String?      @map("country_code")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  lastLoginAt DateTime     @default(now()) @map("last_login_at")
+
+  @@unique([provider, providerId])
+  @@map("users")
+}
