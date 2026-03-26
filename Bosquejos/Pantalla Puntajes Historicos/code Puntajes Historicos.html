@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-high": "#e4e9e9",
+              "on-primary-fixed": "#0e1d27",
+              "surface-container-low": "#f0f5f4",
+              "surface-container": "#eaefef",
+              "primary": "#0f1f29",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#8d9caa",
+              "inverse-surface": "#2c3132",
+              "primary-fixed": "#d4e5f3",
+              "surface-container-lowest": "#ffffff",
+              "primary-fixed-dim": "#b8c9d7",
+              "on-surface-variant": "#43474b",
+              "inverse-primary": "#b8c9d7",
+              "background": "#f5fafa",
+              "inverse-on-surface": "#edf2f2",
+              "outline-variant": "#c3c7cb",
+              "outline": "#74777c",
+              "on-tertiary-container": "#b2957e",
+              "on-primary": "#ffffff",
+              "secondary-fixed-dim": "#ffb786",
+              "on-tertiary": "#ffffff",
+              "surface-variant": "#dee3e3",
+              "on-error-container": "#93000a",
+              "surface-container-highest": "#dee3e3",
+              "error": "#ba1a1a",
+              "tertiary": "#2b190a",
+              "on-secondary-container": "#703500",
+              "on-surface": "#171d1d",
+              "tertiary-container": "#422e1d",
+              "surface-dim": "#d6dbdb",
+              "surface": "#f5fafa",
+              "on-secondary-fixed": "#311400",
+              "surface-tint": "#51606c",
+              "on-tertiary-fixed-variant": "#584230",
+              "secondary": "#954900",
+              "secondary-container": "#ff9b51",
+              "on-secondary-fixed-variant": "#723600",
+              "on-error": "#ffffff",
+              "on-background": "#171d1d",
+              "tertiary-fixed": "#fedcc3",
+              "secondary-fixed": "#ffdcc6",
+              "on-tertiary-fixed": "#291808",
+              "on-primary-fixed-variant": "#3a4954",
+              "surface-bright": "#f5fafa",
+              "primary-container": "#25343f",
+              "error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#e0c0a8"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Space Grotesk"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #f5fafa;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="text-on-surface selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopNavBar (JSON Mapping) -->
+<header class="bg-[#eaefef] dark:bg-[#1a242c] flex justify-between items-center w-full px-8 py-6 max-w-none fixed top-0 z-50">
+<div class="text-2xl font-bold tracking-tighter text-[#25343f] dark:text-[#eaefef]">KINETIC_TYPE</div>
+<nav class="hidden md:flex items-center gap-8 font-['Space_Grotesk'] text-base tracking-normal">
+<a class="text-[#25343f] dark:text-[#bfc9d1] opacity-70 hover:opacity-100 hover:text-[#ff9b51] transition-colors duration-200 scale-95 active:scale-90 transition-transform" href="#">Practice</a>
+<a class="text-[#25343f] dark:text-[#bfc9d1] opacity-70 hover:opacity-100 hover:text-[#ff9b51] transition-colors duration-200 scale-95 active:scale-90 transition-transform" href="#">Compete</a>
+<a class="text-[#ff9b51] font-semibold border-b-4 border-[#ff9b51] pb-1 scale-95 active:scale-90 transition-transform" href="#">Leaderboard</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-[#25343f] dark:text-[#eaefef] p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="language">language</span>
+</button>
+<button class="bg-primary-container text-white px-6 py-2 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all">Profile</button>
+</div>
+</header>
+<main class="pt-32 pb-24 px-8 md:px-12 max-w-[1600px] mx-auto min-h-screen">
+<!-- Heading & Filters -->
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+<div class="space-y-2">
+<span class="text-secondary font-bold tracking-[0.2em] uppercase text-xs">Global Rankings</span>
+<h1 class="text-6xl md:text-7xl font-bold text-primary tracking-tighter leading-none">Puntajes Históricos</h1>
+</div>
+<div class="flex items-center gap-4 w-full md:w-auto">
+<div class="relative flex-1 md:w-64">
+<label class="absolute -top-6 left-0 text-[10px] font-bold uppercase tracking-widest text-outline">Filtrar por</label>
+<div class="flex items-center justify-between bg-surface-container border-b-4 border-primary-container px-4 py-3 cursor-pointer group hover:bg-surface-container-high transition-colors">
+<span class="font-bold text-primary">País: Todos</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-y-1 transition-transform" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Leaderboard Bento-ish Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+<!-- Nivel 1 -->
+<div class="flex flex-col bg-surface-container-lowest rounded-lg p-6 shadow-[0_20px_40px_rgba(15,31,41,0.04)] border border-outline-variant/10">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold tracking-tight text-primary">Nivel 1</h3>
+<span class="material-symbols-outlined text-secondary opacity-50" data-icon="keyboard_double_arrow_right">keyboard_double_arrow_right</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-outline px-2 mb-4">
+<span>Nombre</span>
+<span>Puntaje</span>
+</div>
+<!-- Row 1 -->
+<div class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center border-2 border-secondary group-hover:scale-110 transition-transform">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a young man with a friendly expression in clean, minimalist lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDS3ReMx-zpoqn4SDN2wZIphV2m8GJeqd7KOniDTvFUPzfMJQ6YJ9Sk7SxqBJF0hhDJW5eu_wJhwMVGpxCZ0kc-vq-jlyODVDIwkHIKCgK2-zKXQZDoqorNbTpSc20tO8Rp0I5Fi_BiGKUQQ2XCgAh3_b7fHJZzVKLi1ifkM-QtujciYDQ4fpbnuMQj7mJglLQU8OBFJDynV5mi38pWz0lRCT92p5S8OXoliH8XHGFnH347IKMzcaFL3Xowg1ghO5jgRk_KHMJjKg"/>
+</div>
+<span class="font-medium text-primary tracking-tight">PixelTyper</span>
+</div>
+<span class="font-bold text-secondary text-lg">942</span>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low/50 hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center border-2 border-transparent">
+<img class="w-full h-full object-cover" data-alt="portrait of a confident woman looking directly at the camera with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5Y4U2dbLi4Qj1K1No-awlDJIr_mKuag-WRazjmMapSVnueH_-M9JdLT3pEdlA5061C9yqhDYuheW7dOD3Pglrvojgc4Kylkjwu0_nghWpJD3DPyvsts3ZJMjsjSGm3YPzS0rDrvI7Po7lZzFTkZyXZpejQwP0EsSDB2SJ5X2jTSDxaahORSI99bfEWaqsVgaDFBIlwP7MnA9hrZY7e2408B3P1Yg11NnyxhTSH40H2ACY1GXzJc1mxsJfygB-63Gi7Zi1FlV83Q"/>
+</div>
+<span class="font-medium text-primary tracking-tight">SwiftKey_01</span>
+</div>
+<span class="font-bold text-primary opacity-60 text-lg">884</span>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="headshot of a man with spectacles in a professional but casual environment with blurred background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVuMfKecjA_0PzijaTfFMYqQT0aD2pp-MiGyL5pD-_O4eZZwaeiCiQRzO2qpQLmZoPqLuy9LoYbBI93r_Bvx-0daZv5kjzY7gUT25EhfFqqCLttsouOA7cWmLBgeh9N3nysB2XlQIB_vVb4KS1jS1uimVNXBGZYanNoqMs7f-1zG_CUTo7_1yCu3TJfiWQ4TyjpoyO4Aacq4KwGCgyBNSmgZLYgfy1IMWU9K1brdSA72C1t_8EjoMVYtvqD0Pa1XcAuZHTVDkqGQ"/>
+</div>
+<span class="font-medium text-primary tracking-tight">AnalogSoul</span>
+</div>
+<span class="font-bold text-primary opacity-60 text-lg">833</span>
+</div>
+<!-- Row 4 -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low/50 hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center">
+<div class="w-full h-full bg-primary-container flex items-center justify-center text-white font-bold text-xs">M</div>
+</div>
+<span class="font-medium text-primary tracking-tight">Monospace</span>
+</div>
+<span class="font-bold text-primary opacity-60 text-lg">721</span>
+</div>
+</div>
+</div>
+<!-- Nivel 2 -->
+<div class="flex flex-col bg-surface-container rounded-lg p-6 border border-outline-variant/10">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold tracking-tight text-primary">Nivel 2</h3>
+<span class="material-symbols-outlined text-secondary opacity-50" data-icon="bolt">bolt</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-outline px-2 mb-4">
+<span>Nombre</span>
+<span>Puntaje</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest hover:bg-white shadow-sm transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border-2 border-secondary">
+<img class="w-full h-full object-cover" data-alt="profile of a cheerful man in daylight with a soft bokeh background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARnPYGRjsN3e7GZIQ4fOD2L0ia1NXTFWxbxnbn9w6rVuwqNUfhyRYxcvxDliTgIgiq0pK8XfKOsz4qL_k0GKAIr7zVT9Qzu-LHatYBxMTietk_5hesVLXzGWPNZCEF7Ra7RUjr8QaEREIxRNw2WGfdrCFPduXSGoWmGe8MsprssedM8n0kN6K3-47eGjT9exkYpMXwQdsGR30iWn1_dOBSREv2YpNmv72PO0ulXSl58jDrjYwGEm1B3HCp09hnSiO6raU-xzuSoQ"/>
+</div>
+<span class="font-medium text-primary tracking-tight">NeonSpeed</span>
+</div>
+<span class="font-bold text-secondary text-lg">912</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container-lowest transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="close up profile of a woman with short hair in natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFzB_8sxvAEcoCLuIOSlniFv7HRLna-JXGXNcxJ9rZFA7wFDbx3ONuNhhmIYFhSNE2EVLrOgkOJspIxbvJEepeXbmvy4PKWm3KfCLb3yN0znwZUa_guhj1wOPgrQmvAMMy0zk0jdBgLHtojqIkaqb8Ss_f_sKAGaj8g3XW7xZ2c6Kuazligc7eHEmXlI9XnS9N09hzARaXr7tkOoa-_F31eYQIhRkMMBkRctWPIXioG8LT0BcdSbXJo3Rdjntq3-cjwsXwi7V-ng"/>
+</div>
+<span class="font-medium text-primary tracking-tight">Grotesk_Fan</span>
+</div>
+<span class="font-bold text-primary opacity-60 text-lg">899</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest/50 hover:bg-surface-container-lowest transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<div class="w-full h-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-xs">S</div>
+</div>
+<span class="font-medium text-primary tracking-tight">SonicKey</span>
+</div>
+<span class="font-bold text-primary opacity-60 text-lg">842</span>
+</div>
+</div>
+</div>
+<!-- Nivel 3 -->
+<div class="flex flex-col bg-surface-container-lowest rounded-lg p-6 shadow-[0_20px_40px_rgba(15,31,41,0.04)] border border-outline-variant/10">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold tracking-tight text-primary">Nivel 3</h3>
+<span class="material-symbols-outlined text-secondary opacity-50" data-icon="speed">speed</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-outline px-2 mb-4">
+<span>Nombre</span>
+<span>Puntaje</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border-2 border-secondary">
+<img class="w-full h-full object-cover" data-alt="professional headshot of a middle-aged man with sharp features in studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBefU_SOj56O2dfBWN9csULwSZ15YEuoaaPxw_SipwaAXMtTERx7i2uM-PEM9X58aFWGyJVozLIrZ0g_5AQOZlgKv63ZqFR0TRb9frdA5-sy81LMGdT5GUBqQPcwNcFOHQIK92yav7Eq1krD1jyXNmVlJ8g66OEfqFVFY1t-O2i9XfOASRuxx8UhwABMUqQvScX58hhcvcunTCmpSniUsDJgHOFix9UmgeCbIXnlbx0kUQW8shGEBkNOYhwjKxpJV74zxz7ELvdAw"/>
+</div>
+<span class="font-medium text-primary tracking-tight">TurboDash</span>
+</div>
+<span class="font-bold text-secondary text-lg">876</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low/50 hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="softly lit portrait of a woman with a calm expression in a modern interior" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDH3UnPPL8TtPvrDB-TvYz8dvSYLGE6S1NkJkMQ7cVwTxAtNSO89rErCsO-joxcDhl1WJ2efj64W_Uqb1ZrIVXmjho3k6zQTq0ZBUKRqbn-U09meJcTm9-J1Jb6iTbSatFxp_6x4b71J93WWasYLFbXTntg7yNMjx0CiVyZgiHrbDG5Zkx0lTCVq8a7uGCalDjuw89JMepHpwRzl6Iar_Ih7bvGEn4GxHCE04x24qqM-qAAJd_hSaHRr8t2qIdgNETNdyMFXT4RgA"/>
+</div>
+<span class="font-medium text-primary tracking-tight">AuraType</span>
+</div>
+<span class="font-bold text-primary opacity-60 text-lg">855</span>
+</div>
+</div>
+</div>
+<!-- Nivel 4 -->
+<div class="flex flex-col bg-surface-container rounded-lg p-6 border border-outline-variant/10">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold tracking-tight text-primary">Nivel 4</h3>
+<span class="material-symbols-outlined text-secondary opacity-50" data-icon="workspace_premium">workspace_premium</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-outline px-2 mb-4">
+<span>Nombre</span>
+<span>Puntaje</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest hover:bg-white shadow-sm transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border-2 border-secondary">
+<img class="w-full h-full object-cover" data-alt="vibrant outdoor portrait of a young man smiling with warm sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5tVSSZq2hcwUcSdQBzDgi8NlTn_3aZmmLlFOO6O71FKYP2pnDeRzFgIpUPLy52ZA0bgwod6wzZUZjB0ckQW0qUjJMRHGHf4hRO15AozAVDdPIzGtmcrxT2l3BZT3X969bTy15Wi8xSAAhh-eUmaCSlr-LjINi6HcQL6umzB4SRc2qNPAp3IKAvoQErWQ8mROCjoYsAYA0jdHVEi1p03N9P4oz8Claq4IJ90CvUtW7-BBJpXzDwi_7bFil1y75alKL48IvN8GGMQ"/>
+</div>
+<span class="font-medium text-primary tracking-tight">GhostKey</span>
+</div>
+<span class="font-bold text-secondary text-lg">901</span>
+</div>
+</div>
+</div>
+<!-- Nivel 5 -->
+<div class="flex flex-col bg-primary-container rounded-lg p-6 border border-primary-container">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold tracking-tight text-white">Nivel 5</h3>
+<span class="material-symbols-outlined text-secondary" data-icon="stars">stars</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-primary-container px-2 mb-4">
+<span>Nombre</span>
+<span>Puntaje</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border-2 border-secondary">
+<img class="w-full h-full object-cover" data-alt="portrait of an asian woman looking focused and determined in cool-toned light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPLgexmrvDRx7H77P4rlUU7mS3KtcmIMCjQJM01R06H-E-4kcDJ4PpcGoGnWT1C90HrOh5sHrlIV9RQfU5_sH7S6y1ICg3EaA6T43pYagXH9XXtLZJZ_GTRvuv2wO7kKv65nY6ewBvvAvRWquA1vqIsT2jhWZPIreWwEHKr3d9iOreeDyvyp7R1WXqZfIthv7HFWfRelgxdluOH0TnBWcNV8es_bIf0JJmxLppn64elJlvpzFeMezqw46rdMLnD5ZPdORyzwSpZg"/>
+</div>
+<span class="font-medium text-white tracking-tight">ApexLegend</span>
+</div>
+<span class="font-bold text-secondary text-lg">988</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<div class="w-full h-full bg-outline flex items-center justify-center text-white font-bold text-xs">V</div>
+</div>
+<span class="font-medium text-white opacity-80 tracking-tight">VelocityX</span>
+</div>
+<span class="font-bold text-white opacity-60 text-lg">945</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Featured Score Hero Segment -->
+<section class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="md:col-span-2 relative overflow-hidden bg-surface-container rounded-xl p-12 flex flex-col justify-end min-h-[400px]">
+<div class="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay">
+<img class="w-full h-full object-cover" data-alt="extreme close up of a mechanical keyboard with glowing keycaps in a dark room with cyan and orange neon lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIRyJmAVfHRnn1HGVYAzKZ7D5BYorrxks1KTHcoe3sts-swtO_pKHq6A4-1hT2sThPT-soQt9nYdcDSOQro0R3N2Pbya-V0ZNUO3e-qiSfvAc10p-wlbd_PtJs70VpBnV8lpAB_fTJ4drJYuK9OthGHZBqggQ3Cx76xJVtl8yXHCJwBnp0Vp_EB_sjiOtZA1a67oFqzTo5mtbVkRf6Dmuc-XOZrsXvCwY1guCtJMGsWgkzZhwDrnFkmRYKi89-nFl-E74rNK-uyA"/>
+</div>
+<div class="relative z-10">
+<span class="bg-secondary text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full mb-4 inline-block">Record de la Semana</span>
+<h2 class="text-5xl font-bold text-primary tracking-tighter mb-4">La velocidad máxima alcanzada</h2>
+<p class="text-on-surface-variant max-w-md mb-8">El usuario <span class="text-primary font-bold">ApexLegend</span> ha roto el récord histórico de Nivel 5 con una precisión del 99.8%.</p>
+<button class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:bg-secondary transition-colors inline-flex items-center gap-2 group">
+                        Ver Repetición
+                        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="play_circle">play_circle</span>
+</button>
+</div>
+</div>
+<div class="bg-secondary-container text-on-secondary-container rounded-xl p-8 flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-4xl mb-4" data-icon="military_tech">military_tech</span>
+<h3 class="text-2xl font-bold leading-tight mb-2">Tu Posición Global</h3>
+<p class="opacity-80">Estás en el top 12% de los usuarios este mes. ¡Sigue practicando!</p>
+</div>
+<div class="mt-8">
+<div class="flex justify-between items-end mb-2">
+<span class="text-4xl font-bold tracking-tighter">#1,284</span>
+<span class="text-xs font-bold uppercase tracking-widest opacity-60 mb-1">de 42,000+</span>
+</div>
+<div class="w-full h-2 bg-on-secondary-container/20 rounded-full overflow-hidden">
+<div class="h-full bg-on-secondary-container w-[88%] rounded-full"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (JSON Mapping) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-6 pb-4 md:hidden bg-[#ffffff] dark:bg-[#25343f] rounded-t-[3rem] shadow-[0_-20px_40px_rgba(15,31,41,0.06)]">
+<a class="flex flex-col items-center justify-center text-[#bfc9d1] p-4 hover:text-[#25343f] dark:hover:text-[#eaefef]" href="#">
+<span class="material-symbols-outlined" data-icon="keyboard">keyboard</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">Practice</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#bfc9d1] p-4 hover:text-[#25343f] dark:hover:text-[#eaefef]" href="#">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">Compete</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#ff9b51] text-white rounded-full p-4 transform -translate-y-4 shadow-lg scale-110 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard" data-weight="fill" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">Leaderboard</span>
+</a>
+</nav>
+<!-- FAB Suppression: On leaderboard, no primary contextual FAB needed per guidelines unless specific action. Suppressing to prioritize content. -->
+</body></html>

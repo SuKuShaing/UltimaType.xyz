@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KINETIC_TYPE - Dashboard de Competición</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .mono-typing {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .cursor-multi {
+            width: 2px;
+            height: 2rem;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: -2px;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "background": "#EAEFEF",
+              "surface": "#EAEFEF",
+              "on-surface": "#25343F",
+              "primary": "#FF9B51",
+              "on-primary": "#25343F",
+              "outline": "#BFC9D1",
+              "surface-container": "#DDE4E4",
+              "surface-container-low": "#E1E8E8",
+              "surface-container-lowest": "#F4F7F7",
+              "on-surface-variant": "#4A5D6B",
+              "p-blue": "#3B82F6",
+              "p-green": "#10B981",
+              "p-red": "#EF4444"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Space Grotesk"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {
+              "DEFAULT": "9999px",
+              "lg": "9999px",
+              "xl": "9999px",
+              "2xl": "9999px",
+              "3xl": "9999px",
+              "full": "9999px"
+            },
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background font-body text-on-surface antialiased min-h-screen">
+<!-- TopNavBar Component -->
+<nav class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md font-headline antialiased tracking-tight h-16 flex justify-between items-center px-8 max-w-full mx-auto border-b border-outline/20">
+<div class="flex items-center gap-12">
+<span class="text-2xl font-bold tracking-tighter text-on-surface">KINETIC_TYPE</span>
+<div class="hidden md:flex gap-8 items-center h-full">
+<a class="text-primary font-bold border-b-2 border-primary px-1 py-5" href="#">Practice</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors duration-200 px-1 py-5" href="#">Compete</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors duration-200 px-1 py-5" href="#">Leaderboard</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface hover:bg-outline/10 p-2 rounded-full transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined">language</span>
+<span class="text-sm font-medium">Language</span>
+</button>
+<div class="h-6 w-[1px] bg-outline"></div>
+<button class="flex items-center gap-3 bg-surface-container-lowest px-4 py-2 rounded-full shadow-sm hover:bg-white transition-all duration-200 active:scale-95 border border-outline/30">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-xs">JD</div>
+<span class="text-sm font-semibold">Profile</span>
+</button>
+</div>
+</nav>
+<!-- Content Canvas -->
+<main class="pt-24 pb-12 px-8 max-w-[1600px] mx-auto grid grid-cols-12 gap-8 min-h-[calc(100vh-6rem)]">
+<!-- LEFT SIDE: Expanded Writing Zone -->
+<div class="col-span-12 lg:col-span-8 flex flex-col">
+<section class="flex-1 bg-surface-container-low rounded-[2.5rem] p-10 flex flex-col gap-8 shadow-sm h-full">
+<div class="flex items-center justify-between border-b border-outline/20 pb-6">
+<h2 class="font-headline text-3xl font-bold tracking-tight">Prueba de Escritura</h2>
+<div class="flex gap-4">
+<div class="flex items-center gap-3 bg-surface-container-lowest px-6 py-3 rounded-full shadow-sm border border-outline/10">
+<span class="text-[10px] font-bold uppercase text-on-surface-variant">PPM:</span>
+<span class="text-2xl font-headline font-black text-primary">112</span>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-lowest px-6 py-3 rounded-full shadow-sm border border-outline/10">
+<span class="text-[10px] font-bold uppercase text-on-surface-variant">Error:</span>
+<span class="text-2xl font-headline font-black text-on-surface">0.4%</span>
+</div>
+</div>
+</div>
+<div class="relative flex-1 bg-surface-container-lowest rounded-[3rem] p-12 shadow-sm border border-outline/10 flex items-start overflow-hidden">
+<div class="mono-typing text-3xl leading-[3.5rem] tracking-tight text-on-surface-variant w-full">
+<span class="text-on-surface bg-primary/20 px-1 rounded-sm">La precisión es la clave del flujo constante.</span>
+<span class="relative inline-block">
+<span class="absolute -left-[2px] top-2 bottom-2 w-[3px] bg-primary animate-pulse shadow-[0_0_12px_#FF9B51]"></span>
+<span class="text-primary border-r-2 border-primary animate-pulse">E</span>
+</span>scribir con ritmo permite que la mente procese 
+                    <span class="inline-block w-[3px] h-8 bg-p-blue shadow-[0_0_8px_#3B82F6] align-middle -mt-1 mx-[1px]"></span>
+                    las <span class="relative inline-block text-on-surface">ideas</span> antes de que los dedos toquen el 
+                    <span class="inline-block w-[3px] h-8 bg-p-green shadow-[0_0_8px_#10B981] align-middle -mt-1 mx-[1px]"></span>
+<span class="text-on-surface">teclado mecánico</span>. 
+                    <span class="inline-block w-[3px] h-8 bg-p-red shadow-[0_0_8px_#EF4444] align-middle -mt-1 mx-[1px]"></span>
+                    El murmullo de las teclas es la sinfonía de la productividad en el nuevo milenio.
+                </div>
+</div>
+</section>
+</div>
+<!-- RIGHT SIDE: Config, Waiting Room & Rankings -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-8">
+<!-- Configuration -->
+<section class="bg-surface-container-low rounded-[2.5rem] p-8 flex flex-col gap-6">
+<h2 class="font-headline text-2xl font-bold tracking-tight flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">settings</span>
+                Configuración
+            </h2>
+<div class="space-y-6">
+<div>
+<label class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-3 block">Nivel de Dificultad</label>
+<div class="flex justify-between items-center bg-surface-container-lowest p-1.5 rounded-full border border-outline/10">
+<button class="flex-1 py-3 text-sm font-bold rounded-full hover:bg-outline/10 transition-colors">1</button>
+<button class="flex-1 py-3 text-sm font-bold rounded-full hover:bg-outline/10 transition-colors">2</button>
+<button class="flex-1 py-3 text-sm font-bold rounded-full bg-primary text-on-primary shadow-sm">3</button>
+<button class="flex-1 py-3 text-sm font-bold rounded-full hover:bg-outline/10 transition-colors">4</button>
+<button class="flex-1 py-3 text-sm font-bold rounded-full hover:bg-outline/10 transition-colors">5</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-full flex items-center justify-between border border-outline/20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-p-red animate-pulse">timer</span>
+<div>
+<p class="text-sm font-bold leading-none">Tiempo en marcha</p>
+<p class="text-xs text-on-surface-variant mt-1">42 segundos restantes</p>
+</div>
+</div>
+<div class="flex-1 mx-6 h-2 bg-outline/20 rounded-full overflow-hidden">
+<div class="h-full bg-p-red rounded-full" style="width: 70%"></div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">pause</span>
+</div>
+</div>
+<button class="w-full py-5 bg-p-red text-white font-headline text-xl font-bold rounded-full tracking-widest uppercase shadow-lg shadow-p-red/30 active:scale-[0.98] transition-all duration-100 flex items-center justify-center gap-3 group hover:bg-red-600">
+                DETENER
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">stop_circle</span>
+</button>
+</section>
+<!-- Waiting Room -->
+<section class="bg-surface-container-low rounded-[2.5rem] p-8 flex flex-col gap-6 border-t-4 border-primary/20">
+<div class="flex items-center justify-between">
+<h2 class="font-headline text-2xl font-bold tracking-tight flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">groups_2</span>
+                    Sala de Espera
+                </h2>
+<div class="flex items-center gap-2">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+</span>
+<span class="text-xs font-bold">8 listos</span>
+</div>
+</div>
+<div class="flex flex-wrap gap-3">
+<div class="flex items-center gap-2 bg-surface-container-lowest pl-2 pr-4 py-2 rounded-full border-2 border-primary/40 shadow-sm">
+<div class="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold border border-primary">SM</div>
+<span class="text-xs font-bold">ShiftMaster</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest pl-2 pr-4 py-2 rounded-full border-2 border-p-blue/40 shadow-sm">
+<div class="w-7 h-7 rounded-full bg-p-blue/20 flex items-center justify-center text-[10px] font-bold border border-p-blue">KB</div>
+<span class="text-xs font-bold">KeyBound</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest pl-2 pr-4 py-2 rounded-full border-2 border-p-green/40 shadow-sm">
+<div class="w-7 h-7 rounded-full bg-p-green/20 flex items-center justify-center text-[10px] font-bold border border-p-green">RT</div>
+<span class="text-xs font-bold">RapidType</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest pl-2 pr-4 py-2 rounded-full border-2 border-p-red/40 shadow-sm">
+<div class="w-7 h-7 rounded-full bg-p-red/20 flex items-center justify-center text-[10px] font-bold border border-p-red">FX</div>
+<span class="text-xs font-bold">FlowX</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest px-4 py-2 rounded-full border border-outline/10 opacity-60">
+<span class="text-[10px] font-bold">+4 más esperando...</span>
+</div>
+</div>
+<div class="mt-2 text-center py-3 bg-on-surface text-surface text-[10px] font-bold uppercase tracking-widest rounded-full opacity-80">
+                Próxima ronda en 0:15s
+            </div>
+</section>
+<!-- Ranking -->
+<section class="bg-surface-container-low rounded-[2.5rem] p-8 flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<h2 class="font-headline text-2xl font-bold tracking-tight">Rankings</h2>
+<div class="flex gap-1.5 bg-outline/10 p-1 rounded-full">
+<button class="text-[10px] font-bold bg-primary text-on-primary px-4 py-1.5 rounded-full shadow-sm">MUNDIAL</button>
+<button class="text-[10px] font-bold text-on-surface-variant px-4 py-1.5 rounded-full hover:bg-outline/20 transition-colors">LOCAL</button>
+</div>
+</div>
+<div class="overflow-hidden bg-surface-container-lowest rounded-[2rem] border border-outline/20">
+<table class="w-full text-left border-collapse">
+<tbody class="divide-y divide-outline/10">
+<tr class="hover:bg-outline/5 transition-colors">
+<td class="px-5 py-3 font-black text-primary text-xs">01</td>
+<td class="px-5 py-3"><span class="text-xs font-bold">Speedy_G</span></td>
+<td class="px-5 py-3 text-right font-headline font-bold text-xs">14,290</td>
+</tr>
+<tr class="hover:bg-outline/5 transition-colors">
+<td class="px-5 py-3 font-black text-on-surface-variant text-xs">02</td>
+<td class="px-5 py-3"><span class="text-xs font-bold">TypeQueen</span></td>
+<td class="px-5 py-3 text-right font-headline font-bold text-xs">13,850</td>
+</tr>
+<tr class="bg-primary/10">
+<td class="px-5 py-3 font-black text-primary text-xs">124</td>
+<td class="px-5 py-3"><span class="text-xs font-bold">Tu Perfil</span></td>
+<td class="px-5 py-3 text-right font-headline font-bold text-xs">8,520</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+</body></html>

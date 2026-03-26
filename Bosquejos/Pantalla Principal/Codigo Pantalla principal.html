@@ -1,0 +1,834 @@
+<!doctype html>
+<html class="light" lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <title>KINETIC_TYPE - Dashboard de Competición</title>
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            .material-symbols-outlined {
+                font-variation-settings:
+                    "FILL" 0,
+                    "wght" 400,
+                    "GRAD" 0,
+                    "opsz" 24;
+                vertical-align: middle;
+            }
+            .mono-typing {
+                font-family: "IBM Plex Mono", monospace;
+            }
+        </style>
+        <script id="tailwind-config">
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            background: "#EAEFEF",
+                            surface: "#EAEFEF",
+                            "on-surface": "#25343F",
+                            primary: "#FF9B51",
+                            "on-primary": "#25343F",
+                            outline: "#BFC9D1",
+                            "surface-container": "#DDE4E4",
+                            "surface-container-low": "#E1E8E8",
+                            "surface-container-lowest": "#F4F7F7",
+                            "on-surface-variant": "#4A5D6B",
+                        },
+                        fontFamily: {
+                            headline: ["Space Grotesk"],
+                            body: ["Space Grotesk"],
+                            label: ["Space Grotesk"],
+                        },
+                        borderRadius: {
+                            DEFAULT: "9999px",
+                            lg: "9999px",
+                            xl: "9999px",
+                            "2xl": "9999px",
+                            "3xl": "9999px",
+                            full: "9999px",
+                        },
+                    },
+                },
+            };
+        </script>
+    </head>
+    <body
+        class="bg-background font-body text-on-surface antialiased min-h-screen"
+    >
+        <!-- TopNavBar Component -->
+        <nav
+            class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md font-headline antialiased tracking-tight h-16 flex justify-between items-center px-8 max-w-full mx-auto border-b border-outline/20"
+        >
+            <div class="flex items-center gap-12">
+                <span
+                    class="text-2xl font-bold tracking-tighter text-on-surface"
+                    style=""
+                    >KINETIC_TYPE</span
+                >
+                <div class="hidden md:flex gap-8 items-center h-full">
+                    <a
+                        class="text-primary font-bold border-b-2 border-primary px-1 py-5"
+                        href="#"
+                        style=""
+                        >Princiapl</a
+                    >
+                    <a
+                        class="text-on-surface-variant hover:text-on-surface transition-colors duration-200 px-1 py-5"
+                        href="#"
+                        style=""
+                        ><br
+                    /></a>
+                    <a
+                        class="text-on-surface-variant hover:text-on-surface transition-colors duration-200 px-1 py-5"
+                        href="#"
+                        style=""
+                        >Leaderboard</a
+                    >
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <button
+                    class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface hover:bg-outline/10 p-2 rounded-full transition-all duration-200 active:scale-95"
+                    style=""
+                >
+                    <span class="material-symbols-outlined" style=""
+                        >language</span
+                    >
+                    <span class="text-sm font-medium" style="">Language</span>
+                </button>
+                <div class="h-6 w-[1px] bg-outline"></div>
+                <button
+                    class="flex items-center gap-3 bg-surface-container-lowest px-4 py-2 rounded-full shadow-sm hover:bg-white transition-all duration-200 active:scale-95 border border-outline/30"
+                    style=""
+                >
+                    <div
+                        class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-xs"
+                        style=""
+                    >
+                        JD
+                    </div>
+                    <span class="text-sm font-semibold" style="">Profile</span>
+                </button>
+            </div>
+        </nav>
+        <!-- Content Canvas -->
+        <main
+            class="pt-24 pb-12 px-8 max-w-[1600px] mx-auto flex flex-col gap-8"
+        >
+            <!-- Top Section: Modo de Juego + Configuración -->
+            <div
+                class="bg-surface-container-low rounded-[2.5rem] p-8 grid grid-cols-12 gap-8"
+            >
+                <!-- Left: Pantalla de Espera -->
+                <section
+                    class="col-span-12 lg:col-span-7 xl:col-span-8 flex flex-col"
+                >
+                    <div class="mb-6">
+                        <span
+                            class="text-primary font-bold uppercase tracking-widest text-xs mb-1 block"
+                            style=""
+                            >MODO DE JUEGO</span
+                        >
+                        <h2
+                            class="font-headline text-3xl font-bold tracking-tight"
+                            style=""
+                        >
+                            Pantalla de espera
+                        </h2>
+                    </div>
+                    <div
+                        class="flex-1 flex flex-col justify-center gap-4 max-w-2xl mx-auto w-full"
+                    >
+                        <button
+                            class="flex items-center justify-between bg-surface-container-lowest text-primary p-6 rounded-[2rem] border-2 border-primary/40 hover:bg-white hover:scale-[1.02] transition-all duration-200 shadow-sm group"
+                            style=""
+                        >
+                            <div class="flex items-center gap-5">
+                                <span
+                                    class="material-symbols-outlined text-4xl"
+                                    style=""
+                                    >person</span
+                                >
+                                <span
+                                    class="text-2xl font-headline font-bold"
+                                    style=""
+                                    >Jugar solo</span
+                                >
+                            </div>
+                            <span
+                                class="material-symbols-outlined text-3xl group-hover:translate-x-1 transition-transform"
+                                style=""
+                                >arrow_forward</span
+                            >
+                        </button>
+                        <button
+                            class="flex items-center justify-between bg-surface-container-lowest text-on-surface p-6 rounded-[2rem] border border-outline/30 hover:bg-white hover:scale-[1.02] transition-all duration-200 group"
+                            style=""
+                        >
+                            <div class="flex items-center gap-5">
+                                <span
+                                    class="material-symbols-outlined text-4xl text-primary"
+                                    style=""
+                                    >add_circle</span
+                                >
+                                <span
+                                    class="text-2xl font-headline font-bold"
+                                    style=""
+                                    >Crear partida</span
+                                >
+                            </div>
+                            <span
+                                class="material-symbols-outlined text-3xl group-hover:translate-x-1 transition-transform"
+                                style=""
+                                >arrow_forward</span
+                            >
+                        </button>
+                        <button
+                            class="flex items-center justify-between bg-surface-container-lowest text-on-surface p-6 rounded-[2rem] border border-outline/30 hover:bg-white hover:scale-[1.02] transition-all duration-200 group"
+                            style=""
+                        >
+                            <div class="flex items-center gap-5">
+                                <span
+                                    class="material-symbols-outlined text-4xl text-primary"
+                                    style=""
+                                    >group</span
+                                >
+                                <span
+                                    class="text-2xl font-headline font-bold"
+                                    style=""
+                                    >Unirse a una partida</span
+                                >
+                            </div>
+                            <span
+                                class="material-symbols-outlined text-3xl group-hover:translate-x-1 transition-transform"
+                                style=""
+                                >arrow_forward</span
+                            >
+                        </button>
+                    </div>
+                </section>
+                <!-- Right: Configuración -->
+                <section
+                    class="col-span-12 lg:col-span-5 xl:col-span-4 flex flex-col justify-between"
+                >
+                    <div>
+                        <h2
+                            class="font-headline text-2xl font-bold tracking-tight mb-6 flex items-center gap-2"
+                            style=""
+                        >
+                            <span
+                                class="material-symbols-outlined text-primary"
+                                style=""
+                                >settings</span
+                            >
+                            Configuración
+                        </h2>
+                        <div
+                            class="bg-surface-container-lowest rounded-[2rem] border border-outline/20 overflow-hidden"
+                        >
+                            <div class="p-6">
+                                <label
+                                    class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-3 block"
+                                    style=""
+                                    >Nivel de Dificultad</label
+                                >
+                                <div
+                                    class="flex justify-between items-center bg-surface-container-low/50 p-1.5 rounded-full border border-outline/10"
+                                >
+                                    <button
+                                        class="flex-1 py-3 text-sm font-bold rounded-full hover:bg-outline/10 transition-colors"
+                                        style=""
+                                    >
+                                        1
+                                    </button>
+                                    <button
+                                        class="flex-1 py-3 text-sm font-bold rounded-full hover:bg-outline/10 transition-colors"
+                                        style=""
+                                    >
+                                        2
+                                    </button>
+                                    <button
+                                        class="flex-1 py-3 text-sm font-bold rounded-full bg-primary text-on-primary shadow-sm"
+                                        style=""
+                                    >
+                                        3
+                                    </button>
+                                    <button
+                                        class="flex-1 py-3 text-sm font-bold rounded-full hover:bg-outline/10 transition-colors"
+                                        style=""
+                                    >
+                                        4
+                                    </button>
+                                    <button
+                                        class="flex-1 py-3 text-sm font-bold rounded-full hover:bg-outline/10 transition-colors"
+                                        style=""
+                                    >
+                                        5
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mx-6 h-[1px] bg-outline/20"></div>
+                            <div
+                                class="p-6 flex items-center justify-between hover:bg-outline/5 transition-colors cursor-pointer group"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <span
+                                        class="material-symbols-outlined text-on-surface-variant"
+                                        style=""
+                                        >timer</span
+                                    >
+                                    <div>
+                                        <p
+                                            class="text-sm font-bold leading-none"
+                                            style=""
+                                        >
+                                            Tiempo Límite
+                                        </p>
+                                        <p
+                                            class="text-xs text-on-surface-variant mt-1"
+                                            style=""
+                                        >
+                                            60 segundos
+                                        </p>
+                                    </div>
+                                </div>
+                                <span
+                                    class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform"
+                                    style=""
+                                    >chevron_right</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        class="w-full mt-8 py-5 bg-primary text-on-primary font-headline text-xl font-bold rounded-full tracking-widest uppercase shadow-lg shadow-primary/30 active:scale-[0.98] transition-all duration-100 flex items-center justify-center gap-3 group"
+                        style=""
+                    >
+                        Entrar<span
+                            class="material-symbols-outlined group-hover:translate-x-1 transition-transform"
+                            style=""
+                            >bolt</span
+                        >
+                    </button>
+                </section>
+            </div>
+            <!-- Middle Section: Prueba de Escritura + Clasificación de Partida Actual -->
+            <div
+                class="bg-surface-container-low rounded-[2.5rem] p-8 grid grid-cols-12 gap-8"
+            >
+                <!-- Left: Prueba de Escritura -->
+                <section class="col-span-12 lg:col-span-8 flex flex-col gap-8">
+                    <div
+                        class="flex items-center justify-between border-b border-outline/20 pb-4"
+                    >
+                        <h2
+                            class="font-headline text-2xl font-bold tracking-tight"
+                            style=""
+                        >
+                            Partida en Online
+                        </h2>
+                        <div class="flex gap-4">
+                            <div
+                                class="flex items-center gap-2 bg-surface-container-lowest px-5 py-2.5 rounded-full shadow-sm border border-outline/10"
+                            >
+                                <span
+                                    class="text-xs font-bold uppercase text-on-surface-variant"
+                                    style=""
+                                    >PPM:</span
+                                >
+                                <span
+                                    class="text-xl font-headline font-black text-primary"
+                                    style=""
+                                    >112</span
+                                >
+                            </div>
+                            <div
+                                class="flex items-center gap-2 bg-surface-container-lowest px-5 py-2.5 rounded-full shadow-sm border border-outline/10"
+                            >
+                                <span
+                                    class="text-xs font-bold uppercase text-on-surface-variant"
+                                    style=""
+                                    >Error:</span
+                                >
+                                <span
+                                    class="text-xl font-headline font-black text-on-surface"
+                                    style=""
+                                    >0.4%</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="relative bg-surface-container-lowest rounded-[2rem] p-8 shadow-sm border border-outline/10"
+                    >
+                        <div
+                            class="mono-typing text-2xl leading-[2.5rem] tracking-tight text-on-surface-variant mb-6"
+                            style=""
+                        >
+                            <span
+                                class="text-on-surface bg-primary/20 px-1 rounded-sm"
+                                style=""
+                                >La precisión es la clave del flujo
+                                constante.</span
+                            >
+                            <span class="relative inline-block" style="">
+                                <span
+                                    class="absolute -left-[2px] top-1 bottom-1 w-[2px] bg-[#3B82F6] opacity-70 animate-pulse"
+                                ></span>
+                                <span
+                                    class="absolute -left-[2px] top-1 bottom-1 w-[2px] bg-primary animate-pulse shadow-[0_0_8px_#FF9B51]"
+                                ></span>
+                                <span
+                                    class="text-primary border-r-2 border-primary animate-pulse"
+                                    style=""
+                                    >E</span
+                                > </span
+                            >scribir con ritmo permite que la mente procese las
+                            <span class="relative inline-block" style="">
+                                <span
+                                    class="absolute -left-[2px] top-1 bottom-1 w-[2px] bg-[#4ADE80] animate-pulse"
+                                ></span>
+                                i </span
+                            >deas antes de que los dedos toquen el
+                            <span class="relative inline-block" style="">
+                                <span
+                                    class="absolute -left-[2px] top-1 bottom-1 w-[2px] bg-[#EF4444] animate-pulse shadow-[0_0_8px_#EF4444]"
+                                ></span>
+                                t </span
+                            >eclado mecánico. El murmullo de las
+                            <span class="relative inline-block" style="">
+                                <span
+                                    class="absolute -left-[2px] top-1 bottom-1 w-[2px] bg-[#A855F7] animate-pulse"
+                                ></span>
+                                t </span
+                            >eclas es la sinfonía de la
+                            <span class="relative inline-block" style="">
+                                <span
+                                    class="absolute -left-[2px] top-1 bottom-1 w-[2px] bg-primary animate-pulse opacity-50"
+                                ></span>
+                                p </span
+                            >roductividad en el nuevo milenio.
+                        </div>
+                    </div>
+                </section>
+                <!-- Right: Clasificación Partida Actual -->
+                <section class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+                    <div class="flex items-center justify-between">
+                        <h2
+                            class="font-headline text-2xl font-bold tracking-tight"
+                            style=""
+                        >
+                            Puntacion actual
+                        </h2>
+                        <div
+                            class="flex gap-1.5 bg-outline/10 p-1 rounded-full"
+                        >
+                            <button
+                                class="text-[10px] font-bold bg-primary text-on-primary px-4 py-1.5 rounded-full shadow-sm"
+                                style=""
+                            >
+                                LOBBY
+                            </button>
+                            <button
+                                class="text-[10px] font-bold text-on-surface-variant px-4 py-1.5 rounded-full hover:bg-outline/20 transition-colors"
+                                style=""
+                            >
+                                AMIGOS
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-surface-container-lowest rounded-[2rem] shadow-sm border border-outline/20 overflow-hidden flex-1 flex flex-col"
+                    >
+                        <div class="flex-1">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-outline/10">
+                                    <tr>
+                                        <th
+                                            class="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                                            style=""
+                                        >
+                                            #
+                                        </th>
+                                        <th
+                                            class="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                                            style=""
+                                        >
+                                            Jugador
+                                        </th>
+                                        <th
+                                            class="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-right"
+                                            style=""
+                                        >
+                                            PPM
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-outline/10">
+                                    <tr
+                                        class="hover:bg-outline/5 transition-colors"
+                                    >
+                                        <td
+                                            class="px-5 py-4 font-black text-primary"
+                                            style=""
+                                        >
+                                            01
+                                        </td>
+                                        <td class="px-5 py-4" style="">
+                                            <div
+                                                class="flex items-center gap-3"
+                                            >
+                                                <div
+                                                    class="w-2.5 h-6 bg-primary rounded-full"
+                                                ></div>
+                                                <span
+                                                    class="text-sm font-bold"
+                                                    style=""
+                                                    >FastFingers_1</span
+                                                >
+                                            </div>
+                                        </td>
+                                        <td
+                                            class="px-5 py-4 text-right font-headline font-bold text-sm"
+                                            style=""
+                                        >
+                                            124
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        class="hover:bg-outline/5 transition-colors"
+                                    >
+                                        <td
+                                            class="px-5 py-4 font-black text-on-surface-variant"
+                                            style=""
+                                        >
+                                            02
+                                        </td>
+                                        <td class="px-5 py-4" style="">
+                                            <div
+                                                class="flex items-center gap-3"
+                                            >
+                                                <div
+                                                    class="w-2.5 h-6 bg-outline rounded-full"
+                                                ></div>
+                                                <span
+                                                    class="text-sm font-bold"
+                                                    style=""
+                                                    >TurboType</span
+                                                >
+                                            </div>
+                                        </td>
+                                        <td
+                                            class="px-5 py-4 text-right font-headline font-bold text-sm"
+                                            style=""
+                                        >
+                                            118
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-primary/10">
+                                        <td
+                                            class="px-5 py-4 font-black text-primary"
+                                            style=""
+                                        >
+                                            03
+                                        </td>
+                                        <td class="px-5 py-4" style="">
+                                            <div
+                                                class="flex items-center gap-3"
+                                            >
+                                                <div
+                                                    class="w-2.5 h-6 bg-primary rounded-full"
+                                                ></div>
+                                                <span
+                                                    class="text-sm font-bold"
+                                                    style=""
+                                                    >Tu Perfil (JD)</span
+                                                >
+                                            </div>
+                                        </td>
+                                        <td
+                                            class="px-5 py-4 text-right font-headline font-bold text-sm"
+                                            style=""
+                                        >
+                                            112
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        class="hover:bg-outline/5 transition-colors"
+                                    >
+                                        <td
+                                            class="px-5 py-4 font-black text-on-surface-variant"
+                                            style=""
+                                        >
+                                            04
+                                        </td>
+                                        <td class="px-5 py-4" style="">
+                                            <div
+                                                class="flex items-center gap-3"
+                                            >
+                                                <div
+                                                    class="w-2.5 h-6 bg-on-surface rounded-full"
+                                                ></div>
+                                                <span
+                                                    class="text-sm font-bold"
+                                                    style=""
+                                                    >KeyMaster</span
+                                                >
+                                            </div>
+                                        </td>
+                                        <td
+                                            class="px-5 py-4 text-right font-headline font-bold text-sm"
+                                            style=""
+                                        >
+                                            98
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <!-- Bottom Section: Clasificación Global (Moved to Full Width) -->
+            <div class="bg-surface-container-low rounded-[2.5rem] p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2
+                        class="font-headline text-2xl font-bold tracking-tight"
+                        style=""
+                    >
+                        Clasificación Global
+                    </h2>
+                    <div class="flex gap-1.5 bg-outline/10 p-1 rounded-full">
+                        <button
+                            class="text-[10px] font-bold bg-primary text-on-primary px-6 py-2 rounded-full shadow-sm"
+                            style=""
+                        >
+                            MUNDIAL
+                        </button>
+                        <button
+                            class="text-[10px] font-bold text-on-surface-variant px-6 py-2 rounded-full hover:bg-outline/20 transition-colors"
+                            style=""
+                        >
+                            LOCAL
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Table View -->
+                    <div
+                        class="lg:col-span-8 bg-surface-container-lowest rounded-[2rem] shadow-sm border border-outline/20 overflow-hidden"
+                    >
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-outline/10">
+                                <tr>
+                                    <th
+                                        class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                                        style=""
+                                    >
+                                        #
+                                    </th>
+                                    <th
+                                        class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                                        style=""
+                                    >
+                                        Jugador
+                                    </th>
+                                    <th
+                                        class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-right"
+                                        style=""
+                                    >
+                                        Puntaje
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline/10">
+                                <tr
+                                    class="hover:bg-outline/5 transition-colors"
+                                >
+                                    <td
+                                        class="px-8 py-4 font-black text-primary"
+                                        style=""
+                                    >
+                                        01
+                                    </td>
+                                    <td class="px-8 py-4" style="">
+                                        <div class="flex items-center gap-4">
+                                            <div
+                                                class="w-3 h-8 bg-primary rounded-full"
+                                            ></div>
+                                            <span
+                                                class="text-base font-bold"
+                                                style=""
+                                                >Speedy_Gonzalez</span
+                                            >
+                                        </div>
+                                    </td>
+                                    <td
+                                        class="px-8 py-4 text-right font-headline font-bold text-base"
+                                        style=""
+                                    >
+                                        14,290
+                                    </td>
+                                </tr>
+                                <tr
+                                    class="hover:bg-outline/5 transition-colors"
+                                >
+                                    <td
+                                        class="px-8 py-4 font-black text-on-surface-variant"
+                                        style=""
+                                    >
+                                        02
+                                    </td>
+                                    <td class="px-8 py-4" style="">
+                                        <div class="flex items-center gap-4">
+                                            <div
+                                                class="w-3 h-8 bg-outline rounded-full"
+                                            ></div>
+                                            <span
+                                                class="text-base font-bold"
+                                                style=""
+                                                >TypeQueen_99</span
+                                            >
+                                        </div>
+                                    </td>
+                                    <td
+                                        class="px-8 py-4 text-right font-headline font-bold text-base"
+                                        style=""
+                                    >
+                                        13,850
+                                    </td>
+                                </tr>
+                                <tr
+                                    class="hover:bg-outline/5 transition-colors"
+                                >
+                                    <td
+                                        class="px-8 py-4 font-black text-on-surface-variant"
+                                        style=""
+                                    >
+                                        03
+                                    </td>
+                                    <td class="px-8 py-4" style="">
+                                        <div class="flex items-center gap-4">
+                                            <div
+                                                class="w-3 h-8 bg-primary/40 rounded-full"
+                                            ></div>
+                                            <span
+                                                class="text-base font-bold"
+                                                style=""
+                                                >MechanicalMaster</span
+                                            >
+                                        </div>
+                                    </td>
+                                    <td
+                                        class="px-8 py-4 text-right font-headline font-bold text-base"
+                                        style=""
+                                    >
+                                        13,110
+                                    </td>
+                                </tr>
+                                <tr
+                                    class="hover:bg-outline/5 transition-colors"
+                                >
+                                    <td
+                                        class="px-8 py-4 font-black text-on-surface-variant"
+                                        style=""
+                                    >
+                                        04
+                                    </td>
+                                    <td class="px-8 py-4" style="">
+                                        <div class="flex items-center gap-4">
+                                            <div
+                                                class="w-3 h-8 bg-on-surface rounded-full"
+                                            ></div>
+                                            <span
+                                                class="text-base font-bold"
+                                                style=""
+                                                >ShiftHacker</span
+                                            >
+                                        </div>
+                                    </td>
+                                    <td
+                                        class="px-8 py-4 text-right font-headline font-bold text-base"
+                                        style=""
+                                    >
+                                        12,940
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Personal Context -->
+                    <div class="lg:col-span-4 flex flex-col gap-6">
+                        <div
+                            class="bg-primary/10 rounded-[2rem] p-8 border border-primary/20 flex flex-col justify-between flex-1"
+                        >
+                            <div>
+                                <div
+                                    class="flex items-center justify-between mb-4"
+                                >
+                                    <span
+                                        class="text-xs font-bold uppercase tracking-widest text-primary"
+                                        style=""
+                                        >Tu Posición</span
+                                    >
+                                    <span
+                                        class="material-symbols-outlined text-primary"
+                                        style=""
+                                        >emoji_events</span
+                                    >
+                                </div>
+                                <div class="flex items-center gap-4 mb-2">
+                                    <div
+                                        class="w-3 h-10 bg-primary rounded-full"
+                                    ></div>
+                                    <span class="text-2xl font-bold" style=""
+                                        >Tu Perfil (JD)</span
+                                    >
+                                </div>
+                                <p
+                                    class="font-headline text-3xl font-black text-on-surface"
+                                    style=""
+                                >
+                                    8,520 pts
+                                </p>
+                            </div>
+                            <div class="mt-8 pt-8 border-t border-primary/20">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-14 h-14 bg-surface-container-lowest rounded-full flex items-center justify-center shadow-sm border border-outline/20 overflow-hidden shrink-0"
+                                    >
+                                        <img
+                                            alt="Spain Flag"
+                                            class="w-10 h-auto"
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkBJMQzLbNUn_KT0m3SgxbPphq9c6rZLqsvNnJTeYCctqeNS3wVTQ_FCqZM2CrkCxFJBdf009Luf1r1gXjLy-QXv08akfVKnOfcHjnO6CcOKSPmI7Yd-q7BD1oDYnwo2G3kdZC1O3RtnyzoGwIxPn8ALP1yNu5HzdivkAqqNW84R5bDmRbeBtT_rTBc-Cl0rYqMcA50YqTr3uP8QlVAYEVu6nwi8KWPP6tb6KbTaO-8Vth1QKUZQBqa-ku9yLoy0BIQh298PlITA"
+                                            style=""
+                                        />
+                                    </div>
+                                    <div>
+                                        <p
+                                            class="text-xs font-bold uppercase text-on-surface-variant tracking-wider leading-none mb-1.5"
+                                            style=""
+                                        >
+                                            Tu Rango A nivel mundial
+                                        </p>
+                                        <p
+                                            class="font-headline font-black text-xl"
+                                            style=""
+                                        >
+                                            Top 15 Mundial
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </body>
+</html>
