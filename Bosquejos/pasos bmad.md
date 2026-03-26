@@ -19,4 +19,15 @@ bmad-bmm-create-architecture — Arquitectura técnica ⚡ REQUERIDO
 bmad-bmm-create-epics-and-stories — Épicas e Historias ⚡ REQUERIDO
 bmad-bmm-check-implementation-readiness — Verificar readiness ⚡ REQUERIDO
 
-Una vez validados todos los artefactos de planificación, entraremos a la fase 4-Implementation iniciando con Sprint Planning (bmad-bmm-sprint-planning).
+## Fase 4: Implementación
+
+bmad-bmm-sprint-planning -- para hacer el Sprint Planning
+
+### Lo que vendrá luego (El ciclo de vida del código)
+
+Una vez que bmad-bmm-sprint-planning esté finalizado, el ritmo de desarrollo iterativo para cada "historia" o parte completa (feature) será:
+
+Create Story (bmad-bmm-create-story): El Scrum Master toma la siguiente historia y prepara un archivo aislado con todo el contexto, lo que ayuda a que el agente desarrollador AI no se pierda.
+Dev Story (bmad-bmm-dev-story): Un agente Ingeniero de Software toma toda la arquitectura, las directrices y la historia creada, y produce el código de tu programa.
+Code Review (bmad-bmm-code-review): Revisión asertiva del código para cazar bugs y problemas de borde (opcional pero muy recomendado tras dev story).
+💡 Recordatorio importante del método: Por favor, asegúrate de ejecutar cada uno de estos comandos en una nueva ventana de chat de contexto limpio. ¡Abre un nuevo chat y envía bmad-bmm-sprint-planning para darle vida a ese código!
