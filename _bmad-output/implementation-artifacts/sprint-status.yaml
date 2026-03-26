@@ -1,0 +1,70 @@
+# generated: 2026-03-26T17:35:14-03:00
+# last_updated: 2026-03-26T17:35:14-03:00
+# project: UltimaType
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: d:/Progra/Proyectos_personales/UltimaType/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-26T17:35:14-03:00
+last_updated: 2026-03-26T17:35:14-03:00
+project: UltimaType
+project_key: NOKEY
+tracking_system: file-system
+story_location: d:/Progra/Proyectos_personales/UltimaType/_bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: in-progress
+  1-1-workspace-infrastructure-scaffolding: backlog
+  1-2-oauth-2-0-integration-google-github: backlog
+  1-3-auto-detect-user-country-on-first-login: backlog
+  1-4-profile-dashboard-country-management: backlog
+  epic-1-retrospective: optional
+  epic-2: backlog
+  2-1-text-content-management: backlog
+  2-2-room-creation-lobby: backlog
+  2-3-real-time-caret-sync-engine: backlog
+  2-4-focus-fade-race-mechanics: backlog
+  2-5-real-time-scoring-match-end: backlog
+  2-6-disconnection-handling: backlog
+  epic-2-retrospective: optional
+  epic-3: backlog
+  3-1-spectator-mode-room-capacity-management: backlog
+  3-2-live-spectator-view: backlog
+  3-3-spectator-to-player-transition: backlog
+  epic-3-retrospective: optional
+  epic-4: backlog
+  4-1-match-results-persistence: backlog
+  4-2-personal-history-progression-dashboard: backlog
+  4-3-global-leaderboard: backlog
+  4-4-leaderboard-filtering-difficulty-country: backlog
+  4-5-automated-leaderboard-updates: backlog
+  epic-4-retrospective: optional
