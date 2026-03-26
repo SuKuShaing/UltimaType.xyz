@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UltimaType - Design Directions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Space Grotesk"', 'sans-serif'],
+                    },
+                    colors: {
+                        bgBase: '#000000',
+                        bgRaised: '#111111',
+                        brand: '#FF9B51',
+                        textMain: '#F8F9FA',
+                        textMuted: '#8B949E',
+                        success: '#4ADE80',
+                        error: '#FB7185'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0F1F29; color: #F8F9FA; font-family: 'Space Grotesk', sans-serif; }
+        .bg-sunken { background-color: #1A2630; }
+        .bg-raised { background-color: #25343F; }
+        .text-glow { text-shadow: 0 0 20px rgba(255, 155, 81, 0.4); }
+        .caret { border-left: 3px solid #FF9B51; animation: blink 1s step-end infinite; }
+        @keyframes blink { 50% { border-color: transparent; } }
+    </style>
+</head>
+<body class="min-h-screen overflow-hidden">
+    
+    <!-- Switcher UI -->
+    <div class="fixed top-0 left-0 right-0 p-4 bg-sunken z-50 flex justify-between items-center shadow-[0_4px_30px_rgba(15,31,41,0.5)]">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">UltimaType Design Directions</h1>
+            <p class="text-sm text-textMuted">Focus Fade Active States (Competition Mode)</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="show(1)" id="btn-1" class="px-4 py-2 bg-brand text-black font-semibold rounded-sm hover:opacity-90 transition-opacity">1. Asymmetric Editorial</button>
+            <button onclick="show(2)" id="btn-2" class="px-4 py-2 bg-raised text-textMain font-semibold rounded-sm hover:bg-brand/20 transition-colors">2. Zenith Centered</button>
+            <button onclick="show(3)" id="btn-3" class="px-4 py-2 bg-raised text-textMain font-semibold rounded-sm hover:bg-brand/20 transition-colors">3. Absolute Minimalist</button>
+        </div>
+    </div>
+
+    <!-- Direction 1: Asymmetric Editorial -->
+    <div id="dir-1" class="pt-24 min-h-screen flex px-12 items-center gap-12 transition-opacity duration-500">
+        <!-- Sidebar -->
+        <div class="w-1/3 flex flex-col items-end text-right pr-12">
+            <div class="text-[8rem] leading-none font-bold text-textMain tracking-tighter text-glow">124</div>
+            <div class="text-2xl text-textMuted font-medium mb-12 uppercase tracking-widest">WPM</div>
+            
+            <div class="flex flex-col gap-4 w-48">
+                <div class="flex justify-between items-center bg-sunken p-3 rounded-sm">
+                    <span class="text-cyan-400 font-bold">ALX</span>
+                    <span class="text-lg">118</span>
+                </div>
+                <div class="flex justify-between items-center bg-sunken p-3 rounded-sm">
+                    <span class="text-fuchsia-400 font-bold">MIA</span>
+                    <span class="text-lg">95</span>
+                </div>
+            </div>
+        </div>
+        <!-- Text Block -->
+        <div class="w-2/3 max-w-2xl text-3xl leading-relaxed text-textMuted font-medium">
+            <span class="text-success">The quick brown fox jumps over the </span>
+            <span class="text-textMain caret">lazy dog. </span>
+            <span class="opacity-40">This is a highly optimized typography view designed for maximum legibility and focus at high speeds.</span>
+        </div>
+    </div>
+
+    <!-- Direction 2: Zenith Centered -->
+    <div id="dir-2" class="pt-24 min-h-screen flex flex-col items-center justify-center gap-12 transition-opacity duration-500 hidden">
+        <!-- Top Island -->
+        <div class="flex flex-col items-center gap-2">
+            <div class="text-7xl font-bold text-textMain tracking-tighter text-glow">124 <span class="text-2xl text-textMuted uppercase tracking-widest block text-center mt-[-10px]">WPM</span></div>
+            
+            <div class="flex gap-4 mt-8">
+                <div class="px-4 py-2 bg-sunken rounded-full flex gap-3 items-center border border-white/5">
+                    <span class="w-3 h-3 rounded-full bg-brand"></span>
+                    <span class="font-bold">YOU: 124</span>
+                </div>
+                <div class="px-4 py-2 bg-sunken rounded-full flex gap-3 items-center border border-white/5">
+                    <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
+                    <span class="font-bold text-textMuted">ALX: 118</span>
+                </div>
+            </div>
+        </div>
+        <!-- Text Block -->
+        <div class="max-w-3xl w-full text-center text-3xl leading-relaxed text-textMuted font-medium">
+            <span class="text-success">The quick brown fox jumps over the </span>
+            <span class="text-textMain caret">lazy dog. </span>
+            <span class="opacity-40">This is a highly optimized typography view designed for maximum legibility and focus at high speeds.</span>
+        </div>
+    </div>
+
+    <!-- Direction 3: Absolute Minimalist -->
+    <div id="dir-3" class="pt-24 min-h-screen flex items-center justify-center relative transition-opacity duration-500 hidden">
+        <!-- Floating HUD -->
+        <div class="absolute top-24 right-12 text-right">
+            <div class="text-5xl font-bold text-textMain opacity-20">124 WPM</div>
+        </div>
+        
+        <!-- Text Block -->
+        <div class="max-w-3xl w-full text-4xl leading-snug text-textMuted font-medium">
+            <span class="text-success opacity-30">The quick brown fox jumps over the </span>
+            <span class="text-textMain caret text-glow">lazy dog. </span>
+            <span class="opacity-20">This is a highly optimized typography view. In this mode, opponents are only visible as carets moving through the text.</span>
+        </div>
+    </div>
+
+    <script>
+        function show(id) {
+            document.getElementById('dir-1').classList.add('hidden');
+            document.getElementById('dir-2').classList.add('hidden');
+            document.getElementById('dir-3').classList.add('hidden');
+            
+            document.getElementById('btn-1').className = 'px-4 py-2 bg-raised text-textMain font-semibold rounded-sm hover:bg-brand/20 transition-colors';
+            document.getElementById('btn-2').className = 'px-4 py-2 bg-raised text-textMain font-semibold rounded-sm hover:bg-brand/20 transition-colors';
+            document.getElementById('btn-3').className = 'px-4 py-2 bg-raised text-textMain font-semibold rounded-sm hover:bg-brand/20 transition-colors';
+            
+            document.getElementById('dir-' + id).classList.remove('hidden');
+            document.getElementById('btn-' + id).className = 'px-4 py-2 bg-brand text-black font-semibold rounded-sm hover:opacity-90 transition-opacity';
+        }
+    </script>
+</body>
+</html>

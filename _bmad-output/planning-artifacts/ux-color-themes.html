@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UltimaType - UX Color Themes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Space Grotesk"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: '#FF9B51',
+                        // Dark Theme Colors (From Design Directions)
+                        darkBase: '#0F1F29',
+                        darkSunken: '#1A2630',
+                        darkRaised: '#25343F',
+                        darkText: '#F8F9FA',
+                        darkMuted: '#8B949E',
+                        // Light Theme Colors (From Bosquejos Light Palette)
+                        lightBase: '#F5FAFA',
+                        lightSunken: '#EAEFEF',
+                        lightRaised: '#FFFFFF',
+                        lightText: '#0F1F29', // Deep navy for text feels more premium than black
+                        lightMuted: '#64748B',
+                        
+                        success: '#4ADE80',
+                        error: '#FB7185'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8 font-sans">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold mb-2">UltimaType Color Themes</h1>
+        <p class="text-gray-600 mb-8">Design tokens for "Kinetic Monospace" and "Focus Fade" aesthetics.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Dark Mode Panel -->
+            <div class="rounded-xl overflow-hidden shadow-2xl border border-gray-800">
+                <div class="bg-darkBase p-8 text-darkText h-full">
+                    <div class="flex justify-between items-center mb-12">
+                        <h2 class="text-2xl font-bold tracking-tight">Dark Mode (Base)</h2>
+                        <span class="px-3 py-1 bg-darkRaised rounded-full text-xs font-mono text-darkMuted">class="dark"</span>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Surfaces -->
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-darkMuted mb-3">Surfaces</h3>
+                            <div class="flex gap-4">
+                                <div class="flex-1 rounded-md bg-darkBase border border-white/5 p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Base</div>
+                                        <div class="font-mono text-xs text-darkMuted">#0F1F29</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 rounded-md bg-darkSunken border border-white/5 p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Sunken</div>
+                                        <div class="font-mono text-xs text-darkMuted">#1A2630</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 rounded-md bg-darkRaised p-4 h-24 flex items-end shadow-lg border border-white/10">
+                                    <div>
+                                        <div class="font-bold">Raised</div>
+                                        <div class="font-mono text-xs text-darkMuted">#25343F</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Brand & Semantics -->
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-darkMuted mb-3">Brand & Semantics</h3>
+                            <div class="flex gap-4">
+                                <div class="flex-1 rounded-sm bg-brand text-black p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Brand</div>
+                                        <div class="font-mono text-xs opacity-80">#FF9B51</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 rounded-sm bg-success text-black p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Success</div>
+                                        <div class="font-mono text-xs opacity-80">#4ADE80</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 rounded-sm bg-error text-black p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Error</div>
+                                        <div class="font-mono text-xs opacity-80">#FB7185</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Typography Sample -->
+                        <div class="bg-darkSunken p-6 rounded-md border border-white/5 mt-8">
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-darkMuted mb-4">Typography Contrast</h3>
+                            <div class="space-y-4">
+                                <p class="text-2xl font-medium text-darkText">The quick brown fox jumps over the <span class="text-success">lazy</span> dog. <span class="border-l-2 border-brand animate-pulse"></span></p>
+                                <p class="text-lg text-darkMuted">This is muted text used for secondary information or upcoming letters in the typing canvas.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Light Mode Panel -->
+            <div class="rounded-xl overflow-hidden shadow-2xl border border-gray-200">
+                <div class="bg-lightBase p-8 text-lightText h-full">
+                    <div class="flex justify-between items-center mb-12">
+                        <h2 class="text-2xl font-bold tracking-tight">Light Mode (Editorial)</h2>
+                        <span class="px-3 py-1 bg-lightRaised border border-gray-200 rounded-full text-xs font-mono text-lightMuted">class="light"</span>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Surfaces -->
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-lightMuted mb-3">Surfaces</h3>
+                            <div class="flex gap-4">
+                                <div class="flex-1 rounded-md bg-lightBase border border-black/5 p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Base</div>
+                                        <div class="font-mono text-xs text-lightMuted">#F5FAFA</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 rounded-md bg-lightSunken border border-black/5 p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Sunken/Section</div>
+                                        <div class="font-mono text-xs text-lightMuted">#EAEFEF</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 rounded-md bg-lightRaised p-4 h-24 flex items-end shadow-sm border border-black/5">
+                                    <div>
+                                        <div class="font-bold">Raised/Lowest</div>
+                                        <div class="font-mono text-xs text-lightMuted">#FFFFFF</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Brand & Semantics -->
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-lightMuted mb-3">Brand & Semantics</h3>
+                            <div class="flex gap-4">
+                                <div class="flex-1 rounded-sm bg-brand text-black p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Brand</div>
+                                        <div class="font-mono text-xs opacity-80">#FF9B51</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 rounded-sm bg-[#16A34A] text-white p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Success</div>
+                                        <div class="font-mono text-xs opacity-80">#16A34A</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 rounded-sm bg-[#E11D48] text-white p-4 h-24 flex items-end">
+                                    <div>
+                                        <div class="font-bold">Error</div>
+                                        <div class="font-mono text-xs opacity-80">#E11D48</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Typography Sample -->
+                        <div class="bg-lightSunken border border-black/5 p-6 rounded-md mt-8">
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-lightMuted mb-4">Typography Contrast</h3>
+                            <div class="space-y-4">
+                                <p class="text-2xl font-medium text-lightText">The quick brown fox jumps over the <span class="text-[#16A34A]">lazy</span> dog. <span class="border-l-2 border-brand animate-pulse"></span></p>
+                                <p class="text-lg text-lightMuted">This is muted text used for secondary information or upcoming letters in the typing canvas.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
