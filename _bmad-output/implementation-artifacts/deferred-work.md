@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: retrospectiva Epic 1 (2026-03-27)
+
+- **Enforcement de `kebab-case` sin herramienta automática** — La convención de que todos los archivos deben usar `kebab-case.ts` / `kebab-case.tsx` es una regla crítica del proyecto pero no está enforced por ningún linter ni Nx constraint. Actualmente depende de la disciplina manual del agente dev. Impacto: cualquier archivo creado con `camelCase` o `PascalCase` viola la convención sin que nadie lo detecte automáticamente. Solución propuesta: configurar una regla ESLint personalizada (`check-file` plugin) o un custom Nx generator que valide nombres de archivo en CI. Tratar en una historia de mejora de calidad antes del Epic 3.
+
 ## Deferred from: code review of story 1-2-oauth-2-0-integration-google-github (2026-03-26)
 
 ## Deferred from: code review of 1-3-auto-detect-user-country-on-first-login (2026-03-26)

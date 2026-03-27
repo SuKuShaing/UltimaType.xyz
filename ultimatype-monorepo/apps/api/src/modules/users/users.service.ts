@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AuthProvider } from '@ultimatype-monorepo/prisma-client';
+import { AuthProvider } from '@prisma/client';
 
 export interface CreateUserInput {
   provider: 'GOOGLE' | 'GITHUB';

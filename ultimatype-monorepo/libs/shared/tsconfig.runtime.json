@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.lib.json",
+  "compilerOptions": {
+    "outDir": "dist/js",
+    "emitDeclarationOnly": false,
+    "declaration": false,
+    "declarationMap": false
+  }
+}

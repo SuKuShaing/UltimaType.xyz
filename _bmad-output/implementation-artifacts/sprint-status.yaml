@@ -35,19 +35,19 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-03-27T12:27:00-03:00
+last_updated: 2026-03-27T14:35:00-03:00
 project: UltimaType
 project_key: NOKEY
 tracking_system: file-system
 story_location: d:/Progra/Proyectos_personales/UltimaType/_bmad-output/implementation-artifacts
 
 development_status:
-  epic-1: in-progress
+  epic-1: done
   1-1-workspace-infrastructure-scaffolding: done
   1-2-oauth-2-0-integration-google-github: done
   1-3-auto-detect-user-country-on-first-login: done
   1-4-profile-dashboard-country-management: done
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
   epic-2: backlog
   2-1-text-content-management: backlog
   2-2-room-creation-lobby: backlog

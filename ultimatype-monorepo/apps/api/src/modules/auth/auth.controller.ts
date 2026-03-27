@@ -7,6 +7,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -14,6 +15,20 @@ import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { GithubAuthGuard } from './guards/github-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+
+/** Shape Passport attaches to req.user after OAuth strategies succeed */
+interface OAuthPassportUser {
+  provider: 'GOOGLE' | 'GITHUB';
+  providerId: string;
+  email: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+/** Shape Passport attaches to req.user after JWT strategy succeeds */
+interface JwtPassportUser {
+  userId: string;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -33,7 +48,7 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleCallback(@Req() req: any, @Res() res: any) {
+  async googleCallback(@Req() req: Request & { user: OAuthPassportUser; ip: string }, @Res() res: Response) {
     return this.handleOAuthCallback(req, res);
   }
 
@@ -47,7 +62,7 @@ export class AuthController {
 
   @Get('github/callback')
   @UseGuards(GithubAuthGuard)
-  async githubCallback(@Req() req: any, @Res() res: any) {
+  async githubCallback(@Req() req: Request & { user: OAuthPassportUser; ip: string }, @Res() res: Response) {
     return this.handleOAuthCallback(req, res);
   }
 
@@ -55,7 +70,7 @@ export class AuthController {
 
   @Post('refresh')
   @UseGuards(JwtRefreshGuard)
-  async refresh(@Req() req: any) {
+  async refresh(@Req() req: Request & { user: JwtPassportUser }) {
     const userId = req.user.userId;
     const tokens = await this.authService.refreshTokens(userId);
     return tokens;
@@ -65,7 +80,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@Req() req: any) {
+  async getProfile(@Req() req: Request & { user: JwtPassportUser }) {
     const userId = req.user.userId;
     return this.usersService.findById(userId);
   }
@@ -78,7 +93,10 @@ export class AuthController {
    * code for real tokens via POST /auth/code.
    * This avoids exposing long-lived tokens in the URL / browser history.
    */
-  private async handleOAuthCallback(req: any, res: any) {
+  private async handleOAuthCallback(
+    req: Request & { user: OAuthPassportUser; ip: string },
+    res: Response,
+  ) {
     const clientIp: string | undefined = req.ip;
 
     const user = await this.authService.validateOAuthUser(req.user, clientIp);

@@ -11,12 +11,17 @@
     "emitDecoratorMetadata": true,
     "target": "es2021",
     "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "paths": {
       "@ultimatype-monorepo/shared": ["../../libs/shared/src/index.ts"],
-      "@ultimatype-monorepo/prisma-client": ["./generated/prisma/index.ts"]
+      "@ultimatype-monorepo/prisma-client": ["./src/generated/prisma/index.ts"]
     }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": []
+  "include": ["src/**/*.ts", "generated/**/*.ts"],
+  "exclude": [],
+  "references": [
+    {
+      "path": "../../libs/shared/tsconfig.lib.json"
+    }
+  ]
 }
