@@ -32,6 +32,14 @@
 - **`updateCountryCode` sin manejo de Prisma P2025** — `users.service.ts:54`. Si el userId no existe en DB, Prisma lanza P2025 sin transformar. Patrón consistente con otros métodos del servicio; añadir manejo global de errores Prisma en post-MVP.
 - **Estado visual stale de `effectiveCountry` cuando refetch falla** — `profile-page.tsx`. Si `invalidateQueries` falla por red, el dropdown puede mostrar el valor seleccionado pero `user.countryCode` del cache puede diferir. Requiere Background Sync API (Service Worker) para encolar la mutación y enviarla al reconectarse — tratar junto con capacidades PWA post-MVP.
 
+## Deferred from: code review of 2-3-real-time-caret-sync-engine (2026-03-27)
+
+- **LiveTextCanvas: readOnly en hidden input impide teclado virtual en móvil** — `live-text-canvas.tsx`. Fix completo requiere input visible + `inputmode="text"` + gestión de scroll al enfocar. Móvil no es target de esta historia; retomar cuando se decida soportar móvil.
+- **springInterpolate sin tipos TypeScript** — `multiplayer-caret.tsx`. Parámetros con tipos implícitos `any`. Cosmético, no afecta runtime. Agregar tipos en limpieza de código futuro.
+- **Tests faltantes para ArenaPage, useCaretSync, y spring/rAF de MultiplayerCaret** — Los tests actuales solo cubren renders estáticos. No hay cobertura de la animación rAF ni de la suscripción transient. Expandir en historia de calidad post-MVP.
+- **handleCaretUpdate llama getRoomState en cada evento (20Hz × N jugadores)** — Hot path Redis sin cache. Viable para MVP con pocos usuarios. Optimizar con cache in-process o TTL corto cuando se escale.
+- **ArenaPage sin lógica de reconexión ante desconexión de socket** — Falla silenciosa. Pre-existente en arquitectura del lobby. Tratar con estrategia de reconexión global post-MVP.
+
 ## Deferred from: code review of 2-2-room-creation-lobby (2026-03-27)
 
 - **connections Map in-memory vs multi-instancia** — `game.gateway.ts`. El Map `connections` que asocia socketId → {userId, roomCode} es per-instance. Con el RedisIoAdapter configurado para multi-instancia, si un cliente se conecta en instancia A y se desconecta en instancia B, el cleanup no ocurre. Aceptado como limitación single-instance para el deploy actual. Resolver cuando se escale a múltiples instancias almacenando el tracking en Redis.

@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
 import { connectSocket, disconnectSocket } from '../lib/socket';
-import { RoomState, WS_EVENTS } from '@ultimatype-monorepo/shared';
+import { RoomState, WS_EVENTS, MatchStartPayload } from '@ultimatype-monorepo/shared';
 
 interface UseLobbyReturn {
   roomState: RoomState | null;
   error: string | null;
   isConnected: boolean;
   matchStarted: boolean;
+  matchData: MatchStartPayload | null;
   toggleReady: (ready: boolean) => void;
   selectLevel: (level: number) => void;
   startMatch: () => void;
@@ -19,6 +20,7 @@ export function useLobby(code: string): UseLobbyReturn {
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [matchStarted, setMatchStarted] = useState(false);
+  const [matchData, setMatchData] = useState<MatchStartPayload | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
@@ -43,7 +45,8 @@ export function useLobby(code: string): UseLobbyReturn {
       setError(data.message);
     });
 
-    s.on(WS_EVENTS.MATCH_START, () => {
+    s.on(WS_EVENTS.MATCH_START, (data: MatchStartPayload) => {
+      setMatchData(data);
       setMatchStarted(true);
     });
 
@@ -90,6 +93,7 @@ export function useLobby(code: string): UseLobbyReturn {
     error,
     isConnected,
     matchStarted,
+    matchData,
     toggleReady,
     selectLevel,
     startMatch,

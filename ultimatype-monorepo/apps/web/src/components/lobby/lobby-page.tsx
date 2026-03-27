@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLobby } from '../../hooks/use-lobby';
 import { useAuth } from '../../hooks/use-auth';
 import { PlayerAvatarPill } from './player-avatar-pill';
+import { ArenaPage } from '../arena/arena-page';
 import { DIFFICULTY_LEVELS } from '@ultimatype-monorepo/shared';
 
 export function LobbyPage() {
@@ -13,6 +14,8 @@ export function LobbyPage() {
     roomState,
     error,
     isConnected,
+    matchStarted,
+    matchData,
     toggleReady,
     selectLevel,
     startMatch,
@@ -44,6 +47,11 @@ export function LobbyPage() {
   };
 
   if (!code) return null;
+
+  // Transition to arena when match starts
+  if (matchStarted && matchData && user) {
+    return <ArenaPage matchData={matchData} localUserId={user.id} />;
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-surface-base px-4 py-8 font-sans text-text-main">

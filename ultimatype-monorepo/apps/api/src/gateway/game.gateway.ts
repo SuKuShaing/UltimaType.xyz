@@ -15,6 +15,7 @@ import { verify } from 'jsonwebtoken';
 import { RoomsService } from '../modules/rooms/rooms.service';
 import { UsersService } from '../modules/users/users.service';
 import { TextsService } from '../modules/texts/texts.service';
+import { MatchStateService } from '../modules/matches/match-state.service';
 import { WS_EVENTS, isValidLevel } from '@ultimatype-monorepo/shared';
 
 const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
@@ -34,6 +35,7 @@ export class GameGateway
     private roomsService: RoomsService,
     private usersService: UsersService,
     private textsService: TextsService,
+    private matchStateService: MatchStateService,
     private configService: ConfigService,
   ) {}
 
@@ -228,12 +230,78 @@ export class GameGateway
 
       await this.roomsService.setRoomStatus(data.code, 'playing');
 
+      // Re-fetch state after setting ready to get updated players list
+      const updatedState = await this.roomsService.getRoomState(data.code);
+      if (!updatedState || updatedState.players.length === 0) {
+        await this.roomsService.setRoomStatus(data.code, 'waiting');
+        return client.emit(WS_EVENTS.LOBBY_ERROR, {
+          message: 'No se pudo obtener el estado de la sala',
+        });
+      }
+
+      const playerIds = updatedState.players.map((p) => p.id);
+
+      // Initialize match state in Redis
+      await this.matchStateService.initMatch(
+        data.code,
+        playerIds,
+        text.id,
+        text.content,
+      );
+
       this.server.to(data.code).emit(WS_EVENTS.MATCH_START, {
         code: data.code,
         textId: text.id,
+        textContent: text.content,
+        players: updatedState.players,
       });
     } catch (err: any) {
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.CARET_UPDATE)
+  async handleCaretUpdate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { position: number; timestamp: number },
+  ) {
+    try {
+      if (!Number.isInteger(data?.position) || !Number.isInteger(data?.timestamp) || data.timestamp <= 0) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Payload de caret inválido' });
+      }
+
+      const conn = this.connections.get(client.id);
+      if (!conn) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'No estás en una sala' });
+      }
+
+      const roomState = await this.roomsService.getRoomState(conn.roomCode);
+      if (!roomState || roomState.status !== 'playing') {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'La partida no está en curso' });
+      }
+
+      const result = await this.matchStateService.updatePosition(
+        conn.roomCode,
+        conn.userId,
+        data.position,
+      );
+
+      if (result === 'cheat') {
+        return; // Silent drop — no feedback to avoid revealing detection threshold
+      }
+
+      if (result === 'not_found') {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Jugador no encontrado en la partida' });
+      }
+
+      // Broadcast to all in room except sender (volatile for performance)
+      client.volatile.to(conn.roomCode).emit(WS_EVENTS.CARET_SYNC, {
+        playerId: conn.userId,
+        position: data.position,
+        timestamp: data.timestamp,
+      });
+    } catch (err: any) {
+      this.logger.error(`Error in caret update: ${err.message}`);
     }
   }
 }

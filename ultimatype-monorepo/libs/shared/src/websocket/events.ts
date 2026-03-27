@@ -9,4 +9,8 @@ export const WS_EVENTS = {
   LOBBY_STATE: 'lobby:state',
   LOBBY_ERROR: 'lobby:error',
   MATCH_START: 'match:start',
+  // Caret sync: Client → Server
+  CARET_UPDATE: 'caret:update',
+  // Caret sync: Server → Client
+  CARET_SYNC: 'caret:sync',
 } as const;

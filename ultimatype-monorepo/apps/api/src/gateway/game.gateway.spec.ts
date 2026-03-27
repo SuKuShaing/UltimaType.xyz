@@ -3,6 +3,7 @@ import { GameGateway } from './game.gateway';
 import { RoomsService } from '../modules/rooms/rooms.service';
 import { UsersService } from '../modules/users/users.service';
 import { TextsService } from '../modules/texts/texts.service';
+import { MatchStateService } from '../modules/matches/match-state.service';
 import { ConfigService } from '@nestjs/config';
 import { WS_EVENTS } from '@ultimatype-monorepo/shared';
 
@@ -22,6 +23,12 @@ describe('GameGateway', () => {
   };
   let textsService: {
     getRandomByLevel: ReturnType<typeof vi.fn>;
+  };
+  let matchStateService: {
+    initMatch: ReturnType<typeof vi.fn>;
+    updatePosition: ReturnType<typeof vi.fn>;
+    getMatchState: ReturnType<typeof vi.fn>;
+    getPlayerPosition: ReturnType<typeof vi.fn>;
   };
   let configService: {
     getOrThrow: ReturnType<typeof vi.fn>;
@@ -76,7 +83,13 @@ describe('GameGateway', () => {
       }),
     };
     textsService = {
-      getRandomByLevel: vi.fn().mockResolvedValue({ id: 'text-1' }),
+      getRandomByLevel: vi.fn().mockResolvedValue({ id: 42, content: 'Hola mundo test' }),
+    };
+    matchStateService = {
+      initMatch: vi.fn().mockResolvedValue(undefined),
+      updatePosition: vi.fn().mockResolvedValue('valid'),
+      getMatchState: vi.fn().mockResolvedValue({}),
+      getPlayerPosition: vi.fn().mockResolvedValue(0),
     };
     configService = {
       getOrThrow: vi.fn().mockReturnValue('test-secret'),
@@ -87,6 +100,7 @@ describe('GameGateway', () => {
       roomsService as unknown as RoomsService,
       usersService as unknown as UsersService,
       textsService as unknown as TextsService,
+      matchStateService as unknown as MatchStateService,
       configService as unknown as ConfigService,
     );
 
@@ -250,7 +264,7 @@ describe('GameGateway', () => {
   });
 
   describe('lobby:start', () => {
-    it('emite match:start con textId si condiciones se cumplen', async () => {
+    it('emite match:start con textId, textContent y players si condiciones se cumplen', async () => {
       await gateway.handleStart(mockSocket as any, { code: 'ABC234' });
 
       expect(roomsService.setReady).toHaveBeenCalledWith(
@@ -266,10 +280,18 @@ describe('GameGateway', () => {
         'ABC234',
         'playing',
       );
+      expect(matchStateService.initMatch).toHaveBeenCalledWith(
+        'ABC234',
+        ['user-1'],
+        42,
+        'Hola mundo test',
+      );
       expect(mockServer.to).toHaveBeenCalledWith('ABC234');
       expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.MATCH_START, {
         code: 'ABC234',
-        textId: 'text-1',
+        textId: 42,
+        textContent: 'Hola mundo test',
+        players: roomState.players,
       });
     });
 
@@ -297,6 +319,135 @@ describe('GameGateway', () => {
           message: expect.stringContaining('2 jugadores'),
         }),
       );
+    });
+
+    it('rechaza y revierte status si updatedState es null tras setRoomStatus', async () => {
+      roomsService.getRoomState
+        .mockResolvedValueOnce(roomState)   // primera llamada: validación de host/canStart
+        .mockResolvedValueOnce(null);        // segunda llamada: post-setRoomStatus
+
+      await gateway.handleStart(mockSocket as any, { code: 'ABC234' });
+
+      expect(roomsService.setRoomStatus).toHaveBeenCalledWith('ABC234', 'waiting');
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'No se pudo obtener el estado de la sala',
+      });
+      expect(matchStateService.initMatch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('caret:update', () => {
+    beforeEach(async () => {
+      // Join room first so connection is tracked
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      // Set room status to playing
+      roomsService.getRoomState.mockResolvedValue({
+        ...roomState,
+        status: 'playing',
+      });
+    });
+
+    it('valida posicion y broadcast caret:sync a la sala', async () => {
+      const volatileTo = vi.fn().mockReturnValue({ emit: vi.fn() });
+      (mockSocket as any).volatile = { to: volatileTo };
+
+      await gateway.handleCaretUpdate(mockSocket as any, {
+        position: 1,
+        timestamp: Date.now(),
+      });
+
+      expect(matchStateService.updatePosition).toHaveBeenCalledWith(
+        'ABC234',
+        'user-1',
+        1,
+      );
+      expect(volatileTo).toHaveBeenCalledWith('ABC234');
+    });
+
+    it('rechaza payload invalido (position no es number)', async () => {
+      await gateway.handleCaretUpdate(mockSocket as any, {
+        position: 'abc' as any,
+        timestamp: Date.now(),
+      });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'Payload de caret inválido',
+      });
+      expect(matchStateService.updatePosition).not.toHaveBeenCalled();
+    });
+
+    it('rechaza payload invalido (position es float)', async () => {
+      await gateway.handleCaretUpdate(mockSocket as any, {
+        position: 1.5 as any,
+        timestamp: Date.now(),
+      });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'Payload de caret inválido',
+      });
+      expect(matchStateService.updatePosition).not.toHaveBeenCalled();
+    });
+
+    it('rechaza si jugador no esta en sala (sin conexion)', async () => {
+      const unregisteredSocket = {
+        id: 'socket-unknown',
+        data: { user: { sub: 'user-99', displayName: 'Ghost' } },
+        emit: vi.fn(),
+        volatile: { to: vi.fn().mockReturnValue({ emit: vi.fn() }) },
+      };
+
+      await gateway.handleCaretUpdate(unregisteredSocket as any, {
+        position: 1,
+        timestamp: Date.now(),
+      });
+
+      expect(unregisteredSocket.emit).toHaveBeenCalledWith(
+        WS_EVENTS.LOBBY_ERROR,
+        { message: 'No estás en una sala' },
+      );
+    });
+
+    it('rechaza si sala no esta en playing', async () => {
+      roomsService.getRoomState.mockResolvedValue({
+        ...roomState,
+        status: 'waiting',
+      });
+
+      await gateway.handleCaretUpdate(mockSocket as any, {
+        position: 1,
+        timestamp: Date.now(),
+      });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'La partida no está en curso',
+      });
+    });
+
+    it('descarta silenciosamente posicion invalida (anti-cheat)', async () => {
+      matchStateService.updatePosition.mockResolvedValue('cheat');
+      const volatileTo = vi.fn().mockReturnValue({ emit: vi.fn() });
+      (mockSocket as any).volatile = { to: volatileTo };
+
+      await gateway.handleCaretUpdate(mockSocket as any, {
+        position: 99,
+        timestamp: Date.now(),
+      });
+
+      expect(volatileTo).not.toHaveBeenCalled();
+      expect(mockSocket.emit).not.toHaveBeenCalled();
+    });
+
+    it('emite LOBBY_ERROR si jugador no esta en el match (not_found)', async () => {
+      matchStateService.updatePosition.mockResolvedValue('not_found');
+
+      await gateway.handleCaretUpdate(mockSocket as any, {
+        position: 1,
+        timestamp: Date.now(),
+      });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'Jugador no encontrado en la partida',
+      });
     });
   });
 
