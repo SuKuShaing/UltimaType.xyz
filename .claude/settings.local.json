@@ -8,7 +8,13 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
       "Bash(npx prisma:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "mcp__firecrawl-mcp__firecrawl_search",
+      "WebFetch(domain:socket.io)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.nestjs.com)",
+      "WebFetch(domain:hackernoon.com)"
     ]
   }
 }

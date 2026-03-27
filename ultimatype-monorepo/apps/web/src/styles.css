@@ -1,1 +1,13 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+@theme {
+  --color-surface-base: #0F1F29;
+  --color-surface-sunken: #1A2630;
+  --color-surface-raised: #25343F;
+  --color-primary: #FF9B51;
+  --color-success: #4ADE80;
+  --color-error: #FB7185;
+  --color-text-main: #F8F9FA;
+  --color-text-muted: #8B949E;
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+}

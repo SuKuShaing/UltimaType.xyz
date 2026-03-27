@@ -4,6 +4,8 @@ import { AuthButtons } from '../components/ui/auth-buttons';
 import { AuthCallback } from '../components/auth/auth-callback';
 import { ProtectedRoute } from '../components/auth/protected-route';
 import { ProfilePage } from '../components/profile/profile-page';
+import { LobbyPage } from '../components/lobby/lobby-page';
+import { CreateRoomButton } from '../components/lobby/create-room-button';
 
 export function App() {
   const { user, isAuthenticated, isFetchingProfile, logout } = useAuth();
@@ -17,6 +19,14 @@ export function App() {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/room/:code"
+          element={
+            <ProtectedRoute>
+              <LobbyPage />
             </ProtectedRoute>
           }
         />
@@ -58,6 +68,9 @@ export function App() {
                   <p style={{ color: '#999', marginBottom: '24px' }}>
                     {user.email}
                   </p>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '16px' }}>
+                    <CreateRoomButton />
+                  </div>
                   <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                     <Link
                       to="/profile"

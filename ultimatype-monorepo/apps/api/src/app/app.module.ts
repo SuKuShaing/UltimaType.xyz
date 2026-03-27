@@ -7,6 +7,8 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { UsersModule } from '../modules/users/users.module';
 import { TextsModule } from '../modules/texts/texts.module';
+import { RedisModule } from '../redis/redis.module';
+import { GameModule } from '../gateway/game.module';
 
 const envSchema = z.object({
   JWT_SECRET: z.string().min(1),
@@ -21,6 +23,8 @@ const envSchema = z.object({
   GITHUB_CALLBACK_URL: z.string().url(),
   FRONTEND_URL: z.string().url(),
   DATABASE_URL: z.string().min(1),
+  REDIS_URL: z.string().default('redis://localhost:6379'),
+  TRUST_PROXY: z.string().default('false'),
 });
 
 @Module({
@@ -30,9 +34,11 @@ const envSchema = z.object({
       validate: (config) => envSchema.parse(config),
     }),
     PrismaModule,
+    RedisModule,
     AuthModule,
     UsersModule,
     TextsModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [AppService],

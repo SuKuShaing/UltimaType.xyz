@@ -1,21 +1,46 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
+import { RedisIoAdapter } from './gateway/redis-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.set('trust proxy', 1);
+  const configService = app.get(ConfigService);
+
+  // Trust proxy only when explicitly enabled
+  if (configService.get('TRUST_PROXY') === 'true') {
+    app.set('trust proxy', 1);
+  }
+
+  // Enable CORS for HTTP endpoints
+  const frontendUrl = configService.get('FRONTEND_URL', 'http://localhost:4200');
+  app.enableCors({
+    origin: frontendUrl,
+    credentials: true,
+  });
+
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
+
+  // WebSocket con Redis adapter
+  const redisUrl = configService.get('REDIS_URL', 'redis://localhost:6379');
+  const redisIoAdapter = new RedisIoAdapter(app, redisUrl);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
+
+  // Graceful shutdown
+  app.enableShutdownHooks();
+  const shutdown = async () => {
+    await redisIoAdapter.close();
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+
   const port = process.env.PORT || 3000;
   await app.listen(port);
   Logger.log(
-    `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,
+    `Application is running on: http://localhost:${port}/${globalPrefix}`,
   );
 }
 
