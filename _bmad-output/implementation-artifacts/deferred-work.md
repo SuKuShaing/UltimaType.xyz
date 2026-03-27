@@ -18,6 +18,14 @@
 - **Refresh token sin rotación ni invalidación** — `auth.service.ts`. No hay persistencia de refresh tokens (tabla o Redis). Imposible revocar tokens robados. Requiere diseño de tabla/Redis para token blacklist (post-MVP).
 - **Rate limiting ausente en endpoints auth** — `/auth/refresh`, `/auth/me`. Sin protección contra brute force. Requiere infraestructura de rate limiting (post-MVP).
 
+## Deferred from: code review of 2-1-text-content-management (2026-03-27)
+
+- **Race condition count()+findMany() en getRandomByLevel** — `texts.service.ts`. Limitación conocida de Prisma (sin ORDER BY RANDOM()). Entre las dos llamadas, textos pueden ser eliminados. Actualmente manejado gracefully (results[0] ?? null → 404). Con datos de seed estáticos el riesgo es mínimo. Resolver si los textos se administran dinámicamente.
+- **Test débil "acepta niveles validos 1 a 5"** — `texts.controller.spec.ts`. Solo verifica que result != undefined, no verifica shape ni que el level correcto fue enviado al service. Suficiente para MVP dado que otros tests cubren el contrato.
+- **Sin tests e2e/integración** — Gap pre-existente en todos los módulos. Las rutas HTTP, parsing de query-params, y status codes no se verifican en capa de transporte.
+- **Sin documentación Swagger en endpoints de textos** — Gap pre-existente si Swagger está configurado. Agregar `@ApiProperty` decorators en limpieza futura.
+- **Seed script sin guard de ambiente** — `prisma/seed.ts`. deleteMany ejecuta incondicionalmente sin verificar NODE_ENV. Añadir guard antes de deploy a producción.
+
 ## Deferred from: code review of 1-4-profile-dashboard-country-management (2026-03-27)
 
 - **Ruta `/profile` sin guard a nivel de ruta** — `app.tsx:12`. La protección interna en `ProfilePage` es suficiente para MVP (redirect a `/`). Riesgo: flash de UI antes del redirect. Implementar `ProtectedRoute` wrapper en limpieza post-MVP.

@@ -1,0 +1,127 @@
+[
+  {
+    "level": 1,
+    "language": "es",
+    "content": "el rio corre suavemente entre las piedras mientras los pajaros cantan en las ramas de los arboles que se mecen con el viento de la tarde que trae consigo el aroma fresco del campo"
+  },
+  {
+    "level": 1,
+    "language": "es",
+    "content": "la luna brilla en el cielo oscuro y las estrellas parpadean como pequenas luces que adornan la noche mientras el mundo duerme en silencio esperando la llegada del nuevo dia"
+  },
+  {
+    "level": 1,
+    "language": "es",
+    "content": "caminar por la playa al atardecer es una experiencia que llena el alma de paz y tranquilidad mientras las olas rompen suavemente en la orilla dejando espuma blanca sobre la arena"
+  },
+  {
+    "level": 1,
+    "language": "es",
+    "content": "los gatos duermen durante la mayor parte del dia y salen a explorar cuando llega la noche buscando aventuras entre los tejados y los jardines del vecindario en completo silencio"
+  },
+  {
+    "level": 1,
+    "language": "es",
+    "content": "el cafe caliente por la manana es el mejor companero para empezar el dia con energia y buena voluntad mientras uno piensa en todas las cosas que tiene por hacer durante la jornada"
+  },
+  {
+    "level": 2,
+    "language": "es",
+    "content": "Buenos Aires es una ciudad hermosa donde la cultura se mezcla con la historia en cada esquina Los portenos caminan por las calles de San Telmo admirando el arte y la arquitectura"
+  },
+  {
+    "level": 2,
+    "language": "es",
+    "content": "Maria y Juan decidieron viajar a Barcelona durante el verano para conocer la Sagrada Familia y pasear por Las Ramblas disfrutando de la gastronomia catalana y el clima mediterraneo"
+  },
+  {
+    "level": 2,
+    "language": "es",
+    "content": "El Monte Everest es la montana mas alta del mundo y cada anno miles de alpinistas intentan llegar a su cumbre enfrentando temperaturas extremas y condiciones climaticas muy peligrosas"
+  },
+  {
+    "level": 2,
+    "language": "es",
+    "content": "Leonardo da Vinci fue uno de los genios mas grandes de la historia Su obra La Mona Lisa sigue fascinando a millones de personas que visitan el Museo del Louvre en Paris"
+  },
+  {
+    "level": 2,
+    "language": "es",
+    "content": "Santiago de Chile se encuentra entre la Cordillera de los Andes y el Oceano Pacifico Sus habitantes disfrutan de un clima templado y una vista espectacular de las montanas nevadas"
+  },
+  {
+    "level": 3,
+    "language": "es",
+    "content": "Cuando llegamos al aeropuerto, descubrimos que el vuelo estaba retrasado. \"No puede ser\", dijo Maria. Sin embargo, aprovechamos la espera: compramos cafe, leimos revistas y charlamos sobre el viaje."
+  },
+  {
+    "level": 3,
+    "language": "es",
+    "content": "El chef explico su receta favorita: \"Primero, cortar las verduras en cubos pequenos; luego, saltearlas con aceite de oliva. Despues, agregar sal, pimienta y una pizca de comino. Finalmente, servir caliente.\""
+  },
+  {
+    "level": 3,
+    "language": "es",
+    "content": "La profesora pregunto: \"Quien puede explicar la teoria de la relatividad?\" Nadie respondio. Entonces, sonrio y dijo: \"No se preocupen; es un tema complejo, pero fascinante. Vamos a explorarlo juntos.\""
+  },
+  {
+    "level": 3,
+    "language": "es",
+    "content": "El libro comienza asi: \"Era una noche oscura y tormentosa.\" Aunque suena cliche, la historia es original, emocionante y llena de giros inesperados. Sin duda, vale la pena leerlo hasta el final."
+  },
+  {
+    "level": 3,
+    "language": "es",
+    "content": "Segun los expertos, dormir bien es esencial para la salud. Recomiendan: evitar pantallas antes de dormir, mantener un horario fijo y crear un ambiente oscuro, fresco y silencioso en la habitacion."
+  },
+  {
+    "level": 4,
+    "language": "es",
+    "content": "El 15 de marzo de 2024, la empresa registro ventas por 250.000 dolares. En comparacion con el trimestre anterior, esto representa un crecimiento del 12% y supera la meta de 220.000 establecida en enero."
+  },
+  {
+    "level": 4,
+    "language": "es",
+    "content": "La direccion de la oficina es Avenida Libertador 4820, piso 7, oficina 3B. El horario de atencion es de lunes a viernes, de 9:00 a 18:00. El telefono de contacto es +54 11 5555-1234."
+  },
+  {
+    "level": 4,
+    "language": "es",
+    "content": "En la carrera de 100 metros, el atleta registro un tiempo de 9.87 segundos, superando su marca personal de 10.03. Con este resultado, se ubico 2do en el ranking mundial de 2025."
+  },
+  {
+    "level": 4,
+    "language": "es",
+    "content": "El presupuesto total del proyecto es de 1.500.000 pesos. Se destinan 600.000 para materiales, 450.000 para mano de obra, 250.000 para equipamiento y 200.000 para gastos administrativos e imprevistos."
+  },
+  {
+    "level": 4,
+    "language": "es",
+    "content": "La receta requiere 500 gramos de harina, 3 huevos, 250 mililitros de leche y 100 gramos de azucar. Hornear a 180 grados durante 45 minutos. Rinde para 8 porciones aproximadamente."
+  },
+  {
+    "level": 5,
+    "language": "es",
+    "content": "El comando para clonar el repositorio es: git clone https://github.com/user/repo.git && cd repo && npm install. Luego, crear un archivo .env con las variables DATABASE_URL=postgres://localhost:5432/db."
+  },
+  {
+    "level": 5,
+    "language": "es",
+    "content": "La expresion regular /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/ valida correos electronicos. Para usarla en JavaScript: const regex = new RegExp(pattern); if (regex.test(email)) { /* valido */ }"
+  },
+  {
+    "level": 5,
+    "language": "es",
+    "content": "Calcular el precio final: precio_base * (1 + iva%) - descuento$. Si el producto cuesta $150, con 21% de IVA y $25 de descuento: $150 * 1.21 - $25 = $156.50. Aplicar cupon #SALE2024 para 10% extra."
+  },
+  {
+    "level": 5,
+    "language": "es",
+    "content": "La consulta SQL es: SELECT users.name, COUNT(*) AS total FROM orders JOIN users ON orders.user_id = users.id WHERE orders.status = 'completed' GROUP BY users.name HAVING COUNT(*) > 5 ORDER BY total DESC;"
+  },
+  {
+    "level": 5,
+    "language": "es",
+    "content": "Configurar el firewall: iptables -A INPUT -p tcp --dport 443 -j ACCEPT && iptables -A INPUT -p tcp --dport 80 -j ACCEPT. Verificar con: iptables -L -n | grep -E '(80|443)'. Guardar: iptables-save > /etc/rules.v4"
+  }
+]

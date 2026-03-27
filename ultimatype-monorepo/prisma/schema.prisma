@@ -29,3 +29,15 @@ model User {
   @@unique([provider, providerId])
   @@map("users")
 }
+
+model Text {
+  id        String   @id @default(uuid())
+  level     Int
+  language  String   @default("es")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([level, language])
+  @@map("texts")
+}

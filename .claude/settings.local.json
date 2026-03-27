@@ -3,7 +3,12 @@
     "allow": [
       "Bash(npx nx:*)",
       "Bash(npx vitest:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(find /d/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo -name *.json -path */assets/* -o -name *text* -type f)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(npx prisma:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

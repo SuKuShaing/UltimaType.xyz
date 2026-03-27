@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { UsersModule } from '../modules/users/users.module';
+import { TextsModule } from '../modules/texts/texts.module';
 
 const envSchema = z.object({
   JWT_SECRET: z.string().min(1),
@@ -31,6 +32,7 @@ const envSchema = z.object({
     PrismaModule,
     AuthModule,
     UsersModule,
+    TextsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

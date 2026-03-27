@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-03-27T14:35:00-03:00
+last_updated: 2026-03-27T20:00:00-03:00
 project: UltimaType
 project_key: NOKEY
 tracking_system: file-system
@@ -48,8 +48,8 @@ development_status:
   1-3-auto-detect-user-country-on-first-login: done
   1-4-profile-dashboard-country-management: done
   epic-1-retrospective: done
-  epic-2: backlog
-  2-1-text-content-management: backlog
+  epic-2: in-progress
+  2-1-text-content-management: done
   2-2-room-creation-lobby: backlog
   2-3-real-time-caret-sync-engine: backlog
   2-4-focus-fade-race-mechanics: backlog
