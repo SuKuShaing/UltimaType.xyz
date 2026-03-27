@@ -74,7 +74,7 @@ describe('UsersService', () => {
   });
 
   describe('create', () => {
-    it('should create a new user', async () => {
+    it('should create a new user without countryCode', async () => {
       mockPrisma.user.create.mockResolvedValue(mockUser);
 
       const input = {
@@ -94,9 +94,38 @@ describe('UsersService', () => {
           email: 'test@example.com',
           displayName: 'Test User',
           avatarUrl: 'https://example.com/avatar.jpg',
+          countryCode: null,
         },
       });
       expect(result).toEqual(mockUser);
+    });
+
+    it('should create a new user with countryCode when detected', async () => {
+      const mockUserWithCountry = { ...mockUser, countryCode: 'CL' };
+      mockPrisma.user.create.mockResolvedValue(mockUserWithCountry);
+
+      const input = {
+        provider: 'GITHUB' as const,
+        providerId: '789',
+        email: 'seba@example.com',
+        displayName: 'Seba',
+        avatarUrl: null,
+        countryCode: 'CL',
+      };
+
+      const result = await usersService.create(input);
+
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        data: {
+          provider: 'GITHUB',
+          providerId: '789',
+          email: 'seba@example.com',
+          displayName: 'Seba',
+          avatarUrl: null,
+          countryCode: 'CL',
+        },
+      });
+      expect(result).toEqual(mockUserWithCountry);
     });
   });
 

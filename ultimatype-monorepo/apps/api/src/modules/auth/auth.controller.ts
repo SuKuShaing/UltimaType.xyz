@@ -79,7 +79,9 @@ export class AuthController {
    * This avoids exposing long-lived tokens in the URL / browser history.
    */
   private async handleOAuthCallback(req: any, res: any) {
-    const user = await this.authService.validateOAuthUser(req.user);
+    const clientIp: string | undefined = req.ip;
+
+    const user = await this.authService.validateOAuthUser(req.user, clientIp);
     const code = await this.authService.generateAuthCode(user);
     const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
     res.redirect(`${frontendUrl}/auth/callback?code=${encodeURIComponent(code)}`);

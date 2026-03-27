@@ -8,6 +8,7 @@ export interface CreateUserInput {
   email: string;
   displayName: string;
   avatarUrl: string | null;
+  countryCode?: string | null;
 }
 
 @Injectable()
@@ -39,6 +40,7 @@ export class UsersService {
         email: input.email,
         displayName: input.displayName,
         avatarUrl: input.avatarUrl,
+        countryCode: input.countryCode ?? null,
       },
     });
   }

@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { GeoService } from '../geo/geo.service';
 
 export interface OAuthUserInput {
   provider: 'GOOGLE' | 'GITHUB';
@@ -29,9 +30,10 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private geoService: GeoService,
   ) {}
 
-  async validateOAuthUser(oauthUser: OAuthUserInput) {
+  async validateOAuthUser(oauthUser: OAuthUserInput, ip?: string) {
     const existingUser = await this.usersService.findByProvider(
       oauthUser.provider,
       oauthUser.providerId,
@@ -41,8 +43,10 @@ export class AuthService {
       return this.usersService.updateLastLogin(existingUser.id);
     }
 
+    const countryCode = ip ? this.geoService.getCountryCode(ip) : null;
+
     try {
-      return await this.usersService.create(oauthUser);
+      return await this.usersService.create({ ...oauthUser, countryCode });
     } catch (error: unknown) {
       if (
         error instanceof Error &&

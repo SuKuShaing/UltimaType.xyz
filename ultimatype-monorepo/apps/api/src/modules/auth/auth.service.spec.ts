@@ -14,16 +14,24 @@ const mockJwtService = {
   signAsync: vi.fn().mockResolvedValue('mock-token'),
 };
 
+const configValues: Record<string, string> = {
+  JWT_SECRET: 'test-secret',
+  JWT_REFRESH_SECRET: 'test-refresh-secret',
+  JWT_EXPIRATION: '24h',
+  JWT_REFRESH_EXPIRATION: '7d',
+};
+
 const mockConfigService = {
-  get: vi.fn((key: string, defaultValue?: string) => {
-    const config: Record<string, string> = {
-      JWT_SECRET: 'test-secret',
-      JWT_REFRESH_SECRET: 'test-refresh-secret',
-      JWT_EXPIRATION: '24h',
-      JWT_REFRESH_EXPIRATION: '7d',
-    };
-    return config[key] ?? defaultValue;
+  get: vi.fn((key: string, defaultValue?: string) => configValues[key] ?? defaultValue),
+  getOrThrow: vi.fn((key: string) => {
+    const value = configValues[key];
+    if (!value) throw new Error(`Config key "${key}" not found`);
+    return value;
   }),
+};
+
+const mockGeoService = {
+  getCountryCode: vi.fn(),
 };
 
 describe('AuthService', () => {
@@ -48,6 +56,7 @@ describe('AuthService', () => {
       mockUsersService as any,
       mockJwtService as any,
       mockConfigService as any,
+      mockGeoService as any,
     );
   });
 
@@ -60,29 +69,60 @@ describe('AuthService', () => {
       avatarUrl: 'https://example.com/avatar.jpg',
     };
 
-    it('should return existing user and update lastLoginAt', async () => {
+    it('should return existing user and update lastLoginAt without calling geo', async () => {
       mockUsersService.findByProvider.mockResolvedValue(mockUser);
       mockUsersService.updateLastLogin.mockResolvedValue(mockUser);
 
-      const result = await authService.validateOAuthUser(oauthInput);
+      const result = await authService.validateOAuthUser(oauthInput, '200.1.2.3');
 
-      expect(mockUsersService.findByProvider).toHaveBeenCalledWith(
-        'GOOGLE',
-        '123456',
-      );
-      expect(mockUsersService.updateLastLogin).toHaveBeenCalledWith(
-        mockUser.id,
-      );
+      expect(mockUsersService.findByProvider).toHaveBeenCalledWith('GOOGLE', '123456');
+      expect(mockUsersService.updateLastLogin).toHaveBeenCalledWith(mockUser.id);
+      expect(mockGeoService.getCountryCode).not.toHaveBeenCalled();
       expect(result).toEqual(mockUser);
     });
 
-    it('should create new user if not found', async () => {
+    it('should create new user with detected country when IP is provided', async () => {
+      mockUsersService.findByProvider.mockResolvedValue(null);
+      mockGeoService.getCountryCode.mockReturnValue('CL');
+      const mockUserWithCountry = { ...mockUser, countryCode: 'CL' };
+      mockUsersService.create.mockResolvedValue(mockUserWithCountry);
+
+      const result = await authService.validateOAuthUser(oauthInput, '200.1.2.3');
+
+      expect(mockGeoService.getCountryCode).toHaveBeenCalledWith('200.1.2.3');
+      expect(mockUsersService.create).toHaveBeenCalledWith({
+        ...oauthInput,
+        countryCode: 'CL',
+      });
+      expect(result).toEqual(mockUserWithCountry);
+    });
+
+    it('should create new user with null countryCode when no IP provided', async () => {
       mockUsersService.findByProvider.mockResolvedValue(null);
       mockUsersService.create.mockResolvedValue(mockUser);
 
       const result = await authService.validateOAuthUser(oauthInput);
 
-      expect(mockUsersService.create).toHaveBeenCalledWith(oauthInput);
+      expect(mockGeoService.getCountryCode).not.toHaveBeenCalled();
+      expect(mockUsersService.create).toHaveBeenCalledWith({
+        ...oauthInput,
+        countryCode: null,
+      });
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should create new user with null countryCode when geo returns null (loopback IP)', async () => {
+      mockUsersService.findByProvider.mockResolvedValue(null);
+      mockGeoService.getCountryCode.mockReturnValue(null);
+      mockUsersService.create.mockResolvedValue(mockUser);
+
+      const result = await authService.validateOAuthUser(oauthInput, '127.0.0.1');
+
+      expect(mockGeoService.getCountryCode).toHaveBeenCalledWith('127.0.0.1');
+      expect(mockUsersService.create).toHaveBeenCalledWith({
+        ...oauthInput,
+        countryCode: null,
+      });
       expect(result).toEqual(mockUser);
     });
   });
