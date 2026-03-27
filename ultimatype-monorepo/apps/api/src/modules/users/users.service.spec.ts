@@ -141,4 +141,38 @@ describe('UsersService', () => {
       });
     });
   });
+
+  describe('updateCountryCode', () => {
+    it('should update countryCode for existing user', async () => {
+      const updatedUser = { ...mockUser, countryCode: 'CL' };
+      mockPrisma.user.update.mockResolvedValue(updatedUser);
+
+      const result = await usersService.updateCountryCode(
+        'user-uuid-123',
+        'CL',
+      );
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-uuid-123' },
+        data: { countryCode: 'CL' },
+      });
+      expect(result.countryCode).toBe('CL');
+    });
+
+    it('should work with any valid country code', async () => {
+      const updatedUser = { ...mockUser, countryCode: 'US' };
+      mockPrisma.user.update.mockResolvedValue(updatedUser);
+
+      const result = await usersService.updateCountryCode(
+        'user-uuid-123',
+        'US',
+      );
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-uuid-123' },
+        data: { countryCode: 'US' },
+      });
+      expect(result.countryCode).toBe('US');
+    });
+  });
 });

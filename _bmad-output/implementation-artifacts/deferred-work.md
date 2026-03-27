@@ -13,3 +13,9 @@
 
 - **Refresh token sin rotación ni invalidación** — `auth.service.ts`. No hay persistencia de refresh tokens (tabla o Redis). Imposible revocar tokens robados. Requiere diseño de tabla/Redis para token blacklist (post-MVP).
 - **Rate limiting ausente en endpoints auth** — `/auth/refresh`, `/auth/me`. Sin protección contra brute force. Requiere infraestructura de rate limiting (post-MVP).
+
+## Deferred from: code review of 1-4-profile-dashboard-country-management (2026-03-27)
+
+- **Ruta `/profile` sin guard a nivel de ruta** — `app.tsx:12`. La protección interna en `ProfilePage` es suficiente para MVP (redirect a `/`). Riesgo: flash de UI antes del redirect. Implementar `ProtectedRoute` wrapper en limpieza post-MVP.
+- **`updateCountryCode` sin manejo de Prisma P2025** — `users.service.ts:54`. Si el userId no existe en DB, Prisma lanza P2025 sin transformar. Patrón consistente con otros métodos del servicio; añadir manejo global de errores Prisma en post-MVP.
+- **Estado visual stale de `effectiveCountry` cuando refetch falla** — `profile-page.tsx`. Si `invalidateQueries` falla por red, el dropdown puede mostrar el valor seleccionado pero `user.countryCode` del cache puede diferir. Requiere Background Sync API (Service Worker) para encolar la mutación y enviarla al reconectarse — tratar junto con capacidades PWA post-MVP.

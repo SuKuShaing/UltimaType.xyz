@@ -51,4 +51,11 @@ export class UsersService {
       data: { lastLoginAt: new Date() },
     });
   }
+
+  async updateCountryCode(userId: string, countryCode: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { countryCode },
+    });
+  }
 }

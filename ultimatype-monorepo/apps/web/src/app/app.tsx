@@ -1,7 +1,9 @@
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import { AuthButtons } from '../components/ui/auth-buttons';
 import { AuthCallback } from '../components/auth/auth-callback';
+import { ProtectedRoute } from '../components/auth/protected-route';
+import { ProfilePage } from '../components/profile/profile-page';
 
 export function App() {
   const { user, isAuthenticated, isFetchingProfile, logout } = useAuth();
@@ -10,6 +12,14 @@ export function App() {
     <div>
       <Routes>
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="*"
           element={
@@ -48,22 +58,40 @@ export function App() {
                   <p style={{ color: '#999', marginBottom: '24px' }}>
                     {user.email}
                   </p>
-                  <button
-                    id="logout"
-                    onClick={logout}
-                    style={{
-                      padding: '8px 24px',
-                      fontSize: '14px',
-                      border: '1px solid #333',
-                      borderRadius: '8px',
-                      backgroundColor: 'transparent',
-                      color: '#999',
-                      cursor: 'pointer',
-                    }}
-                    aria-label="Cerrar sesión"
-                  >
-                    Cerrar sesión
-                  </button>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <Link
+                      to="/profile"
+                      style={{
+                        padding: '8px 24px',
+                        fontSize: '14px',
+                        borderRadius: '8px',
+                        backgroundColor: '#FF9B51',
+                        color: '#0F1F29',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                        fontFamily: "'Space Grotesk', sans-serif",
+                      }}
+                      aria-label="Ver mi perfil"
+                    >
+                      Mi Perfil
+                    </Link>
+                    <button
+                      id="logout"
+                      onClick={logout}
+                      style={{
+                        padding: '8px 24px',
+                        fontSize: '14px',
+                        border: '1px solid #333',
+                        borderRadius: '8px',
+                        backgroundColor: 'transparent',
+                        color: '#999',
+                        cursor: 'pointer',
+                      }}
+                      aria-label="Cerrar sesión"
+                    >
+                      Cerrar sesión
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

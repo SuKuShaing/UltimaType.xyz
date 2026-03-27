@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx nx:*)"
+      "Bash(npx nx:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

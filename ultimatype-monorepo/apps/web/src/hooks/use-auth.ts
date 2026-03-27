@@ -1,11 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { UserProfile } from '@ultimatype-monorepo/shared';
 import { apiClient, setTokens, clearTokens, getAccessToken } from '../lib/api-client';
-
-interface UserProfile {
-  userId: string;
-  email: string;
-  displayName: string;
-}
 
 export function useAuth() {
   const queryClient = useQueryClient();
