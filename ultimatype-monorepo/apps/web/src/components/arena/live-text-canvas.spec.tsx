@@ -1,10 +1,15 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { LiveTextCanvas } from './live-text-canvas';
+import { arenaStore } from '../../hooks/use-arena-store';
 
 describe('LiveTextCanvas', () => {
   const text = 'Hola';
   const onPositionChange = vi.fn();
+
+  beforeEach(() => {
+    arenaStore.getState().reset();
+  });
 
   it('renderiza cada caracter como un span individual', () => {
     const { container } = render(
@@ -31,7 +36,7 @@ describe('LiveTextCanvas', () => {
 
   it('llama onPositionChange al teclear correctamente', () => {
     const { container } = render(
-      <LiveTextCanvas text={text} onPositionChange={onPositionChange} />,
+      <LiveTextCanvas text={text} onPositionChange={onPositionChange} isActive />,
     );
 
     const input = container.querySelector('input')!;
@@ -42,7 +47,7 @@ describe('LiveTextCanvas', () => {
 
   it('colorea verde la letra correcta y roja la incorrecta', () => {
     const { container } = render(
-      <LiveTextCanvas text={text} onPositionChange={vi.fn()} />,
+      <LiveTextCanvas text={text} onPositionChange={vi.fn()} isActive />,
     );
 
     const input = container.querySelector('input')!;
@@ -60,7 +65,7 @@ describe('LiveTextCanvas', () => {
   it('retrocede con Backspace y resetea el color', () => {
     const handler = vi.fn();
     const { container } = render(
-      <LiveTextCanvas text={text} onPositionChange={handler} />,
+      <LiveTextCanvas text={text} onPositionChange={handler} isActive />,
     );
 
     const input = container.querySelector('input')!;
@@ -77,7 +82,7 @@ describe('LiveTextCanvas', () => {
   it('no avanza mas alla del largo del texto', () => {
     const handler = vi.fn();
     const { container } = render(
-      <LiveTextCanvas text="ab" onPositionChange={handler} />,
+      <LiveTextCanvas text="ab" onPositionChange={handler} isActive />,
     );
 
     const input = container.querySelector('input')!;
@@ -90,5 +95,75 @@ describe('LiveTextCanvas', () => {
     const calls = handler.mock.calls;
     expect(calls[calls.length - 1][0]).toBe(2);
     expect(calls).toHaveLength(2); // Only 2 calls, 3rd ignored
+  });
+
+  it('ignora eventos de teclado cuando isActive es false', () => {
+    const handler = vi.fn();
+    const { container } = render(
+      <LiveTextCanvas text={text} onPositionChange={handler} isActive={false} />,
+    );
+
+    const input = container.querySelector('input')!;
+    fireEvent.keyDown(input, { key: 'H' });
+    fireEvent.keyDown(input, { key: 'o' });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('aplica blur al contenedor de texto cuando isActive es false', () => {
+    const { container } = render(
+      <LiveTextCanvas text={text} onPositionChange={vi.fn()} isActive={false} />,
+    );
+
+    const textDiv = container.querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(textDiv?.style.filter).toBe('blur(8px)');
+  });
+
+  it('no aplica blur al contenedor de texto cuando isActive es true', () => {
+    const { container } = render(
+      <LiveTextCanvas text={text} onPositionChange={vi.fn()} isActive />,
+    );
+
+    const textDiv = container.querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(textDiv?.style.filter).toBe('');
+  });
+
+  it('incrementa keystrokes en el store al tipear correctamente', () => {
+    const { container } = render(
+      <LiveTextCanvas text={text} onPositionChange={vi.fn()} isActive />,
+    );
+
+    const input = container.querySelector('input')!;
+    fireEvent.keyDown(input, { key: 'H' }); // correct
+
+    const state = arenaStore.getState();
+    expect(state.totalKeystrokes).toBe(1);
+    expect(state.errorKeystrokes).toBe(0);
+  });
+
+  it('incrementa errorKeystrokes en el store al tipear incorrectamente', () => {
+    const { container } = render(
+      <LiveTextCanvas text={text} onPositionChange={vi.fn()} isActive />,
+    );
+
+    const input = container.querySelector('input')!;
+    fireEvent.keyDown(input, { key: 'X' }); // incorrect (expected 'H')
+
+    const state = arenaStore.getState();
+    expect(state.totalKeystrokes).toBe(1);
+    expect(state.errorKeystrokes).toBe(1);
+  });
+
+  it('NO incrementa keystrokes en el store al presionar Backspace', () => {
+    const { container } = render(
+      <LiveTextCanvas text={text} onPositionChange={vi.fn()} isActive />,
+    );
+
+    const input = container.querySelector('input')!;
+    fireEvent.keyDown(input, { key: 'H' }); // correct — count: 1
+    fireEvent.keyDown(input, { key: 'Backspace' }); // should NOT count
+
+    const state = arenaStore.getState();
+    expect(state.totalKeystrokes).toBe(1);
   });
 });

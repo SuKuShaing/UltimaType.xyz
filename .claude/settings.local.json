@@ -14,7 +14,10 @@
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:docs.nestjs.com)",
-      "WebFetch(domain:hackernoon.com)"
+      "WebFetch(domain:hackernoon.com)",
+      "Bash(for f:*)",
+      "Bash(do git:*)",
+      "Bash(done)"
     ]
   }
 }

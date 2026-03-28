@@ -12,6 +12,9 @@ interface ArenaState {
   localPosition: number;
   textContent: string;
   matchStatus: 'countdown' | 'playing' | 'finished';
+  matchStartTime: number | null;
+  totalKeystrokes: number;
+  errorKeystrokes: number;
 }
 
 interface ArenaActions {
@@ -22,6 +25,9 @@ interface ArenaActions {
   updatePlayerPosition: (playerId: string, position: number) => void;
   setLocalPosition: (position: number) => void;
   setMatchStatus: (status: ArenaState['matchStatus']) => void;
+  setMatchStarted: () => void;
+  incrementKeystrokes: (correct: boolean) => void;
+  resetRaceMetrics: () => void;
   reset: () => void;
 }
 
@@ -30,6 +36,9 @@ const initialState: ArenaState = {
   localPosition: 0,
   textContent: '',
   matchStatus: 'countdown',
+  matchStartTime: null,
+  totalKeystrokes: 0,
+  errorKeystrokes: 0,
 };
 
 export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
@@ -46,7 +55,15 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
         };
       }
     }
-    set({ textContent, players: playersMap, localPosition: 0, matchStatus: 'playing' });
+    set({
+      textContent,
+      players: playersMap,
+      localPosition: 0,
+      matchStatus: 'countdown',
+      matchStartTime: null,
+      totalKeystrokes: 0,
+      errorKeystrokes: 0,
+    });
   },
 
   updatePlayerPosition: (playerId, position) =>
@@ -63,6 +80,22 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
   setLocalPosition: (position) => set({ localPosition: position }),
 
   setMatchStatus: (status) => set({ matchStatus: status }),
+
+  setMatchStarted: () =>
+    set((state) =>
+      state.matchStatus === 'countdown'
+        ? { matchStatus: 'playing', matchStartTime: Date.now() }
+        : {},
+    ),
+
+  incrementKeystrokes: (correct) =>
+    set((state) => ({
+      totalKeystrokes: state.totalKeystrokes + 1,
+      errorKeystrokes: correct ? state.errorKeystrokes : state.errorKeystrokes + 1,
+    })),
+
+  resetRaceMetrics: () =>
+    set({ matchStartTime: null, totalKeystrokes: 0, errorKeystrokes: 0 }),
 
   reset: () => set(initialState),
 }));

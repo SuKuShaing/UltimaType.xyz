@@ -1,14 +1,17 @@
 import { useRef, useEffect, useCallback } from 'react';
+import { arenaStore } from '../../hooks/use-arena-store';
 
 interface LiveTextCanvasProps {
   text: string;
   onPositionChange: (position: number) => void;
+  isActive?: boolean;
   disabled?: boolean;
 }
 
 export function LiveTextCanvas({
   text,
   onPositionChange,
+  isActive = true,
   disabled = false,
 }: LiveTextCanvasProps) {
   const spanRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -16,18 +19,20 @@ export function LiveTextCanvas({
   const positionRef = useRef(0);
   const errorsRef = useRef<Set<number>>(new Set());
 
-  // Focus the hidden input on mount and when clicking the text area
+  const canType = isActive && !disabled;
+
+  // Focus the hidden input on mount and when isActive changes
   useEffect(() => {
-    if (!disabled) {
+    if (canType) {
       inputRef.current?.focus();
     }
-  }, [disabled]);
+  }, [canType]);
 
   const handleContainerClick = useCallback(() => {
-    if (!disabled) {
+    if (canType) {
       inputRef.current?.focus();
     }
-  }, [disabled]);
+  }, [canType]);
 
   const colorChar = (index: number, color: string) => {
     const span = spanRefs.current[index];
@@ -47,7 +52,7 @@ export function LiveTextCanvas({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (disabled) return;
+      if (!canType) return;
 
       const pos = positionRef.current;
 
@@ -74,16 +79,18 @@ export function LiveTextCanvas({
 
       if (isCorrect) {
         colorChar(pos, '#4ADE80'); // success green
+        arenaStore.getState().incrementKeystrokes(true);
       } else {
         colorChar(pos, '#FB7185'); // error red
         errorsRef.current.add(pos);
+        arenaStore.getState().incrementKeystrokes(false);
       }
 
       const newPos = pos + 1;
       positionRef.current = newPos;
       onPositionChange(newPos);
     },
-    [text, onPositionChange, disabled],
+    [text, onPositionChange, canType],
   );
 
   return (
@@ -100,16 +107,20 @@ export function LiveTextCanvas({
         readOnly
         aria-label="Área de escritura"
         tabIndex={0}
-        disabled={disabled}
+        disabled={!canType}
       />
 
       {/* Accessible twin for screen readers */}
       <p className="sr-only">{text}</p>
 
-      {/* Visual character spans */}
+      {/* Visual character spans — blur when not active */}
       <div
         className="relative font-sans text-lg leading-relaxed tracking-wide text-text-main"
         aria-hidden="true"
+        style={{
+          filter: isActive ? '' : 'blur(8px)',
+          transition: 'filter 0.3s ease',
+        }}
       >
         {text.split('').map((char, i) => (
           <span
