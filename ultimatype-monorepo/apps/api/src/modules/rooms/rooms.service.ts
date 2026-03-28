@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 import { customAlphabet } from 'nanoid';
 import { REDIS_CLIENT } from '../../redis/redis.module';
@@ -71,7 +71,8 @@ local player = cjson.encode({
   avatarUrl = avatarUrl ~= '' and avatarUrl or cjson.null,
   colorIndex = colorIndex,
   isReady = false,
-  joinedAt = joinedAt
+  joinedAt = joinedAt,
+  disconnected = false
 })
 
 redis.call('HSET', playersKey, userId, player)
@@ -121,6 +122,8 @@ return 'OK'
 
 @Injectable()
 export class RoomsService {
+  private readonly logger = new Logger(RoomsService.name);
+
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   async createRoom(
@@ -160,6 +163,7 @@ export class RoomsService {
       colorIndex: 0,
       isReady: false,
       joinedAt: now,
+      disconnected: false,
     };
 
     await this.redis.hset(playersKey, hostId, JSON.stringify(player));
@@ -315,8 +319,38 @@ export class RoomsService {
     ]);
   }
 
+  async markPlayerDisconnected(code: string, userId: string): Promise<void> {
+    const playersKey = `room:${code}:players`;
+    const playerJson = await this.redis.hget(playersKey, userId);
+    if (!playerJson) return;
+    const player: PlayerInfo = JSON.parse(playerJson);
+    player.disconnected = true;
+    await this.redis.hset(playersKey, userId, JSON.stringify(player));
+  }
+
+  async markPlayerConnected(code: string, userId: string): Promise<void> {
+    const playersKey = `room:${code}:players`;
+    const playerJson = await this.redis.hget(playersKey, userId);
+    if (!playerJson) return;
+    const player: PlayerInfo = JSON.parse(playerJson);
+    player.disconnected = false;
+    await this.redis.hset(playersKey, userId, JSON.stringify(player));
+  }
+
+  async isPlayerInRoom(code: string, userId: string): Promise<boolean> {
+    const playersKey = `room:${code}:players`;
+    return (await this.redis.hexists(playersKey, userId)) === 1;
+  }
+
   private async getPlayers(playersKey: string): Promise<PlayerInfo[]> {
     const playersHash = await this.redis.hgetall(playersKey);
-    return Object.values(playersHash).map((json) => JSON.parse(json));
+    return Object.values(playersHash).flatMap((json) => {
+      try {
+        return [JSON.parse(json) as PlayerInfo];
+      } catch {
+        this.logger.error(`JSON corrupto en Redis para clave ${playersKey}`);
+        return [];
+      }
+    });
   }
 }

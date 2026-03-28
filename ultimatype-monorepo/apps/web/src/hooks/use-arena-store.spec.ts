@@ -26,8 +26,8 @@ describe('arenaStore', () => {
     const state = arenaStore.getState();
     expect(state.textContent).toBe('Test text');
     expect(state.matchStatus).toBe('countdown');
-    expect(state.players['p1']).toEqual({ position: 0, displayName: 'Alice', colorIndex: 1 });
-    expect(state.players['p2']).toEqual({ position: 0, displayName: 'Bob', colorIndex: 3 });
+    expect(state.players['p1']).toEqual({ position: 0, displayName: 'Alice', colorIndex: 1, disconnected: false });
+    expect(state.players['p2']).toEqual({ position: 0, displayName: 'Bob', colorIndex: 3, disconnected: false });
   });
 
   it('initArena resetea metricas de carrera', () => {
@@ -171,6 +171,72 @@ describe('arenaStore', () => {
     expect(state.localFinishStats).toBeNull();
     expect(state.matchResults).toBeNull();
     expect(state.matchEndReason).toBeNull();
+  });
+
+  it('setConnectionStatus actualiza connectionStatus y reconnectAttempt', () => {
+    expect(arenaStore.getState().connectionStatus).toBe('connected');
+    expect(arenaStore.getState().reconnectAttempt).toBe(0);
+
+    arenaStore.getState().setConnectionStatus('reconnecting', 2);
+    expect(arenaStore.getState().connectionStatus).toBe('reconnecting');
+    expect(arenaStore.getState().reconnectAttempt).toBe(2);
+
+    arenaStore.getState().setConnectionStatus('disconnected');
+    expect(arenaStore.getState().connectionStatus).toBe('disconnected');
+    expect(arenaStore.getState().reconnectAttempt).toBe(2); // unchanged
+  });
+
+  it('markPlayerDisconnected marca al jugador como desconectado', () => {
+    arenaStore.getState().initArena('Test', [
+      { id: 'p1', displayName: 'Alice', colorIndex: 0 },
+    ]);
+
+    arenaStore.getState().markPlayerDisconnected('p1');
+    expect(arenaStore.getState().players['p1'].disconnected).toBe(true);
+  });
+
+  it('markPlayerReconnected marca al jugador como conectado', () => {
+    arenaStore.getState().initArena('Test', [
+      { id: 'p1', displayName: 'Alice', colorIndex: 0 },
+    ]);
+    arenaStore.getState().markPlayerDisconnected('p1');
+    arenaStore.getState().markPlayerReconnected('p1');
+    expect(arenaStore.getState().players['p1'].disconnected).toBe(false);
+  });
+
+  it('restoreFromRejoin restaura estado completo del match', () => {
+    arenaStore.getState().restoreFromRejoin({
+      textContent: 'hello world',
+      textId: '42',
+      startedAt: '2026-03-28T12:00:00Z',
+      localPosition: 5,
+      localErrors: 1,
+      localTotalKeystrokes: 6,
+      localErrorKeystrokes: 1,
+      localFinished: false,
+      localFinishedAt: null,
+      players: [
+        { playerId: 'p1', displayName: 'Alice', colorIndex: 0, position: 3, finished: false, disconnected: false },
+        { playerId: 'p2', displayName: 'Bob', colorIndex: 1, position: 7, finished: true, disconnected: false },
+      ],
+    });
+
+    const state = arenaStore.getState();
+    expect(state.textContent).toBe('hello world');
+    expect(state.localPosition).toBe(5);
+    expect(state.matchStatus).toBe('playing');
+    expect(state.totalKeystrokes).toBe(6);
+    expect(state.errorKeystrokes).toBe(1);
+    expect(state.connectionStatus).toBe('connected');
+    expect(state.players['p1']).toEqual({ position: 3, displayName: 'Alice', colorIndex: 0, disconnected: false });
+    expect(state.players['p2']).toEqual({ position: 7, displayName: 'Bob', colorIndex: 1, disconnected: false });
+  });
+
+  it('initArena resetea connectionStatus y reconnectAttempt', () => {
+    arenaStore.getState().setConnectionStatus('reconnecting', 3);
+    arenaStore.getState().initArena('New', [{ id: 'p1', displayName: 'A', colorIndex: 0 }]);
+    expect(arenaStore.getState().connectionStatus).toBe('connected');
+    expect(arenaStore.getState().reconnectAttempt).toBe(0);
   });
 
   it('resetRaceMetrics resetea localFinished, localFinishStats y matchResults', () => {

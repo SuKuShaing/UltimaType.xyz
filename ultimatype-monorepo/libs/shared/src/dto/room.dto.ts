@@ -5,6 +5,7 @@ export interface PlayerInfo {
   colorIndex: number;
   isReady: boolean;
   joinedAt: string;
+  disconnected: boolean;
 }
 
 export interface RoomState {

@@ -1,11 +1,12 @@
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import { PlayerResult } from '@ultimatype-monorepo/shared';
+import { PlayerResult, RejoinMatchState } from '@ultimatype-monorepo/shared';
 
 interface PlayerState {
   position: number;
   displayName: string;
   colorIndex: number;
+  disconnected: boolean;
 }
 
 interface ArenaState {
@@ -20,6 +21,8 @@ interface ArenaState {
   localFinishStats: { wpm: number; precision: number; score: number } | null;
   matchResults: PlayerResult[] | null;
   matchEndReason: 'all_finished' | 'timeout' | null;
+  connectionStatus: 'connected' | 'reconnecting' | 'disconnected';
+  reconnectAttempt: number;
 }
 
 interface ArenaActions {
@@ -39,6 +42,10 @@ interface ArenaActions {
     results: PlayerResult[],
     reason: 'all_finished' | 'timeout',
   ) => void;
+  setConnectionStatus: (status: ArenaState['connectionStatus'], attempt?: number) => void;
+  markPlayerDisconnected: (playerId: string) => void;
+  markPlayerReconnected: (playerId: string) => void;
+  restoreFromRejoin: (matchState: RejoinMatchState) => void;
   reset: () => void;
 }
 
@@ -54,6 +61,8 @@ const initialState: ArenaState = {
   localFinishStats: null,
   matchResults: null,
   matchEndReason: null,
+  connectionStatus: 'connected',
+  reconnectAttempt: 0,
 };
 
 export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
@@ -67,6 +76,7 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
           position: 0,
           displayName: p.displayName,
           colorIndex: p.colorIndex,
+          disconnected: false,
         };
       }
     }
@@ -82,6 +92,8 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
       localFinishStats: null,
       matchResults: null,
       matchEndReason: null,
+      connectionStatus: 'connected',
+      reconnectAttempt: 0,
     });
   },
 
@@ -134,6 +146,62 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
       matchStatus: 'finished',
       matchResults: results,
       matchEndReason: reason,
+    }),
+
+  setConnectionStatus: (status, attempt) =>
+    set((state) => ({
+      connectionStatus: status,
+      reconnectAttempt: attempt ?? state.reconnectAttempt,
+    })),
+
+  markPlayerDisconnected: (playerId) =>
+    set((state) => {
+      if (!state.players[playerId]) return state;
+      return {
+        players: {
+          ...state.players,
+          [playerId]: { ...state.players[playerId], disconnected: true },
+        },
+      };
+    }),
+
+  markPlayerReconnected: (playerId) =>
+    set((state) => {
+      if (!state.players[playerId]) return state;
+      return {
+        players: {
+          ...state.players,
+          [playerId]: { ...state.players[playerId], disconnected: false },
+        },
+      };
+    }),
+
+  restoreFromRejoin: (matchState) =>
+    set(() => {
+      const playersMap: Record<string, PlayerState> = {};
+      for (const p of matchState.players) {
+        playersMap[p.playerId] = {
+          position: p.position,
+          displayName: p.displayName,
+          colorIndex: p.colorIndex,
+          disconnected: p.disconnected,
+        };
+      }
+      return {
+        textContent: matchState.textContent,
+        players: playersMap,
+        localPosition: matchState.localPosition,
+        matchStatus: 'playing',
+        matchStartTime: new Date(matchState.startedAt).getTime(),
+        totalKeystrokes: matchState.localTotalKeystrokes,
+        errorKeystrokes: matchState.localErrorKeystrokes,
+        localFinished: matchState.localFinished,
+        localFinishStats: null,
+        matchResults: null,
+        matchEndReason: null,
+        connectionStatus: 'connected',
+        reconnectAttempt: 0,
+      };
     }),
 
   reset: () => set(initialState),

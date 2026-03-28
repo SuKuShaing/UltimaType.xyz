@@ -9,6 +9,11 @@ export function getSocket(): Socket {
       autoConnect: false,
       auth: (cb) => cb({ token: getAccessToken() }),
       transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 8000,
+      randomizationFactor: 0.3,
     });
   }
   return socket;

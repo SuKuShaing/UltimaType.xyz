@@ -159,38 +159,37 @@ describe('MatchStateService', () => {
   });
 
   describe('markPlayerFinished', () => {
-    it('marca al jugador como finished con timestamp y keystrokes', async () => {
-      redis.hget.mockResolvedValue(
-        JSON.stringify({ position: 10, errors: 0, startedAt: '2026-03-28T00:00:00Z' }),
-      );
+    it('marca al jugador como finished con timestamp y keystrokes via Lua atomico', async () => {
+      const finishedAt = '2026-03-28T00:01:00Z';
+      redis.eval.mockResolvedValue(JSON.stringify({ finishedAt, position: 10 }));
 
       const result = await service.markPlayerFinished('ABC234', 'user-1', 50, 5);
 
       expect(result).not.toBeNull();
       expect(result!.position).toBe(10);
-      expect(result!.finishedAt).toBeDefined();
-      expect(redis.hset).toHaveBeenCalledWith(
+      expect(result!.finishedAt).toBe(finishedAt);
+      expect(redis.eval).toHaveBeenCalledWith(
+        expect.any(String),
+        1,
         'match:ABC234:players',
         'user-1',
-        expect.stringContaining('"finishedAt"'),
+        '50',
+        '5',
+        expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/), // ISO timestamp
       );
     });
 
-    it('retorna datos existentes si ya estaba finished (deduplicacion)', async () => {
+    it('retorna datos existentes si ya estaba finished (deduplicacion atomica)', async () => {
       const finishedAt = '2026-03-28T00:01:00Z';
-      redis.hget.mockResolvedValue(
-        JSON.stringify({ position: 10, errors: 0, startedAt: '2026-03-28T00:00:00Z', finishedAt, totalKeystrokes: 95, errorKeystrokes: 3 }),
-      );
+      redis.eval.mockResolvedValue(JSON.stringify({ finishedAt, position: 10 }));
 
       const result = await service.markPlayerFinished('ABC234', 'user-1', 50, 5);
 
       expect(result).toEqual({ finishedAt, position: 10 });
-      // hset should NOT be called again (keystrokes already stored)
-      expect(redis.hset).not.toHaveBeenCalled();
     });
 
-    it('retorna null si jugador no existe', async () => {
-      redis.hget.mockResolvedValue(null);
+    it('retorna null si jugador no existe (Lua retorna nil)', async () => {
+      redis.eval.mockResolvedValue(null);
 
       const result = await service.markPlayerFinished('ABC234', 'unknown', 0, 0);
 
@@ -388,6 +387,104 @@ describe('MatchStateService', () => {
 
       expect(result).toBe('2026-03-28T00:00:00Z');
       expect(redis.hget).toHaveBeenCalledWith('match:ABC234', 'startedAt');
+    });
+  });
+
+  describe('getPlayerMatchState', () => {
+    it('retorna el estado del jugador parseado desde Redis', async () => {
+      const playerState = {
+        position: 42,
+        errors: 3,
+        totalKeystrokes: 50,
+        errorKeystrokes: 3,
+        finishedAt: null,
+      };
+      redis.hget.mockResolvedValue(JSON.stringify(playerState));
+
+      const result = await service.getPlayerMatchState('ABC234', 'user-1');
+
+      expect(result).toEqual(playerState);
+      expect(redis.hget).toHaveBeenCalledWith('match:ABC234:players', 'user-1');
+    });
+
+    it('retorna null si el jugador no existe en el hash', async () => {
+      redis.hget.mockResolvedValue(null);
+
+      const result = await service.getPlayerMatchState('ABC234', 'user-99');
+
+      expect(result).toBeNull();
+    });
+
+    it('retorna null si el JSON esta corrupto', async () => {
+      redis.hget.mockResolvedValue('not-valid-json{');
+
+      const result = await service.getPlayerMatchState('ABC234', 'user-1');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getAllPlayerPositions', () => {
+    it('retorna posiciones y estado finished de todos los jugadores', async () => {
+      redis.hgetall.mockResolvedValue({
+        'user-1': JSON.stringify({ position: 10, errors: 0, finishedAt: null }),
+        'user-2': JSON.stringify({ position: 50, errors: 2, finishedAt: '2026-03-28T00:01:00Z' }),
+      });
+
+      const result = await service.getAllPlayerPositions('ABC234');
+
+      expect(result).toHaveLength(2);
+      expect(result).toEqual(
+        expect.arrayContaining([
+          { playerId: 'user-1', position: 10, finished: false },
+          { playerId: 'user-2', position: 50, finished: true },
+        ]),
+      );
+    });
+
+    it('retorna array vacio si no hay jugadores', async () => {
+      redis.hgetall.mockResolvedValue({});
+
+      const result = await service.getAllPlayerPositions('ABC234');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getMatchMetadata', () => {
+    it('retorna metadata completa del match', async () => {
+      redis.hgetall.mockResolvedValue({
+        textContent: 'Hola mundo',
+        textId: '42',
+        startedAt: '2026-03-28T00:00:00Z',
+        status: 'playing',
+      });
+
+      const result = await service.getMatchMetadata('ABC234');
+
+      expect(result).toEqual({
+        textContent: 'Hola mundo',
+        textId: '42',
+        startedAt: '2026-03-28T00:00:00Z',
+        status: 'playing',
+      });
+      expect(redis.hgetall).toHaveBeenCalledWith('match:ABC234');
+    });
+
+    it('retorna null si no hay textContent en el hash', async () => {
+      redis.hgetall.mockResolvedValue({ status: 'playing' });
+
+      const result = await service.getMatchMetadata('ABC234');
+
+      expect(result).toBeNull();
+    });
+
+    it('retorna null si el hash esta vacio', async () => {
+      redis.hgetall.mockResolvedValue({});
+
+      const result = await service.getMatchMetadata('ABC234');
+
+      expect(result).toBeNull();
     });
   });
 });

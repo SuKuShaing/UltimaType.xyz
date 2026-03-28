@@ -1,7 +1,13 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import { connectSocket, disconnectSocket } from '../lib/socket';
-import { RoomState, WS_EVENTS, MatchStartPayload } from '@ultimatype-monorepo/shared';
+import { arenaStore } from './use-arena-store';
+import {
+  RoomState,
+  WS_EVENTS,
+  MatchStartPayload,
+  RejoinStatePayload,
+} from '@ultimatype-monorepo/shared';
 
 interface UseLobbyReturn {
   roomState: RoomState | null;
@@ -22,19 +28,63 @@ export function useLobby(code: string): UseLobbyReturn {
   const [matchStarted, setMatchStarted] = useState(false);
   const [matchData, setMatchData] = useState<MatchStartPayload | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const pendingRejoinRef = useRef<string | null>(null);
+  const hasJoinedRef = useRef(false);
 
   useEffect(() => {
     const s = connectSocket();
     setSocket(s);
 
-    s.on('connect', () => {
-      setIsConnected(true);
-      s.emit(WS_EVENTS.LOBBY_JOIN, { code });
-    });
+    let rejoinHandler: ((payload: RejoinStatePayload) => void) | null = null;
 
-    s.on('disconnect', () => {
+    const handleConnect = () => {
+      setIsConnected(true);
+
+      if (pendingRejoinRef.current) {
+        // Reconnection — emit LOBBY_REJOIN instead of LOBBY_JOIN
+        rejoinHandler = (payload: RejoinStatePayload) => {
+          rejoinHandler = null;
+          setRoomState(payload.roomState);
+          if (payload.matchState) {
+            arenaStore.getState().restoreFromRejoin(payload.matchState);
+            setMatchData({
+              code: payload.roomCode,
+              textId: Number(payload.matchState.textId),
+              textContent: payload.matchState.textContent,
+              players: payload.roomState.players,
+            } as MatchStartPayload);
+            setMatchStarted(true);
+          }
+          arenaStore.getState().setConnectionStatus('connected');
+          pendingRejoinRef.current = null;
+        };
+        s.once(WS_EVENTS.REJOIN_STATE, rejoinHandler);
+        s.emit(WS_EVENTS.LOBBY_REJOIN, { roomCode: pendingRejoinRef.current });
+      } else if (!hasJoinedRef.current) {
+        // First connection — emit LOBBY_JOIN
+        s.emit(WS_EVENTS.LOBBY_JOIN, { code });
+        hasJoinedRef.current = true;
+      }
+    };
+
+    const handleDisconnect = () => {
       setIsConnected(false);
-    });
+      pendingRejoinRef.current = code;
+      arenaStore.getState().setConnectionStatus('reconnecting', 0);
+    };
+
+    const handleReconnectAttempt = (attempt: number) => {
+      arenaStore.getState().setConnectionStatus('reconnecting', attempt);
+    };
+    const handleReconnectFailed = () => {
+      arenaStore.getState().setConnectionStatus('disconnected');
+      pendingRejoinRef.current = null;
+    };
+
+    s.on('connect', handleConnect);
+    s.on('disconnect', handleDisconnect);
+    s.io.on('reconnect_attempt', handleReconnectAttempt);
+    s.io.on('reconnect_failed', handleReconnectFailed);
 
     s.on(WS_EVENTS.LOBBY_STATE, (state: RoomState) => {
       setRoomState(state);
@@ -53,17 +103,26 @@ export function useLobby(code: string): UseLobbyReturn {
     // If already connected, join immediately
     if (s.connected) {
       setIsConnected(true);
-      s.emit(WS_EVENTS.LOBBY_JOIN, { code });
+      if (!hasJoinedRef.current) {
+        s.emit(WS_EVENTS.LOBBY_JOIN, { code });
+        hasJoinedRef.current = true;
+      }
     }
 
     return () => {
-      s.off('connect');
-      s.off('disconnect');
+      s.off('connect', handleConnect);
+      s.off('disconnect', handleDisconnect);
+      s.io.off('reconnect_attempt', handleReconnectAttempt);
+      s.io.off('reconnect_failed', handleReconnectFailed);
       s.off(WS_EVENTS.LOBBY_STATE);
       s.off(WS_EVENTS.LOBBY_ERROR);
       s.off(WS_EVENTS.MATCH_START);
+      if (rejoinHandler) s.off(WS_EVENTS.REJOIN_STATE, rejoinHandler);
+      hasJoinedRef.current = false;
+      pendingRejoinRef.current = null;
       disconnectSocket();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
 
   const toggleReady = useCallback(

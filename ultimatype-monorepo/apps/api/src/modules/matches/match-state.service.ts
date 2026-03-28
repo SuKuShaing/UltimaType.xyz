@@ -31,6 +31,30 @@ end
 return 0
 `;
 
+// Lua: atomic mark-player-finished
+// KEYS[1] = match:{code}:players, ARGV[1] = userId, ARGV[2] = totalKeystrokes,
+// ARGV[3] = errorKeystrokes, ARGV[4] = finishedAt ISO timestamp
+// Returns JSON {finishedAt, position} or nil if player not found
+const MARK_PLAYER_FINISHED_LUA = `
+local raw = redis.call('HGET', KEYS[1], ARGV[1])
+if not raw then return nil end
+local state = cjson.decode(raw)
+if state.finishedAt then
+  local ks = tonumber(ARGV[2])
+  if (state.totalKeystrokes or 0) == 0 and ks > 0 then
+    state.totalKeystrokes = ks
+    state.errorKeystrokes = tonumber(ARGV[3])
+    redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(state))
+  end
+else
+  state.finishedAt = ARGV[4]
+  state.totalKeystrokes = tonumber(ARGV[2])
+  state.errorKeystrokes = tonumber(ARGV[3])
+  redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(state))
+end
+return cjson.encode({finishedAt = state.finishedAt, position = state.position})
+`;
+
 @Injectable()
 export class MatchStateService {
   private readonly logger = new Logger(MatchStateService.name);
@@ -153,25 +177,19 @@ export class MatchStateService {
     errorKeystrokes: number,
   ): Promise<{ finishedAt: string; position: number } | null> {
     const playersKey = `match:${roomCode}:players`;
-    const raw = await this.redis.hget(playersKey, userId);
-    if (!raw) return null;
-
+    const finishedAt = new Date().toISOString();
     try {
-      const state: PlayerMatchState = JSON.parse(raw);
-      if (state.finishedAt) {
-        // Actualizar keystrokes si el path anterior los pasó como 0 y ahora llegan los reales
-        if ((state.totalKeystrokes ?? 0) === 0 && totalKeystrokes > 0) {
-          state.totalKeystrokes = totalKeystrokes;
-          state.errorKeystrokes = errorKeystrokes;
-          await this.redis.hset(playersKey, userId, JSON.stringify(state));
-        }
-        return { finishedAt: state.finishedAt, position: state.position };
-      }
-      state.finishedAt = new Date().toISOString();
-      state.totalKeystrokes = totalKeystrokes;
-      state.errorKeystrokes = errorKeystrokes;
-      await this.redis.hset(playersKey, userId, JSON.stringify(state));
-      return { finishedAt: state.finishedAt, position: state.position };
+      const result = await this.redis.eval(
+        MARK_PLAYER_FINISHED_LUA,
+        1,
+        playersKey,
+        userId,
+        String(totalKeystrokes),
+        String(errorKeystrokes),
+        finishedAt,
+      ) as string | null;
+      if (!result) return null;
+      return JSON.parse(result) as { finishedAt: string; position: number };
     } catch {
       this.logger.error(`Error al marcar finish para ${userId} en ${roomCode}`);
       return null;
@@ -263,6 +281,46 @@ export class MatchStateService {
   async getMatchStartedAt(roomCode: string): Promise<string | null> {
     const matchKey = `match:${roomCode}`;
     return this.redis.hget(matchKey, 'startedAt');
+  }
+
+  async getPlayerMatchState(
+    roomCode: string,
+    userId: string,
+  ): Promise<PlayerMatchState | null> {
+    const playersKey = `match:${roomCode}:players`;
+    const raw = await this.redis.hget(playersKey, userId);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      this.logger.error(`Estado corrupto para ${userId} en ${roomCode}`);
+      return null;
+    }
+  }
+
+  async getAllPlayerPositions(
+    roomCode: string,
+  ): Promise<Array<{ playerId: string; position: number; finished: boolean }>> {
+    const states = await this.getMatchState(roomCode);
+    return Object.entries(states).map(([playerId, state]) => ({
+      playerId,
+      position: state.position,
+      finished: !!state.finishedAt,
+    }));
+  }
+
+  async getMatchMetadata(
+    roomCode: string,
+  ): Promise<{ textContent: string; textId: string; startedAt: string; status: string } | null> {
+    const matchKey = `match:${roomCode}`;
+    const data = await this.redis.hgetall(matchKey);
+    if (!data.textContent) return null;
+    return {
+      textContent: data.textContent,
+      textId: data.textId,
+      startedAt: data.startedAt,
+      status: data.status,
+    };
   }
 
   async cleanupMatch(roomCode: string): Promise<void> {

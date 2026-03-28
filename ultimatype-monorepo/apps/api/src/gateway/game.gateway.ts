@@ -20,7 +20,12 @@ import {
   WS_EVENTS,
   isValidLevel,
   MATCH_TIMEOUT_MS,
+  DISCONNECT_GRACE_PERIOD_MS,
   PlayerFinishClientPayload,
+  RejoinStatePayload,
+  RejoinMatchState,
+  RejoinPlayerState,
+  LobbyRejoinPayload,
 } from '@ultimatype-monorepo/shared';
 
 const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
@@ -36,6 +41,7 @@ export class GameGateway
     { userId: string; roomCode: string }
   >();
   private matchTimeouts = new Map<string, NodeJS.Timeout>();
+  private graceTimers = new Map<string, NodeJS.Timeout>();
 
   constructor(
     private roomsService: RoomsService,
@@ -75,25 +81,72 @@ export class GameGateway
   async handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
     const conn = this.connections.get(client.id);
-    if (conn) {
-      this.connections.delete(client.id);
-      try {
-        const state = await this.roomsService.leaveRoom(
-          conn.roomCode,
-          conn.userId,
-        );
+    if (!conn) return;
+    this.connections.delete(client.id);
+
+    const { userId, roomCode } = conn;
+
+    try {
+      const roomState = await this.roomsService.getRoomState(roomCode);
+      if (!roomState) return;
+
+      // Grace period for playing/waiting rooms — give player time to reconnect
+      if (roomState.status === 'playing' || roomState.status === 'waiting') {
+        await this.roomsService.markPlayerDisconnected(roomCode, userId);
+        this.server.to(roomCode).emit(WS_EVENTS.PLAYER_DISCONNECTED, {
+          playerId: userId,
+          roomCode,
+        });
+
+        const timerKey = `${roomCode}:${userId}`;
+        // Clear any existing grace timer for this player (e.g. multiple disconnects)
+        this.clearGraceTimer(timerKey);
+
+        const timer = setTimeout(async () => {
+          this.graceTimers.delete(timerKey);
+          try {
+            const currentState = await this.roomsService.getRoomState(roomCode);
+            // If the player reconnected during the grace period, their disconnected flag
+            // was cleared by handleRejoin. Abort to avoid removing a live player.
+            const player = currentState?.players.find((p) => p.id === userId);
+            if (!player || !player.disconnected) return;
+
+            const wasPlaying = currentState.status === 'playing';
+
+            const updatedState = await this.roomsService.leaveRoom(roomCode, userId);
+            if (updatedState) {
+              this.server.to(roomCode).emit(WS_EVENTS.LOBBY_STATE, updatedState);
+              if (wasPlaying) {
+                await this.checkMatchEndAfterDisconnect(roomCode);
+              }
+            } else {
+              // Room empty — finalize
+              this.clearMatchTimeout(roomCode);
+              this.clearAllGraceTimersForRoom(roomCode);
+              await this.matchStateService.cleanupMatch(roomCode);
+            }
+          } catch (err) {
+            this.logger.error(`Error in grace period expiry for ${userId} in ${roomCode}`, err);
+          }
+        }, DISCONNECT_GRACE_PERIOD_MS);
+
+        this.graceTimers.set(timerKey, timer);
+      } else {
+        // Room finished — leave immediately
+        const state = await this.roomsService.leaveRoom(roomCode, userId);
         if (state) {
-          this.server.to(conn.roomCode).emit(WS_EVENTS.LOBBY_STATE, state);
+          this.server.to(roomCode).emit(WS_EVENTS.LOBBY_STATE, state);
         } else {
-          // Room is empty — cleanup timeout
-          this.clearMatchTimeout(conn.roomCode);
+          // Room empty — finalize
+          this.clearMatchTimeout(roomCode);
+          await this.matchStateService.cleanupMatch(roomCode);
         }
-      } catch (err) {
-        this.logger.error(
-          `Error cleaning up disconnect for ${conn.userId} in room ${conn.roomCode}`,
-          err,
-        );
       }
+    } catch (err) {
+      this.logger.error(
+        `Error cleaning up disconnect for ${userId} in room ${roomCode}`,
+        err,
+      );
     }
   }
 
@@ -146,6 +199,9 @@ export class GameGateway
 
       if (state) {
         this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
+      } else {
+        // Room empty — finalize
+        await this.matchStateService.cleanupMatch(data.code);
       }
     } catch (err: any) {
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
@@ -374,6 +430,7 @@ export class GameGateway
       // Cleanup match state
       await this.matchStateService.cleanupMatch(conn.roomCode);
       this.clearMatchTimeout(conn.roomCode);
+      this.clearAllGraceTimersForRoom(conn.roomCode);
 
       // Reset room to waiting
       await this.roomsService.setRoomStatus(conn.roomCode, 'waiting');
@@ -384,6 +441,101 @@ export class GameGateway
         this.server.to(conn.roomCode).emit(WS_EVENTS.LOBBY_STATE, newState);
       }
     } catch (err: any) {
+      client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.LOBBY_REJOIN)
+  async handleRejoin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: LobbyRejoinPayload,
+  ) {
+    try {
+      if (!data?.roomCode || typeof data.roomCode !== 'string' || !ROOM_CODE_REGEX.test(data.roomCode)) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+      }
+
+      const userId = client.data.user.sub;
+      const roomCode = data.roomCode;
+
+      // Cancel grace period timer immediately — before any async operations — to
+      // close the TOCTOU window between isPlayerInRoom check and timer expiry
+      const timerKey = `${roomCode}:${userId}`;
+      this.clearGraceTimer(timerKey);
+
+      // Verify player is still in room (within grace period)
+      const inRoom = await this.roomsService.isPlayerInRoom(roomCode, userId);
+      if (!inRoom) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Ya no estás en esta sala' });
+      }
+
+      const roomState = await this.roomsService.getRoomState(roomCode);
+      if (!roomState) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Sala no encontrada' });
+      }
+
+      // Mark player as connected
+      await this.roomsService.markPlayerConnected(roomCode, userId);
+
+      // Register new socket connection
+      this.connections.set(client.id, { userId, roomCode });
+      client.join(roomCode);
+
+      // Build rejoin state payload before broadcasting, so state is consistent
+      // when other clients receive PLAYER_RECONNECTED
+      let matchState: RejoinMatchState | null = null;
+
+      if (roomState.status === 'playing') {
+        const matchMeta = await this.matchStateService.getMatchMetadata(roomCode);
+        const playerMatchState = await this.matchStateService.getPlayerMatchState(roomCode, userId);
+        const allPositions = await this.matchStateService.getAllPlayerPositions(roomCode);
+
+        if (matchMeta && playerMatchState) {
+          // Build players array with disconnected status from room state
+          const players: RejoinPlayerState[] = allPositions.map((pp) => {
+            const roomPlayer = roomState.players.find((rp) => rp.id === pp.playerId);
+            return {
+              playerId: pp.playerId,
+              displayName: roomPlayer?.displayName ?? 'Unknown',
+              colorIndex: roomPlayer?.colorIndex ?? 0,
+              position: pp.position,
+              finished: pp.finished,
+              disconnected: pp.playerId === userId ? false : (roomPlayer?.disconnected ?? false),
+            };
+          });
+
+          matchState = {
+            textContent: matchMeta.textContent,
+            textId: matchMeta.textId,
+            startedAt: matchMeta.startedAt,
+            localPosition: playerMatchState.position,
+            localErrors: playerMatchState.errors,
+            localTotalKeystrokes: playerMatchState.totalKeystrokes ?? 0,
+            localErrorKeystrokes: playerMatchState.errorKeystrokes ?? 0,
+            localFinished: !!playerMatchState.finishedAt,
+            localFinishedAt: playerMatchState.finishedAt ?? null,
+            players,
+          };
+        }
+      }
+
+      // Refresh room state to include reconnected status
+      const updatedRoomState = await this.roomsService.getRoomState(roomCode);
+
+      const rejoinPayload: RejoinStatePayload = {
+        roomCode,
+        roomState: updatedRoomState ?? roomState,
+        matchState,
+      };
+
+      // Broadcast reconnection to room, then send full state to reconnecting socket
+      this.server.to(roomCode).emit(WS_EVENTS.PLAYER_RECONNECTED, {
+        playerId: userId,
+        roomCode,
+      });
+      client.emit(WS_EVENTS.REJOIN_STATE, rejoinPayload);
+    } catch (err: any) {
+      this.logger.error(`Error in rejoin: ${err.message}`);
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
     }
   }
@@ -465,6 +617,7 @@ export class GameGateway
     if (!roomState || roomState.status === 'finished') return;
 
     this.clearMatchTimeout(roomCode);
+    this.clearAllGraceTimersForRoom(roomCode);
 
     const playerInfoMap: Record<
       string,
@@ -510,6 +663,47 @@ export class GameGateway
     if (timeout) {
       clearTimeout(timeout);
       this.matchTimeouts.delete(roomCode);
+    }
+  }
+
+  private clearGraceTimer(timerKey: string): void {
+    const timer = this.graceTimers.get(timerKey);
+    if (timer) {
+      clearTimeout(timer);
+      this.graceTimers.delete(timerKey);
+    }
+  }
+
+  private clearAllGraceTimersForRoom(roomCode: string): void {
+    for (const [key, timer] of this.graceTimers.entries()) {
+      if (key.startsWith(`${roomCode}:`)) {
+        clearTimeout(timer);
+        this.graceTimers.delete(key);
+      }
+    }
+  }
+
+  private async checkMatchEndAfterDisconnect(roomCode: string): Promise<void> {
+    const roomState = await this.roomsService.getRoomState(roomCode);
+    if (!roomState || roomState.status !== 'playing') return;
+
+    // Check if all remaining (non-disconnected) players have finished
+    const matchStates = await this.matchStateService.getMatchState(roomCode);
+    const activePlayers = roomState.players.filter((p) => !p.disconnected);
+
+    if (activePlayers.length === 0) {
+      // All players disconnected — end match
+      await this.endMatch(roomCode, 'timeout');
+      return;
+    }
+
+    const allActiveFinished = activePlayers.every((p) => {
+      const ms = matchStates[p.id];
+      return ms && !!ms.finishedAt;
+    });
+
+    if (allActiveFinished) {
+      await this.endMatch(roomCode, 'all_finished');
     }
   }
 

@@ -7,6 +7,7 @@ describe('RoomsService', () => {
     hset: ReturnType<typeof vi.fn>;
     hget: ReturnType<typeof vi.fn>;
     hgetall: ReturnType<typeof vi.fn>;
+    hexists: ReturnType<typeof vi.fn>;
     del: ReturnType<typeof vi.fn>;
     expire: ReturnType<typeof vi.fn>;
     exists: ReturnType<typeof vi.fn>;
@@ -24,6 +25,7 @@ describe('RoomsService', () => {
       hset: vi.fn().mockResolvedValue('OK'),
       hget: vi.fn().mockResolvedValue(null),
       hgetall: vi.fn().mockResolvedValue({}),
+      hexists: vi.fn().mockResolvedValue(0),
       del: vi.fn().mockResolvedValue(1),
       expire: vi.fn().mockResolvedValue(1),
       exists: vi.fn().mockResolvedValue(0),
@@ -422,6 +424,92 @@ describe('RoomsService', () => {
       await expect(
         service.setReady('ABC123', 'user-99', true),
       ).rejects.toThrow('Jugador no encontrado');
+    });
+  });
+
+  describe('markPlayerDisconnected', () => {
+    it('setea disconnected: true en el player hash', async () => {
+      mockRedis.hget.mockResolvedValue(
+        JSON.stringify({
+          id: 'user-1',
+          displayName: 'Host',
+          avatarUrl: null,
+          colorIndex: 0,
+          isReady: false,
+          joinedAt: '2026-03-27T00:00:00.000Z',
+          disconnected: false,
+        }),
+      );
+
+      await service.markPlayerDisconnected('ABC123', 'user-1');
+
+      expect(mockRedis.hset).toHaveBeenCalledWith(
+        'room:ABC123:players',
+        'user-1',
+        expect.stringContaining('"disconnected":true'),
+      );
+    });
+
+    it('no hace nada si el player no existe en el hash', async () => {
+      mockRedis.hget.mockResolvedValue(null);
+
+      await service.markPlayerDisconnected('ABC123', 'user-99');
+
+      expect(mockRedis.hset).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('markPlayerConnected', () => {
+    it('setea disconnected: false en el player hash', async () => {
+      mockRedis.hget.mockResolvedValue(
+        JSON.stringify({
+          id: 'user-1',
+          displayName: 'Host',
+          avatarUrl: null,
+          colorIndex: 0,
+          isReady: false,
+          joinedAt: '2026-03-27T00:00:00.000Z',
+          disconnected: true,
+        }),
+      );
+
+      await service.markPlayerConnected('ABC123', 'user-1');
+
+      expect(mockRedis.hset).toHaveBeenCalledWith(
+        'room:ABC123:players',
+        'user-1',
+        expect.stringContaining('"disconnected":false'),
+      );
+    });
+
+    it('no hace nada si el player no existe en el hash', async () => {
+      mockRedis.hget.mockResolvedValue(null);
+
+      await service.markPlayerConnected('ABC123', 'user-99');
+
+      expect(mockRedis.hset).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('isPlayerInRoom', () => {
+    it('retorna true si el player existe en el hash', async () => {
+      mockRedis.hexists.mockResolvedValue(1);
+
+      const result = await service.isPlayerInRoom('ABC123', 'user-1');
+
+      expect(result).toBe(true);
+      expect(mockRedis.hexists).toHaveBeenCalledWith(
+        'room:ABC123:players',
+        'user-1',
+      );
+    });
+
+    it('retorna false si el player no existe en el hash', async () => {
+      mockRedis.hexists.mockResolvedValue(0);
+
+      const result = await service.isPlayerInRoom('ABC123', 'user-99');
+
+      expect(result).toBe(false);
     });
   });
 

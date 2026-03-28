@@ -17,7 +17,8 @@
       "WebFetch(domain:hackernoon.com)",
       "Bash(for f:*)",
       "Bash(do git:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(grep -E \"\\\\.tsx?$\")"
     ]
   }
 }

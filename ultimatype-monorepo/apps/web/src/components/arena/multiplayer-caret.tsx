@@ -26,11 +26,13 @@ function springInterpolate(
 export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretProps) {
   const caretRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
+  const disconnectedLabelRef = useRef<HTMLDivElement>(null);
   const springState = useRef({ current: 0, velocity: 0, target: 0 });
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef(0);
   const colorRef = useRef('#FF9B51');
   const displayNameRef = useRef('');
+  const disconnectedRef = useRef(false);
 
   const updateCaretPosition = (xPos: number) => {
     if (caretRef.current) {
@@ -88,6 +90,24 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
     }
   };
 
+  const applyDisconnectedVisuals = (isDisconnected: boolean) => {
+    disconnectedRef.current = isDisconnected;
+    const opacity = isDisconnected ? '0.4' : '1';
+    const labelOpacity = isDisconnected ? '0.4' : '0.7';
+    const pulseClass = isDisconnected ? 'animate-pulse' : '';
+
+    if (caretRef.current) {
+      caretRef.current.style.opacity = opacity;
+      caretRef.current.className = `pointer-events-none absolute top-0${pulseClass ? ` ${pulseClass}` : ''}`;
+    }
+    if (labelRef.current) {
+      labelRef.current.style.opacity = labelOpacity;
+    }
+    if (disconnectedLabelRef.current) {
+      disconnectedLabelRef.current.style.display = isDisconnected ? '' : 'none';
+    }
+  };
+
   // Subscribe to store changes (transient pattern — no re-renders)
   useEffect(() => {
     // Read color and displayName after mount (post-initArena)
@@ -100,13 +120,18 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
         labelRef.current.style.color = colorRef.current;
         labelRef.current.textContent = displayNameRef.current;
       }
+      applyDisconnectedVisuals(playerInfo.disconnected);
     }
 
     const unsubscribe = arenaStore.subscribe((state) => {
       const player = state.players[playerId];
-      if (player && player.position !== springState.current.target) {
+      if (!player) return;
+      if (player.position !== springState.current.target) {
         springState.current.target = player.position;
         startAnimation();
+      }
+      if (player.disconnected !== disconnectedRef.current) {
+        applyDisconnectedVisuals(player.disconnected);
       }
     });
 
@@ -127,6 +152,15 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
         className="pointer-events-none absolute -top-5 whitespace-nowrap text-xs font-medium"
         style={{ opacity: 0.7, transform: 'translateX(0px)' }}
       />
+      {/* Disconnected suffix label — hidden by default, shown via DOM */}
+      <div
+        ref={disconnectedLabelRef}
+        className="pointer-events-none absolute -top-5 whitespace-nowrap text-xs text-muted animate-pulse"
+        style={{ display: 'none', opacity: 0.4, transform: 'translateX(0px)' }}
+        data-testid={`disconnected-label-${playerId}`}
+      >
+        (desconectado)
+      </div>
       {/* Caret bar */}
       <div
         ref={caretRef}

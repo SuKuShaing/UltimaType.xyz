@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 import { MultiplayerCaret } from './multiplayer-caret';
 import { arenaStore } from '../../hooks/use-arena-store';
 import { PLAYER_COLORS } from '@ultimatype-monorepo/shared';
@@ -51,5 +51,57 @@ describe('MultiplayerCaret', () => {
     const caret = container.querySelector('div[style*="width: 2px"]') as HTMLElement;
     expect(caret.style.backgroundColor).toBeTruthy();
     expect(container.textContent).toContain('Bob');
+  });
+
+  it('aplica opacidad reducida y animate-pulse cuando el jugador esta desconectado', () => {
+    arenaStore.getState().markPlayerDisconnected('player-1');
+
+    const containerRef = createRef<HTMLDivElement>();
+    const { container } = render(
+      <div ref={containerRef}>
+        <MultiplayerCaret playerId="player-1" containerRef={containerRef} />
+      </div>,
+    );
+
+    const caret = container.querySelector('div[style*="width: 2px"]') as HTMLElement;
+    expect(caret.style.opacity).toBe('0.4');
+    expect(caret.className).toContain('animate-pulse');
+  });
+
+  it('muestra el label (desconectado) cuando el jugador esta desconectado', () => {
+    arenaStore.getState().markPlayerDisconnected('player-1');
+
+    const containerRef = createRef<HTMLDivElement>();
+    const { getByTestId } = render(
+      <div ref={containerRef}>
+        <MultiplayerCaret playerId="player-1" containerRef={containerRef} />
+      </div>,
+    );
+
+    const label = getByTestId('disconnected-label-player-1') as HTMLElement;
+    expect(label.style.display).not.toBe('none');
+    expect(label.textContent).toContain('desconectado');
+  });
+
+  it('actualiza visuals cuando el jugador reconecta (store update)', () => {
+    arenaStore.getState().markPlayerDisconnected('player-1');
+
+    const containerRef = createRef<HTMLDivElement>();
+    const { container, getByTestId } = render(
+      <div ref={containerRef}>
+        <MultiplayerCaret playerId="player-1" containerRef={containerRef} />
+      </div>,
+    );
+
+    act(() => {
+      arenaStore.getState().markPlayerReconnected('player-1');
+    });
+
+    const caret = container.querySelector('div[style*="width: 2px"]') as HTMLElement;
+    expect(caret.style.opacity).toBe('1');
+    expect(caret.className).not.toContain('animate-pulse');
+
+    const label = getByTestId('disconnected-label-player-1') as HTMLElement;
+    expect(label.style.display).toBe('none');
   });
 });

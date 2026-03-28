@@ -4,6 +4,7 @@ export * from './dto/text.dto';
 export * from './dto/room.dto';
 export * from './dto/caret.dto';
 export * from './dto/match-result.dto';
+export * from './dto/rejoin.dto';
 export * from './types/user';
 export * from './constants/countries';
 export * from './constants/difficulty-levels';

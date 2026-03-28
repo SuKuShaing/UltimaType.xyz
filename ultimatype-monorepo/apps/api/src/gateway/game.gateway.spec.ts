@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GameGateway } from './game.gateway';
 import { RoomsService } from '../modules/rooms/rooms.service';
 import { UsersService } from '../modules/users/users.service';
 import { TextsService } from '../modules/texts/texts.service';
 import { MatchStateService } from '../modules/matches/match-state.service';
 import { ConfigService } from '@nestjs/config';
-import { WS_EVENTS } from '@ultimatype-monorepo/shared';
+import { WS_EVENTS, DISCONNECT_GRACE_PERIOD_MS } from '@ultimatype-monorepo/shared';
 
 describe('GameGateway', () => {
   let gateway: GameGateway;
@@ -17,6 +17,9 @@ describe('GameGateway', () => {
     setLevel: ReturnType<typeof vi.fn>;
     canStart: ReturnType<typeof vi.fn>;
     setRoomStatus: ReturnType<typeof vi.fn>;
+    markPlayerDisconnected: ReturnType<typeof vi.fn>;
+    markPlayerConnected: ReturnType<typeof vi.fn>;
+    isPlayerInRoom: ReturnType<typeof vi.fn>;
   };
   let usersService: {
     findById: ReturnType<typeof vi.fn>;
@@ -36,6 +39,9 @@ describe('GameGateway', () => {
     calculateResults: ReturnType<typeof vi.fn>;
     cleanupMatch: ReturnType<typeof vi.fn>;
     getMatchStartedAt: ReturnType<typeof vi.fn>;
+    getPlayerMatchState: ReturnType<typeof vi.fn>;
+    getAllPlayerPositions: ReturnType<typeof vi.fn>;
+    getMatchMetadata: ReturnType<typeof vi.fn>;
   };
   let configService: {
     getOrThrow: ReturnType<typeof vi.fn>;
@@ -67,6 +73,7 @@ describe('GameGateway', () => {
         avatarUrl: null,
         colorIndex: 0,
         isReady: false,
+        disconnected: false,
       },
     ],
     maxPlayers: 20,
@@ -81,6 +88,9 @@ describe('GameGateway', () => {
       setLevel: vi.fn().mockResolvedValue(undefined),
       canStart: vi.fn().mockResolvedValue(true),
       setRoomStatus: vi.fn().mockResolvedValue(undefined),
+      markPlayerDisconnected: vi.fn().mockResolvedValue(undefined),
+      markPlayerConnected: vi.fn().mockResolvedValue(undefined),
+      isPlayerInRoom: vi.fn().mockResolvedValue(true),
     };
     usersService = {
       findById: vi.fn().mockResolvedValue({
@@ -104,6 +114,9 @@ describe('GameGateway', () => {
       calculateResults: vi.fn().mockResolvedValue([]),
       cleanupMatch: vi.fn().mockResolvedValue(undefined),
       getMatchStartedAt: vi.fn().mockResolvedValue('2026-03-28T00:00:00Z'),
+      getPlayerMatchState: vi.fn().mockResolvedValue(null),
+      getAllPlayerPositions: vi.fn().mockResolvedValue([]),
+      getMatchMetadata: vi.fn().mockResolvedValue(null),
     };
     configService = {
       getOrThrow: vi.fn().mockReturnValue('test-secret'),
@@ -587,34 +600,152 @@ describe('GameGateway', () => {
   });
 
   describe('handleDisconnect', () => {
-    it('limpia conexion y broadcast al desconectarse', async () => {
+    it('marca jugador como desconectado y emite PLAYER_DISCONNECTED en room waiting', async () => {
       // First join
       await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
 
       await gateway.handleDisconnect(mockSocket as any);
 
-      expect(roomsService.leaveRoom).toHaveBeenCalledWith(
-        'ABC234',
-        'user-1',
-      );
+      expect(roomsService.markPlayerDisconnected).toHaveBeenCalledWith('ABC234', 'user-1');
+      expect(roomsService.leaveRoom).not.toHaveBeenCalled();
       expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.PLAYER_DISCONNECTED, {
+        playerId: 'user-1',
+        roomCode: 'ABC234',
+      });
+    });
+
+    it('deja inmediatamente en room finished', async () => {
+      roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'finished' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'finished' });
+
+      await gateway.handleDisconnect(mockSocket as any);
+
+      expect(roomsService.leaveRoom).toHaveBeenCalledWith('ABC234', 'user-1');
+      expect(roomsService.markPlayerDisconnected).not.toHaveBeenCalled();
     });
 
     it('no hace nada si no habia conexion registrada', async () => {
       await gateway.handleDisconnect(mockSocket as any);
       expect(roomsService.leaveRoom).not.toHaveBeenCalled();
+      expect(roomsService.markPlayerDisconnected).not.toHaveBeenCalled();
     });
 
-    it('no lanza excepcion si leaveRoom falla', async () => {
-      // First join
+    it('no lanza excepcion si getRoomState falla', async () => {
       await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      roomsService.getRoomState.mockRejectedValue(new Error('Redis error'));
 
-      roomsService.leaveRoom.mockRejectedValue(new Error('Redis error'));
-
-      // Should not throw thanks to try-catch
       await expect(
         gateway.handleDisconnect(mockSocket as any),
       ).resolves.toBeUndefined();
+    });
+
+    it('llama leaveRoom y broadcast LOBBY_STATE cuando el grace period expira', async () => {
+      vi.useFakeTimers();
+      try {
+        const playingRoomState = {
+          ...roomState,
+          status: 'playing' as const,
+          players: [{ ...roomState.players[0], disconnected: true }],
+        };
+        roomsService.getRoomState
+          .mockResolvedValueOnce(playingRoomState)  // inside handleDisconnect
+          .mockResolvedValue(playingRoomState);      // inside grace timer callback
+
+        await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+        roomsService.getRoomState.mockResolvedValue(playingRoomState);
+        await gateway.handleDisconnect(mockSocket as any);
+
+        // leaveRoom must NOT have been called yet
+        expect(roomsService.leaveRoom).not.toHaveBeenCalled();
+
+        // Advance clock past the grace period
+        await vi.advanceTimersByTimeAsync(DISCONNECT_GRACE_PERIOD_MS);
+
+        expect(roomsService.leaveRoom).toHaveBeenCalledWith('ABC234', 'user-1');
+        expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+        expect(mockServer.emit).toHaveBeenCalledWith(
+          WS_EVENTS.LOBBY_STATE,
+          expect.any(Object),
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('no llama leaveRoom si el jugador reconecto antes de que expire el grace period', async () => {
+      vi.useFakeTimers();
+      try {
+        const playingRoomState = {
+          ...roomState,
+          status: 'playing' as const,
+          players: [{ ...roomState.players[0], disconnected: false }],
+        };
+        roomsService.getRoomState.mockResolvedValue(playingRoomState);
+
+        await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+        await gateway.handleDisconnect(mockSocket as any);
+
+        // Advance past grace period — but player.disconnected is false (reconnected)
+        await vi.advanceTimersByTimeAsync(DISCONNECT_GRACE_PERIOD_MS);
+
+        expect(roomsService.leaveRoom).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('handleRejoin', () => {
+    it('restaura player y emite REJOIN_STATE en room waiting', async () => {
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      // Simulate disconnect and new socket
+      await gateway.handleDisconnect(mockSocket as any);
+
+      const newSocket = {
+        id: 'socket-2',
+        data: { user: { sub: 'user-1', displayName: 'Host' } },
+        join: vi.fn(),
+        leave: vi.fn(),
+        emit: vi.fn(),
+      };
+
+      await gateway.handleRejoin(newSocket as any, { roomCode: 'ABC234' });
+
+      expect(roomsService.markPlayerConnected).toHaveBeenCalledWith('ABC234', 'user-1');
+      expect(newSocket.join).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.PLAYER_RECONNECTED, {
+        playerId: 'user-1',
+        roomCode: 'ABC234',
+      });
+      expect(newSocket.emit).toHaveBeenCalledWith(
+        WS_EVENTS.REJOIN_STATE,
+        expect.objectContaining({
+          roomCode: 'ABC234',
+          roomState: expect.any(Object),
+          matchState: null,
+        }),
+      );
+    });
+
+    it('emite error si jugador no esta en la sala', async () => {
+      roomsService.isPlayerInRoom.mockResolvedValue(false);
+
+      await gateway.handleRejoin(mockSocket as any, { roomCode: 'ABC234' });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'Ya no estás en esta sala',
+      });
+    });
+
+    it('emite error si codigo de sala es invalido', async () => {
+      await gateway.handleRejoin(mockSocket as any, { roomCode: 'invalid' });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'Código de sala inválido',
+      });
     });
   });
 });

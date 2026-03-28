@@ -8,10 +8,13 @@ import { CountdownOverlay } from './countdown-overlay';
 import { FocusWPMCounter } from './focus-wpm-counter';
 import { MatchResultsOverlay } from './match-results-overlay';
 import { WaitingForOthersOverlay } from './waiting-for-others-overlay';
+import { ReconnectingOverlay } from './reconnecting-overlay';
 import {
   MatchStartPayload,
   MatchEndPayload,
   PlayerFinishPayload,
+  PlayerDisconnectedPayload,
+  PlayerReconnectedPayload,
   RoomState,
   WS_EVENTS,
 } from '@ultimatype-monorepo/shared';
@@ -38,6 +41,8 @@ export function ArenaPage({
   const localFinishStats = useArenaStore((s) => s.localFinishStats);
   const matchResults = useArenaStore((s) => s.matchResults);
   const matchEndReason = useArenaStore((s) => s.matchEndReason);
+  const connectionStatus = useArenaStore((s) => s.connectionStatus);
+  const reconnectAttempt = useArenaStore((s) => s.reconnectAttempt);
 
   // Initialize arena store on mount
   useEffect(() => {
@@ -99,6 +104,36 @@ export function ArenaPage({
     };
   }, [socket, onReturnToLobby, matchStatus]);
 
+  // Listen for PLAYER_DISCONNECTED events
+  useEffect(() => {
+    const handlePlayerDisconnected = (payload: PlayerDisconnectedPayload) => {
+      if (payload.playerId !== localUserId) {
+        arenaStore.getState().markPlayerDisconnected(payload.playerId);
+      }
+    };
+    socket.on(WS_EVENTS.PLAYER_DISCONNECTED, handlePlayerDisconnected);
+    return () => {
+      socket.off(WS_EVENTS.PLAYER_DISCONNECTED, handlePlayerDisconnected);
+    };
+  }, [socket, localUserId]);
+
+  // Listen for PLAYER_RECONNECTED events
+  useEffect(() => {
+    const handlePlayerReconnected = (payload: PlayerReconnectedPayload) => {
+      if (payload.playerId !== localUserId) {
+        arenaStore.getState().markPlayerReconnected(payload.playerId);
+      }
+    };
+    socket.on(WS_EVENTS.PLAYER_RECONNECTED, handlePlayerReconnected);
+    return () => {
+      socket.off(WS_EVENTS.PLAYER_RECONNECTED, handlePlayerReconnected);
+    };
+  }, [socket, localUserId]);
+
+  const handleGoHome = useCallback(() => {
+    window.location.href = '/';
+  }, []);
+
   const handlePositionChange = useCallback(
     (position: number) => {
       arenaStore.getState().setLocalPosition(position);
@@ -144,6 +179,7 @@ export function ArenaPage({
           text={textContent}
           onPositionChange={handlePositionChange}
           isActive={isPlaying}
+          disabled={connectionStatus !== 'connected'}
         />
 
         {/* Multiplayer carets for other players */}
@@ -171,6 +207,16 @@ export function ArenaPage({
             localUserId={localUserId}
             reason={matchEndReason}
             onRematch={handleRematch}
+          />
+        )}
+
+        {/* Reconnecting overlay — shown when connection lost */}
+        {connectionStatus !== 'connected' && (
+          <ReconnectingOverlay
+            status={connectionStatus}
+            attempt={reconnectAttempt}
+            maxAttempts={5}
+            onGoHome={handleGoHome}
           />
         )}
       </div>

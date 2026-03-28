@@ -18,4 +18,11 @@ export const WS_EVENTS = {
   MATCH_REMATCH: 'match:rematch',
   // Match lifecycle: Server → Client
   MATCH_END: 'match:end',
+  // Reconnection: Client → Server
+  LOBBY_REJOIN: 'lobby:rejoin',
+  // Reconnection: Server → Client (direct response to rejoining socket)
+  REJOIN_STATE: 'rejoin:state',
+  // Disconnection: Server → Client (broadcast)
+  PLAYER_DISCONNECTED: 'player:disconnected',
+  PLAYER_RECONNECTED: 'player:reconnected',
 } as const;
