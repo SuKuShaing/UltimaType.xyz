@@ -13,4 +13,9 @@ export const WS_EVENTS = {
   CARET_UPDATE: 'caret:update',
   // Caret sync: Server → Client
   CARET_SYNC: 'caret:sync',
+  // Match lifecycle: Client → Server
+  PLAYER_FINISH: 'player:finish', // también emitido Server → Client (broadcast de finish individual)
+  MATCH_REMATCH: 'match:rematch',
+  // Match lifecycle: Server → Client
+  MATCH_END: 'match:end',
 } as const;

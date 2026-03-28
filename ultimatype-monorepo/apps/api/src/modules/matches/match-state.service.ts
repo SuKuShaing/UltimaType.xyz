@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../../redis/redis.module';
+import { PlayerResult } from '@ultimatype-monorepo/shared';
 
 const MATCH_TTL = 3600; // 1 hour
 
@@ -8,6 +9,9 @@ interface PlayerMatchState {
   position: number;
   errors: number;
   startedAt: string;
+  finishedAt?: string;
+  totalKeystrokes?: number;
+  errorKeystrokes?: number;
 }
 
 // Lua: atomic validate-then-update position (anti-cheat)
@@ -125,5 +129,145 @@ export class MatchStateService {
       this.logger.error(`Estado corrupto en Redis para jugador ${userId} en sala ${roomCode}`);
       return -1;
     }
+  }
+
+  async isPlayerFinished(
+    roomCode: string,
+    userId: string,
+  ): Promise<boolean> {
+    const playersKey = `match:${roomCode}:players`;
+    const raw = await this.redis.hget(playersKey, userId);
+    if (!raw) return false;
+    try {
+      const state: PlayerMatchState = JSON.parse(raw);
+      return !!state.finishedAt;
+    } catch {
+      return false;
+    }
+  }
+
+  async markPlayerFinished(
+    roomCode: string,
+    userId: string,
+    totalKeystrokes: number,
+    errorKeystrokes: number,
+  ): Promise<{ finishedAt: string; position: number } | null> {
+    const playersKey = `match:${roomCode}:players`;
+    const raw = await this.redis.hget(playersKey, userId);
+    if (!raw) return null;
+
+    try {
+      const state: PlayerMatchState = JSON.parse(raw);
+      if (state.finishedAt) {
+        // Actualizar keystrokes si el path anterior los pasó como 0 y ahora llegan los reales
+        if ((state.totalKeystrokes ?? 0) === 0 && totalKeystrokes > 0) {
+          state.totalKeystrokes = totalKeystrokes;
+          state.errorKeystrokes = errorKeystrokes;
+          await this.redis.hset(playersKey, userId, JSON.stringify(state));
+        }
+        return { finishedAt: state.finishedAt, position: state.position };
+      }
+      state.finishedAt = new Date().toISOString();
+      state.totalKeystrokes = totalKeystrokes;
+      state.errorKeystrokes = errorKeystrokes;
+      await this.redis.hset(playersKey, userId, JSON.stringify(state));
+      return { finishedAt: state.finishedAt, position: state.position };
+    } catch {
+      this.logger.error(`Error al marcar finish para ${userId} en ${roomCode}`);
+      return null;
+    }
+  }
+
+  async areAllPlayersFinished(roomCode: string): Promise<boolean> {
+    const states = await this.getMatchState(roomCode);
+    const players = Object.values(states);
+    if (players.length === 0) return false;
+    return players.every((p) => !!p.finishedAt);
+  }
+
+  async getTextLength(roomCode: string): Promise<number> {
+    const matchKey = `match:${roomCode}`;
+    const textContent = await this.redis.hget(matchKey, 'textContent');
+    return textContent ? textContent.length : 0;
+  }
+
+  async calculateResults(
+    roomCode: string,
+    playerInfoMap: Record<string, { displayName: string; colorIndex: number }>,
+  ): Promise<PlayerResult[]> {
+    const matchKey = `match:${roomCode}`;
+    const matchData = await this.redis.hgetall(matchKey);
+    const matchStartedAt = matchData.startedAt;
+    const textLength = matchData.textContent?.length ?? 0;
+    const now = new Date().toISOString();
+
+    const trunc2 = (n: number) => Math.trunc(n * 100) / 100;
+
+    const states = await this.getMatchState(roomCode);
+    const results: PlayerResult[] = [];
+
+    for (const [userId, state] of Object.entries(states)) {
+      const info = playerInfoMap[userId] ?? {
+        displayName: 'Unknown',
+        colorIndex: 0,
+      };
+      const finished = !!state.finishedAt;
+      const endTime = state.finishedAt ?? now;
+      const startTime = matchStartedAt ?? state.startedAt;
+      const elapsedMs = Math.max(
+        new Date(endTime).getTime() - new Date(startTime).getTime(),
+        0,
+      );
+      const elapsedMinutes = elapsedMs / 60_000;
+
+      const wpmRaw =
+        elapsedMinutes > 0 ? (state.position / 5) / elapsedMinutes : 0;
+      const wpm = trunc2(wpmRaw);
+
+      const totalKs = state.totalKeystrokes ?? 0;
+      const errorKs = Math.min(state.errorKeystrokes ?? 0, totalKs);
+      const precisionDecimal =
+        totalKs > 0 ? trunc2((totalKs - errorKs) / totalKs) : 1.0;
+      const precision = Math.round(precisionDecimal * 100);
+
+      const missingChars = finished ? 0 : Math.max(textLength - state.position, 0);
+      const score = trunc2(wpm * 10 * precisionDecimal - missingChars * 2);
+
+      results.push({
+        playerId: userId,
+        displayName: info.displayName,
+        colorIndex: info.colorIndex,
+        rank: 0,
+        wpm,
+        precision,
+        score,
+        finished,
+        finishedAt: state.finishedAt ?? null,
+      });
+    }
+
+    results.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      // Desempate: terminó antes gana (DNF siempre después de los que terminaron)
+      if (a.finishedAt && b.finishedAt)
+        return new Date(a.finishedAt).getTime() - new Date(b.finishedAt).getTime();
+      if (a.finishedAt) return -1;
+      if (b.finishedAt) return 1;
+      return 0;
+    });
+    results.forEach((r, i) => (r.rank = i + 1));
+
+    return results;
+  }
+
+  async getMatchStartedAt(roomCode: string): Promise<string | null> {
+    const matchKey = `match:${roomCode}`;
+    return this.redis.hget(matchKey, 'startedAt');
+  }
+
+  async cleanupMatch(roomCode: string): Promise<void> {
+    const matchKey = `match:${roomCode}`;
+    const playersKey = `match:${roomCode}:players`;
+    await this.redis.del(matchKey, playersKey);
   }
 }

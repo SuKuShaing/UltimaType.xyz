@@ -6,24 +6,40 @@ import { LiveTextCanvas } from './live-text-canvas';
 import { MultiplayerCaret } from './multiplayer-caret';
 import { CountdownOverlay } from './countdown-overlay';
 import { FocusWPMCounter } from './focus-wpm-counter';
-import { MatchStartPayload } from '@ultimatype-monorepo/shared';
+import { MatchResultsOverlay } from './match-results-overlay';
+import { WaitingForOthersOverlay } from './waiting-for-others-overlay';
+import {
+  MatchStartPayload,
+  MatchEndPayload,
+  PlayerFinishPayload,
+  RoomState,
+  WS_EVENTS,
+} from '@ultimatype-monorepo/shared';
 
 interface ArenaPageProps {
   matchData: MatchStartPayload;
   localUserId: string;
+  onReturnToLobby: () => void;
 }
 
-export function ArenaPage({ matchData, localUserId }: ArenaPageProps) {
+export function ArenaPage({
+  matchData,
+  localUserId,
+  onReturnToLobby,
+}: ArenaPageProps) {
   const textContainerRef = useRef<HTMLDivElement>(null);
   const otherPlayerIdsRef = useRef<string[]>([]);
-  // Capture matchData on first mount — the match payload never changes mid-game
   const matchDataRef = useRef(matchData);
   const socket = getSocket();
   const { emitCaretUpdate } = useCaretSync(socket);
   const textContent = useArenaStore((s) => s.textContent);
   const matchStatus = useArenaStore((s) => s.matchStatus);
+  const localFinished = useArenaStore((s) => s.localFinished);
+  const localFinishStats = useArenaStore((s) => s.localFinishStats);
+  const matchResults = useArenaStore((s) => s.matchResults);
+  const matchEndReason = useArenaStore((s) => s.matchEndReason);
 
-  // Initialize arena store on mount; derive other player IDs once (no reactive subscription)
+  // Initialize arena store on mount
   useEffect(() => {
     const data = matchDataRef.current;
     arenaStore.getState().initArena(data.textContent, data.players);
@@ -36,14 +52,68 @@ export function ArenaPage({ matchData, localUserId }: ArenaPageProps) {
     };
   }, [localUserId]);
 
-  const handlePositionChange = useCallback((position: number) => {
-    arenaStore.getState().setLocalPosition(position);
-    emitCaretUpdate(position);
-  }, [emitCaretUpdate]);
+  // Listen for PLAYER_FINISH events
+  useEffect(() => {
+    const handlePlayerFinish = (payload: PlayerFinishPayload) => {
+      if (payload.playerId === localUserId) {
+        const score =
+          Math.trunc(payload.wpm * 10 * (payload.precision / 100) * 100) / 100;
+        arenaStore
+          .getState()
+          .setLocalFinishStats(payload.wpm, payload.precision, score);
+      } else {
+        arenaStore
+          .getState()
+          .updatePlayerPosition(payload.playerId, payload.position);
+      }
+    };
+    socket.on(WS_EVENTS.PLAYER_FINISH, handlePlayerFinish);
+    return () => {
+      socket.off(WS_EVENTS.PLAYER_FINISH, handlePlayerFinish);
+    };
+  }, [socket, localUserId]);
+
+  // Listen for MATCH_END events
+  useEffect(() => {
+    const handleMatchEnd = (payload: MatchEndPayload) => {
+      arenaStore
+        .getState()
+        .setMatchFinished(payload.results, payload.reason);
+    };
+    socket.on(WS_EVENTS.MATCH_END, handleMatchEnd);
+    return () => {
+      socket.off(WS_EVENTS.MATCH_END, handleMatchEnd);
+    };
+  }, [socket]);
+
+  // Listen for LOBBY_STATE (rematch transitions back to lobby)
+  useEffect(() => {
+    const handleLobbyState = (state: RoomState) => {
+      if (state.status === 'waiting' && matchStatus === 'finished') {
+        onReturnToLobby();
+      }
+    };
+    socket.on(WS_EVENTS.LOBBY_STATE, handleLobbyState);
+    return () => {
+      socket.off(WS_EVENTS.LOBBY_STATE, handleLobbyState);
+    };
+  }, [socket, onReturnToLobby, matchStatus]);
+
+  const handlePositionChange = useCallback(
+    (position: number) => {
+      arenaStore.getState().setLocalPosition(position);
+      emitCaretUpdate(position);
+    },
+    [emitCaretUpdate],
+  );
 
   const handleCountdownEnd = useCallback(() => {
     arenaStore.getState().setMatchStarted();
   }, []);
+
+  const handleRematch = useCallback(() => {
+    socket.emit(WS_EVENTS.MATCH_REMATCH);
+  }, [socket]);
 
   const isPlaying = matchStatus === 'playing';
 
@@ -84,6 +154,25 @@ export function ArenaPage({ matchData, localUserId }: ArenaPageProps) {
             containerRef={textContainerRef}
           />
         ))}
+
+        {/* Waiting overlay — shown when local player finished but match still ongoing */}
+        {localFinished && matchStatus !== 'finished' && localFinishStats && (
+          <WaitingForOthersOverlay
+            wpm={localFinishStats.wpm}
+            precision={localFinishStats.precision}
+            score={localFinishStats.score}
+          />
+        )}
+
+        {/* Results overlay — shown when match is finished */}
+        {matchStatus === 'finished' && matchResults && matchEndReason && (
+          <MatchResultsOverlay
+            results={matchResults}
+            localUserId={localUserId}
+            reason={matchEndReason}
+            onRematch={handleRematch}
+          />
+        )}
       </div>
     </div>
   );

@@ -157,4 +157,237 @@ describe('MatchStateService', () => {
       expect(position).toBe(-1);
     });
   });
+
+  describe('markPlayerFinished', () => {
+    it('marca al jugador como finished con timestamp y keystrokes', async () => {
+      redis.hget.mockResolvedValue(
+        JSON.stringify({ position: 10, errors: 0, startedAt: '2026-03-28T00:00:00Z' }),
+      );
+
+      const result = await service.markPlayerFinished('ABC234', 'user-1', 50, 5);
+
+      expect(result).not.toBeNull();
+      expect(result!.position).toBe(10);
+      expect(result!.finishedAt).toBeDefined();
+      expect(redis.hset).toHaveBeenCalledWith(
+        'match:ABC234:players',
+        'user-1',
+        expect.stringContaining('"finishedAt"'),
+      );
+    });
+
+    it('retorna datos existentes si ya estaba finished (deduplicacion)', async () => {
+      const finishedAt = '2026-03-28T00:01:00Z';
+      redis.hget.mockResolvedValue(
+        JSON.stringify({ position: 10, errors: 0, startedAt: '2026-03-28T00:00:00Z', finishedAt, totalKeystrokes: 95, errorKeystrokes: 3 }),
+      );
+
+      const result = await service.markPlayerFinished('ABC234', 'user-1', 50, 5);
+
+      expect(result).toEqual({ finishedAt, position: 10 });
+      // hset should NOT be called again (keystrokes already stored)
+      expect(redis.hset).not.toHaveBeenCalled();
+    });
+
+    it('retorna null si jugador no existe', async () => {
+      redis.hget.mockResolvedValue(null);
+
+      const result = await service.markPlayerFinished('ABC234', 'unknown', 0, 0);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('isPlayerFinished', () => {
+    it('retorna true si jugador tiene finishedAt', async () => {
+      redis.hget.mockResolvedValue(
+        JSON.stringify({ position: 10, errors: 0, startedAt: '2026-03-28T00:00:00Z', finishedAt: '2026-03-28T00:01:00Z' }),
+      );
+
+      expect(await service.isPlayerFinished('ABC234', 'user-1')).toBe(true);
+    });
+
+    it('retorna false si jugador no tiene finishedAt', async () => {
+      redis.hget.mockResolvedValue(
+        JSON.stringify({ position: 5, errors: 0, startedAt: '2026-03-28T00:00:00Z' }),
+      );
+
+      expect(await service.isPlayerFinished('ABC234', 'user-1')).toBe(false);
+    });
+
+    it('retorna false si jugador no existe', async () => {
+      redis.hget.mockResolvedValue(null);
+
+      expect(await service.isPlayerFinished('ABC234', 'unknown')).toBe(false);
+    });
+  });
+
+  describe('areAllPlayersFinished', () => {
+    it('retorna true si todos tienen finishedAt', async () => {
+      redis.hgetall.mockResolvedValue({
+        'user-1': JSON.stringify({ position: 10, errors: 0, startedAt: '2026-03-28T00:00:00Z', finishedAt: '2026-03-28T00:01:00Z' }),
+        'user-2': JSON.stringify({ position: 10, errors: 1, startedAt: '2026-03-28T00:00:00Z', finishedAt: '2026-03-28T00:01:05Z' }),
+      });
+
+      expect(await service.areAllPlayersFinished('ABC234')).toBe(true);
+    });
+
+    it('retorna false si alguno no tiene finishedAt', async () => {
+      redis.hgetall.mockResolvedValue({
+        'user-1': JSON.stringify({ position: 10, errors: 0, startedAt: '2026-03-28T00:00:00Z', finishedAt: '2026-03-28T00:01:00Z' }),
+        'user-2': JSON.stringify({ position: 5, errors: 0, startedAt: '2026-03-28T00:00:00Z' }),
+      });
+
+      expect(await service.areAllPlayersFinished('ABC234')).toBe(false);
+    });
+
+    it('retorna false si no hay jugadores', async () => {
+      redis.hgetall.mockResolvedValue({});
+
+      expect(await service.areAllPlayersFinished('ABC234')).toBe(false);
+    });
+  });
+
+  describe('calculateResults', () => {
+    it('calcula WPM, precision y score con trunc2, ordenados por score desc', async () => {
+      const startedAt = '2026-03-28T00:00:00.000Z';
+      const finished1 = '2026-03-28T00:01:00.000Z'; // 1 minuto
+      const finished2 = '2026-03-28T00:01:30.000Z'; // 1.5 minutos
+      const textContent = 'A'.repeat(60);            // textLength=60, ambos terminaron → missingChars=0
+
+      redis.hgetall
+        .mockResolvedValueOnce({ startedAt, textContent }) // match data
+        .mockResolvedValueOnce({                           // players
+          'user-1': JSON.stringify({
+            position: 50, errors: 0, startedAt,
+            finishedAt: finished1, totalKeystrokes: 50, errorKeystrokes: 5,
+          }),
+          'user-2': JSON.stringify({
+            position: 50, errors: 0, startedAt,
+            finishedAt: finished2, totalKeystrokes: 55, errorKeystrokes: 0,
+          }),
+        });
+
+      const results = await service.calculateResults('ABC234', {
+        'user-1': { displayName: 'Alice', colorIndex: 0 },
+        'user-2': { displayName: 'Bob', colorIndex: 1 },
+      });
+
+      expect(results).toHaveLength(2);
+      // user-1: wpm=trunc2(50/5/1)=10, precision=trunc2(45/50)=0.9→90%, score=trunc2(10*10*0.9)=90
+      // user-2: wpm=trunc2(50/5/1.5)=trunc2(6.666)=6.66, precision=100%, score=trunc2(6.66*10*1.0)=66.6
+      expect(results[0].playerId).toBe('user-1');
+      expect(results[0].rank).toBe(1);
+      expect(results[0].wpm).toBe(10);
+      expect(results[0].precision).toBe(90);
+      expect(results[0].score).toBe(90);
+      expect(results[1].playerId).toBe('user-2');
+      expect(results[1].rank).toBe(2);
+      expect(results[1].wpm).toBe(6.66);
+      expect(results[1].score).toBe(66.59);
+      expect(results[1].finished).toBe(true);
+    });
+
+    it('aplica penalización por caracteres faltantes en DNF', async () => {
+      const startedAt = '2026-03-28T00:00:00.000Z';
+      const finishedAt = '2026-03-28T00:01:00.000Z'; // 1 minuto
+      const textContent = 'A'.repeat(100);            // textLength=100
+
+      redis.hgetall
+        .mockResolvedValueOnce({ startedAt, textContent })
+        .mockResolvedValueOnce({
+          'user-1': JSON.stringify({
+            position: 50, errors: 0, startedAt,
+            finishedAt, totalKeystrokes: 50, errorKeystrokes: 0,
+          }),
+          'user-2': JSON.stringify({
+            position: 30, errors: 0, startedAt,
+            // Sin finishedAt — DNF, missingChars = 100 - 30 = 70
+            totalKeystrokes: 30, errorKeystrokes: 0,
+          }),
+        });
+
+      const results = await service.calculateResults('ABC234', {
+        'user-1': { displayName: 'Alice', colorIndex: 0 },
+        'user-2': { displayName: 'Bob', colorIndex: 1 },
+      });
+
+      // user-1: terminó, missingChars=0 → score = trunc2(10*10*1.0) = 100
+      expect(results[0].playerId).toBe('user-1');
+      expect(results[0].finished).toBe(true);
+      expect(results[0].score).toBe(100);
+      // user-2: DNF, missingChars=70 → score tiene descuento de 70*2=140
+      expect(results[1].playerId).toBe('user-2');
+      expect(results[1].finished).toBe(false);
+      expect(results[1].finishedAt).toBeNull();
+      expect(results[1].score).toBeLessThan(results[0].score);
+    });
+
+    it('desempate por finishedAt cuando scores son iguales', async () => {
+      const startedAt = '2026-03-28T00:00:00.000Z';
+      const finished1 = '2026-03-28T00:01:00.000Z'; // terminó antes
+      const finished2 = '2026-03-28T00:01:30.000Z'; // terminó después
+      const textContent = 'A'.repeat(60);
+
+      redis.hgetall
+        .mockResolvedValueOnce({ startedAt, textContent })
+        .mockResolvedValueOnce({
+          'user-1': JSON.stringify({
+            position: 50, errors: 0, startedAt,
+            finishedAt: finished1, totalKeystrokes: 50, errorKeystrokes: 5,
+          }),
+          'user-2': JSON.stringify({
+            position: 50, errors: 0, startedAt,
+            finishedAt: finished2, totalKeystrokes: 50, errorKeystrokes: 5,
+          }),
+        });
+
+      const results = await service.calculateResults('ABC234', {
+        'user-1': { displayName: 'Alice', colorIndex: 0 },
+        'user-2': { displayName: 'Bob', colorIndex: 1 },
+      });
+
+      // Mismo score, user-1 terminó antes → rank 1
+      expect(results[0].playerId).toBe('user-1');
+      expect(results[1].playerId).toBe('user-2');
+    });
+  });
+
+  describe('getTextLength', () => {
+    it('retorna la longitud del texto del match', async () => {
+      redis.hget.mockResolvedValue('Hola mundo');
+
+      const length = await service.getTextLength('ABC234');
+
+      expect(length).toBe(10);
+      expect(redis.hget).toHaveBeenCalledWith('match:ABC234', 'textContent');
+    });
+
+    it('retorna 0 si no hay textContent', async () => {
+      redis.hget.mockResolvedValue(null);
+
+      const length = await service.getTextLength('ABC234');
+
+      expect(length).toBe(0);
+    });
+  });
+
+  describe('cleanupMatch', () => {
+    it('elimina las keys del match', async () => {
+      await service.cleanupMatch('ABC234');
+
+      expect(redis.del).toHaveBeenCalledWith('match:ABC234', 'match:ABC234:players');
+    });
+  });
+
+  describe('getMatchStartedAt', () => {
+    it('retorna el timestamp de inicio del match', async () => {
+      redis.hget.mockResolvedValue('2026-03-28T00:00:00Z');
+
+      const result = await service.getMatchStartedAt('ABC234');
+
+      expect(result).toBe('2026-03-28T00:00:00Z');
+      expect(redis.hget).toHaveBeenCalledWith('match:ABC234', 'startedAt');
+    });
+  });
 });

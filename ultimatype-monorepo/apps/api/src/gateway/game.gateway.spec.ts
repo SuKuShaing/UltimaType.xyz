@@ -29,6 +29,13 @@ describe('GameGateway', () => {
     updatePosition: ReturnType<typeof vi.fn>;
     getMatchState: ReturnType<typeof vi.fn>;
     getPlayerPosition: ReturnType<typeof vi.fn>;
+    getTextLength: ReturnType<typeof vi.fn>;
+    isPlayerFinished: ReturnType<typeof vi.fn>;
+    markPlayerFinished: ReturnType<typeof vi.fn>;
+    areAllPlayersFinished: ReturnType<typeof vi.fn>;
+    calculateResults: ReturnType<typeof vi.fn>;
+    cleanupMatch: ReturnType<typeof vi.fn>;
+    getMatchStartedAt: ReturnType<typeof vi.fn>;
   };
   let configService: {
     getOrThrow: ReturnType<typeof vi.fn>;
@@ -90,6 +97,13 @@ describe('GameGateway', () => {
       updatePosition: vi.fn().mockResolvedValue('valid'),
       getMatchState: vi.fn().mockResolvedValue({}),
       getPlayerPosition: vi.fn().mockResolvedValue(0),
+      getTextLength: vi.fn().mockResolvedValue(100),
+      isPlayerFinished: vi.fn().mockResolvedValue(false),
+      markPlayerFinished: vi.fn().mockResolvedValue(null),
+      areAllPlayersFinished: vi.fn().mockResolvedValue(false),
+      calculateResults: vi.fn().mockResolvedValue([]),
+      cleanupMatch: vi.fn().mockResolvedValue(undefined),
+      getMatchStartedAt: vi.fn().mockResolvedValue('2026-03-28T00:00:00Z'),
     };
     configService = {
       getOrThrow: vi.fn().mockReturnValue('test-secret'),
@@ -448,6 +462,127 @@ describe('GameGateway', () => {
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
         message: 'Jugador no encontrado en la partida',
       });
+    });
+  });
+
+  describe('player:finish', () => {
+    beforeEach(async () => {
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      roomsService.getRoomState.mockResolvedValue({
+        ...roomState,
+        status: 'playing',
+      });
+    });
+
+    it('llama handlePlayerFinishInternal con keystrokes del payload', async () => {
+      matchStateService.isPlayerFinished.mockResolvedValue(false);
+      matchStateService.markPlayerFinished.mockResolvedValue({
+        finishedAt: '2026-03-28T00:01:00Z',
+        position: 100,
+      });
+      matchStateService.getMatchState.mockResolvedValue({
+        'user-1': { position: 100, errors: 0, startedAt: '2026-03-28T00:00:00Z', totalKeystrokes: 50, errorKeystrokes: 5 },
+      });
+      matchStateService.areAllPlayersFinished.mockResolvedValue(false);
+
+      await gateway.handlePlayerFinish(mockSocket as any, {
+        totalKeystrokes: 50,
+        errorKeystrokes: 5,
+      });
+
+      expect(matchStateService.markPlayerFinished).toHaveBeenCalledWith(
+        'ABC234', 'user-1', 50, 5,
+      );
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        WS_EVENTS.PLAYER_FINISH,
+        expect.objectContaining({ playerId: 'user-1', position: 100 }),
+      );
+    });
+
+    it('no hace nada si no hay conexion registrada', async () => {
+      const unknownSocket = { id: 'unknown', data: { user: { sub: 'x' } }, emit: vi.fn() };
+      await gateway.handlePlayerFinish(unknownSocket as any, { totalKeystrokes: 10, errorKeystrokes: 0 });
+      expect(matchStateService.markPlayerFinished).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('match:rematch', () => {
+    beforeEach(async () => {
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+    });
+
+    it('resetea sala y broadcast LOBBY_STATE', async () => {
+      roomsService.getRoomState
+        .mockResolvedValueOnce({ ...roomState, status: 'finished' })
+        .mockResolvedValueOnce({ ...roomState, status: 'waiting' });
+
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(matchStateService.cleanupMatch).toHaveBeenCalledWith('ABC234');
+      expect(roomsService.setRoomStatus).toHaveBeenCalledWith('ABC234', 'waiting');
+      expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_STATE, expect.any(Object));
+    });
+
+    it('emite error si sala no está en finished', async () => {
+      roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'playing' });
+
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'La partida no ha terminado',
+      });
+      expect(matchStateService.cleanupMatch).not.toHaveBeenCalled();
+    });
+
+    it('emite error si no hay conexion registrada', async () => {
+      const unknownSocket = { id: 'unknown', data: {}, emit: vi.fn() };
+      await gateway.handleRematch(unknownSocket as any);
+      expect((unknownSocket as any).emit).toHaveBeenCalledWith(
+        WS_EVENTS.LOBBY_ERROR,
+        { message: 'No estás en una sala' },
+      );
+    });
+  });
+
+  describe('caret:update — detección de finish', () => {
+    beforeEach(async () => {
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'playing' });
+      (mockSocket as any).volatile = { to: vi.fn().mockReturnValue({ emit: vi.fn() }) };
+    });
+
+    it('dispara finish cuando position >= textLength y jugador no estaba finished', async () => {
+      matchStateService.getTextLength.mockResolvedValue(5);
+      matchStateService.isPlayerFinished.mockResolvedValue(false);
+      matchStateService.markPlayerFinished.mockResolvedValue({
+        finishedAt: '2026-03-28T00:01:00Z',
+        position: 5,
+      });
+      matchStateService.getMatchState.mockResolvedValue({
+        'user-1': { position: 5, errors: 0, startedAt: '2026-03-28T00:00:00Z' },
+      });
+      matchStateService.areAllPlayersFinished.mockResolvedValue(false);
+
+      await gateway.handleCaretUpdate(mockSocket as any, {
+        position: 5,
+        timestamp: Date.now(),
+      });
+
+      expect(matchStateService.markPlayerFinished).toHaveBeenCalledWith(
+        'ABC234', 'user-1', 0, 0,
+      );
+    });
+
+    it('no dispara finish si jugador ya estaba finished', async () => {
+      matchStateService.getTextLength.mockResolvedValue(5);
+      matchStateService.isPlayerFinished.mockResolvedValue(true);
+
+      await gateway.handleCaretUpdate(mockSocket as any, {
+        position: 5,
+        timestamp: Date.now(),
+      });
+
+      expect(matchStateService.markPlayerFinished).not.toHaveBeenCalled();
     });
   });
 

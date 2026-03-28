@@ -1,5 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { arenaStore } from '../../hooks/use-arena-store';
+import { getSocket } from '../../lib/socket';
+import { WS_EVENTS } from '@ultimatype-monorepo/shared';
 
 interface LiveTextCanvasProps {
   text: string;
@@ -19,7 +21,8 @@ export function LiveTextCanvas({
   const positionRef = useRef(0);
   const errorsRef = useRef<Set<number>>(new Set());
 
-  const canType = isActive && !disabled;
+  const localFinishedRef = useRef(false);
+  const canType = isActive && !disabled && !localFinishedRef.current;
 
   // Focus the hidden input on mount and when isActive changes
   useEffect(() => {
@@ -52,7 +55,7 @@ export function LiveTextCanvas({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (!canType) return;
+      if (!isActive || disabled || localFinishedRef.current) return;
 
       const pos = positionRef.current;
 
@@ -89,8 +92,20 @@ export function LiveTextCanvas({
       const newPos = pos + 1;
       positionRef.current = newPos;
       onPositionChange(newPos);
+
+      // Detect finish
+      if (newPos === text.length) {
+        localFinishedRef.current = true;
+        arenaStore.getState().setLocalFinished();
+        const { totalKeystrokes, errorKeystrokes } = arenaStore.getState();
+        const socket = getSocket();
+        socket.emit(WS_EVENTS.PLAYER_FINISH, {
+          totalKeystrokes,
+          errorKeystrokes,
+        });
+      }
     },
-    [text, onPositionChange, canType],
+    [text, onPositionChange, isActive, disabled],
   );
 
   return (

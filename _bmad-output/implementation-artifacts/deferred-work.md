@@ -43,3 +43,14 @@
 ## Deferred from: code review of 2-2-room-creation-lobby (2026-03-27)
 
 - **connections Map in-memory vs multi-instancia** — `game.gateway.ts`. El Map `connections` que asocia socketId → {userId, roomCode} es per-instance. Con el RedisIoAdapter configurado para multi-instancia, si un cliente se conecta en instancia A y se desconecta en instancia B, el cleanup no ocurre. Aceptado como limitación single-instance para el deploy actual. Resolver cuando se escale a múltiples instancias almacenando el tracking en Redis.
+
+## Deferred from: code review of 2-5-real-time-scoring-match-end (2026-03-28)
+
+- **WPM en PLAYER_FINISH vs MATCH_END pueden divergir** — `game.gateway.ts:handlePlayerFinishInternal` y `match-state.service.ts:calculateResults` calculan WPM independientemente con diferentes timestamps. El valor intermedio (PLAYER_FINISH) puede diferir del final (MATCH_END). Aceptado para MVP; si se detectan diferencias notables, unificar en un único punto de cálculo.
+- **markPlayerFinished no es atómico** — `match-state.service.ts:markPlayerFinished`. El patrón hget→parse→hset sin atomicidad Redis puede causar doble-write en condiciones de carrera. La deduplicación via `isPlayerFinished` mitiga el impacto práctico. Reemplazar con Lua script si se detectan problemas en producción.
+- **areAllPlayersFinished no considera jugadores desconectados** — `match-state.service.ts:areAllPlayersFinished`. Si un jugador se desconecta mid-match y sigue en el hash Redis sin `finishedAt`, el match nunca termina (hasta timeout). Cubierto por Story 2-6 (disconnection handling).
+- **Disconnect mid-match con jugadores restantes** — `game.gateway.ts:handleDisconnect`. Si el jugador que se desconecta era el único sin terminar, el match queda atascado esperando que expire el timeout de 5 minutos. Cubierto por Story 2-6.
+- **Parámetros sin tipo en métodos privados del gateway** — `game.gateway.ts:handlePlayerFinishInternal`, `endMatch`. Parámetros `roomCode`, `userId` etc. sin anotación TypeScript. Cosmético, agregar en limpieza futura.
+- **matchTimeouts no se limpia en reinicio del servidor** — `game.gateway.ts`. No hay `onModuleDestroy` para limpiar los `NodeJS.Timeout` pendientes. Relevante si NestJS se recarga en caliente (hot reload). Sin impacto en deploy normal.
+- **Empates en ranking sin criterio de desempate** — `match-state.service.ts:calculateResults`. Dos jugadores con igual score reciben rankeo arbitrario (orden del hash Redis). El campo `finishedAt` está disponible y sería el desempate natural. Agregar en refinamiento de UX post-MVP.
+- **PLAYER_FINISH usado bidireccional (C→S y S→C)** — `libs/shared/src/websocket/events.ts`. El comentario dice "Client → Server" pero el servidor también emite este evento a los clientes. Funciona correctamente porque el listener del cliente filtra por `playerId !== localUserId`. Actualizar comentario en limpieza.

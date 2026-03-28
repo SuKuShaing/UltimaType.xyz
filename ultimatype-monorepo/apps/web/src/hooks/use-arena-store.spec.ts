@@ -123,4 +123,67 @@ describe('arenaStore', () => {
     expect(state.errorKeystrokes).toBe(0);
     expect(state.matchStatus).toBe('countdown');
   });
+
+  it('setLocalFinished pone localFinished en true', () => {
+    expect(arenaStore.getState().localFinished).toBe(false);
+    arenaStore.getState().setLocalFinished();
+    expect(arenaStore.getState().localFinished).toBe(true);
+  });
+
+  it('setLocalFinishStats guarda wpm, precision y score', () => {
+    arenaStore.getState().setLocalFinishStats(76.27, 92, 701.68);
+    const state = arenaStore.getState();
+    expect(state.localFinishStats).toEqual({ wpm: 76.27, precision: 92, score: 701.68 });
+  });
+
+  it('setMatchFinished transiciona a finished con resultados y reason', () => {
+    const mockResults = [
+      {
+        playerId: 'p1',
+        displayName: 'Alice',
+        colorIndex: 0,
+        rank: 1,
+        wpm: 60,
+        precision: 95,
+        score: 570,
+        finished: true,
+        finishedAt: '2026-03-28T00:00:00Z',
+      },
+    ];
+
+    arenaStore.getState().setMatchFinished(mockResults, 'all_finished');
+
+    const state = arenaStore.getState();
+    expect(state.matchStatus).toBe('finished');
+    expect(state.matchResults).toEqual(mockResults);
+    expect(state.matchEndReason).toBe('all_finished');
+  });
+
+  it('initArena resetea localFinished, localFinishStats, matchResults y matchEndReason', () => {
+    arenaStore.getState().setLocalFinished();
+    arenaStore.getState().setLocalFinishStats(60, 90, 540);
+    arenaStore.getState().setMatchFinished([], 'timeout');
+
+    arenaStore.getState().initArena('New', [{ id: 'p1', displayName: 'A', colorIndex: 0 }]);
+
+    const state = arenaStore.getState();
+    expect(state.localFinished).toBe(false);
+    expect(state.localFinishStats).toBeNull();
+    expect(state.matchResults).toBeNull();
+    expect(state.matchEndReason).toBeNull();
+  });
+
+  it('resetRaceMetrics resetea localFinished, localFinishStats y matchResults', () => {
+    arenaStore.getState().setLocalFinished();
+    arenaStore.getState().setLocalFinishStats(60, 90, 540);
+    arenaStore.getState().setMatchFinished([], 'all_finished');
+
+    arenaStore.getState().resetRaceMetrics();
+
+    const state = arenaStore.getState();
+    expect(state.localFinished).toBe(false);
+    expect(state.localFinishStats).toBeNull();
+    expect(state.matchResults).toBeNull();
+    expect(state.matchEndReason).toBeNull();
+  });
 });

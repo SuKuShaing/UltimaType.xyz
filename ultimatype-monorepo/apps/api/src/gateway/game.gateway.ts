@@ -16,7 +16,12 @@ import { RoomsService } from '../modules/rooms/rooms.service';
 import { UsersService } from '../modules/users/users.service';
 import { TextsService } from '../modules/texts/texts.service';
 import { MatchStateService } from '../modules/matches/match-state.service';
-import { WS_EVENTS, isValidLevel } from '@ultimatype-monorepo/shared';
+import {
+  WS_EVENTS,
+  isValidLevel,
+  MATCH_TIMEOUT_MS,
+  PlayerFinishClientPayload,
+} from '@ultimatype-monorepo/shared';
 
 const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
 
@@ -30,6 +35,7 @@ export class GameGateway
     string,
     { userId: string; roomCode: string }
   >();
+  private matchTimeouts = new Map<string, NodeJS.Timeout>();
 
   constructor(
     private roomsService: RoomsService,
@@ -78,6 +84,9 @@ export class GameGateway
         );
         if (state) {
           this.server.to(conn.roomCode).emit(WS_EVENTS.LOBBY_STATE, state);
+        } else {
+          // Room is empty — cleanup timeout
+          this.clearMatchTimeout(conn.roomCode);
         }
       } catch (err) {
         this.logger.error(
@@ -255,6 +264,9 @@ export class GameGateway
         textContent: text.content,
         players: updatedState.players,
       });
+
+      // Start match timeout
+      this.startMatchTimeout(data.code);
     } catch (err: any) {
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
     }
@@ -300,8 +312,213 @@ export class GameGateway
         position: data.position,
         timestamp: data.timestamp,
       });
+
+      // Check if player finished the text
+      const textLength = await this.matchStateService.getTextLength(
+        conn.roomCode,
+      );
+      if (
+        data.position >= textLength &&
+        !(await this.matchStateService.isPlayerFinished(
+          conn.roomCode,
+          conn.userId,
+        ))
+      ) {
+        await this.handlePlayerFinishInternal(conn.roomCode, conn.userId, 0, 0);
+      }
     } catch (err: any) {
       this.logger.error(`Error in caret update: ${err.message}`);
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.PLAYER_FINISH)
+  async handlePlayerFinish(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: PlayerFinishClientPayload,
+  ) {
+    try {
+      const conn = this.connections.get(client.id);
+      if (!conn) return;
+
+      const totalKeystrokes = data?.totalKeystrokes ?? 0;
+      const errorKeystrokes = data?.errorKeystrokes ?? 0;
+
+      await this.handlePlayerFinishInternal(
+        conn.roomCode,
+        conn.userId,
+        totalKeystrokes,
+        errorKeystrokes,
+      );
+    } catch (err: any) {
+      this.logger.error(`Error in player finish: ${err.message}`);
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.MATCH_REMATCH)
+  async handleRematch(@ConnectedSocket() client: Socket) {
+    try {
+      const conn = this.connections.get(client.id);
+      if (!conn) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, {
+          message: 'No estás en una sala',
+        });
+      }
+
+      const roomState = await this.roomsService.getRoomState(conn.roomCode);
+      if (!roomState || roomState.status !== 'finished') {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, {
+          message: 'La partida no ha terminado',
+        });
+      }
+
+      // Cleanup match state
+      await this.matchStateService.cleanupMatch(conn.roomCode);
+      this.clearMatchTimeout(conn.roomCode);
+
+      // Reset room to waiting
+      await this.roomsService.setRoomStatus(conn.roomCode, 'waiting');
+      await this.resetAllPlayersReady(conn.roomCode, roomState.players.map((p) => p.id));
+
+      const newState = await this.roomsService.getRoomState(conn.roomCode);
+      if (newState) {
+        this.server.to(conn.roomCode).emit(WS_EVENTS.LOBBY_STATE, newState);
+      }
+    } catch (err: any) {
+      client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
+  private async handlePlayerFinishInternal(
+    roomCode: string,
+    userId: string,
+    totalKeystrokes: number,
+    errorKeystrokes: number,
+  ): Promise<void> {
+    const alreadyFinished = await this.matchStateService.isPlayerFinished(
+      roomCode,
+      userId,
+    );
+    // Skip solo si ya terminó Y no tenemos keystrokes reales para actualizar
+    if (alreadyFinished && totalKeystrokes === 0) return;
+
+    const finishResult = await this.matchStateService.markPlayerFinished(
+      roomCode,
+      userId,
+      totalKeystrokes,
+      errorKeystrokes,
+    );
+    if (!finishResult) return;
+
+    // Get player info for broadcast
+    const roomState = await this.roomsService.getRoomState(roomCode);
+    const playerInfo = roomState?.players.find((p) => p.id === userId);
+
+    const matchData = await this.matchStateService.getMatchState(roomCode);
+    const playerState = matchData[userId];
+    const startedAt = await this.matchStateService.getMatchStartedAt(roomCode);
+
+    const elapsedMs = Math.max(
+      startedAt
+        ? new Date(finishResult.finishedAt).getTime() -
+          new Date(startedAt).getTime()
+        : 0,
+      0,
+    );
+    const elapsedMinutes = elapsedMs / 60_000;
+    const trunc2 = (n: number) => Math.trunc(n * 100) / 100;
+    const wpm =
+      elapsedMinutes > 0
+        ? trunc2((finishResult.position / 5) / elapsedMinutes)
+        : 0;
+
+    const tks = playerState?.totalKeystrokes ?? totalKeystrokes;
+    const eks = Math.min(playerState?.errorKeystrokes ?? errorKeystrokes, tks);
+    const precisionDecimal = tks > 0 ? trunc2((tks - eks) / tks) : 1.0;
+    const precision = Math.round(precisionDecimal * 100);
+
+    // Broadcast PLAYER_FINISH (reliable, not volatile)
+    this.server.to(roomCode).emit(WS_EVENTS.PLAYER_FINISH, {
+      playerId: userId,
+      displayName: playerInfo?.displayName ?? 'Unknown',
+      colorIndex: playerInfo?.colorIndex ?? 0,
+      position: finishResult.position,
+      wpm,
+      precision,
+      finishedAt: finishResult.finishedAt,
+    });
+
+    // Solo verificar fin del match si el jugador no estaba ya marcado
+    if (!alreadyFinished) {
+      const allFinished =
+        await this.matchStateService.areAllPlayersFinished(roomCode);
+      if (allFinished) {
+        await this.endMatch(roomCode, 'all_finished');
+      }
+    }
+  }
+
+  private async endMatch(
+    roomCode: string,
+    reason: 'all_finished' | 'timeout',
+  ): Promise<void> {
+    const roomState = await this.roomsService.getRoomState(roomCode);
+    if (!roomState || roomState.status === 'finished') return;
+
+    this.clearMatchTimeout(roomCode);
+
+    const playerInfoMap: Record<
+      string,
+      { displayName: string; colorIndex: number }
+    > = {};
+    for (const p of roomState.players) {
+      playerInfoMap[p.id] = {
+        displayName: p.displayName,
+        colorIndex: p.colorIndex,
+      };
+    }
+
+    const results = await this.matchStateService.calculateResults(
+      roomCode,
+      playerInfoMap,
+    );
+
+    await this.roomsService.setRoomStatus(roomCode, 'finished');
+    await this.matchStateService.cleanupMatch(roomCode);
+
+    this.server.to(roomCode).emit(WS_EVENTS.MATCH_END, {
+      roomCode,
+      results,
+      reason,
+    });
+  }
+
+  private startMatchTimeout(roomCode: string): void {
+    this.clearMatchTimeout(roomCode);
+    const timeout = setTimeout(() => {
+      this.matchTimeouts.delete(roomCode);
+      this.endMatch(roomCode, 'timeout').catch((err) => {
+        this.logger.error(
+          `Error ending match by timeout for ${roomCode}: ${err.message}`,
+        );
+      });
+    }, MATCH_TIMEOUT_MS);
+    this.matchTimeouts.set(roomCode, timeout);
+  }
+
+  private clearMatchTimeout(roomCode: string): void {
+    const timeout = this.matchTimeouts.get(roomCode);
+    if (timeout) {
+      clearTimeout(timeout);
+      this.matchTimeouts.delete(roomCode);
+    }
+  }
+
+  private async resetAllPlayersReady(
+    roomCode: string,
+    playerIds: string[],
+  ): Promise<void> {
+    for (const playerId of playerIds) {
+      await this.roomsService.setReady(roomCode, playerId, false);
     }
   }
 }

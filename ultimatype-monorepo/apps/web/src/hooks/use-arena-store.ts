@@ -1,5 +1,6 @@
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
+import { PlayerResult } from '@ultimatype-monorepo/shared';
 
 interface PlayerState {
   position: number;
@@ -15,6 +16,10 @@ interface ArenaState {
   matchStartTime: number | null;
   totalKeystrokes: number;
   errorKeystrokes: number;
+  localFinished: boolean;
+  localFinishStats: { wpm: number; precision: number; score: number } | null;
+  matchResults: PlayerResult[] | null;
+  matchEndReason: 'all_finished' | 'timeout' | null;
 }
 
 interface ArenaActions {
@@ -28,6 +33,12 @@ interface ArenaActions {
   setMatchStarted: () => void;
   incrementKeystrokes: (correct: boolean) => void;
   resetRaceMetrics: () => void;
+  setLocalFinished: () => void;
+  setLocalFinishStats: (wpm: number, precision: number, score: number) => void;
+  setMatchFinished: (
+    results: PlayerResult[],
+    reason: 'all_finished' | 'timeout',
+  ) => void;
   reset: () => void;
 }
 
@@ -39,6 +50,10 @@ const initialState: ArenaState = {
   matchStartTime: null,
   totalKeystrokes: 0,
   errorKeystrokes: 0,
+  localFinished: false,
+  localFinishStats: null,
+  matchResults: null,
+  matchEndReason: null,
 };
 
 export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
@@ -63,6 +78,10 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
       matchStartTime: null,
       totalKeystrokes: 0,
       errorKeystrokes: 0,
+      localFinished: false,
+      localFinishStats: null,
+      matchResults: null,
+      matchEndReason: null,
     });
   },
 
@@ -95,7 +114,27 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
     })),
 
   resetRaceMetrics: () =>
-    set({ matchStartTime: null, totalKeystrokes: 0, errorKeystrokes: 0 }),
+    set({
+      matchStartTime: null,
+      totalKeystrokes: 0,
+      errorKeystrokes: 0,
+      localFinished: false,
+      localFinishStats: null,
+      matchResults: null,
+      matchEndReason: null,
+    }),
+
+  setLocalFinished: () => set({ localFinished: true }),
+
+  setLocalFinishStats: (wpm, precision, score) =>
+    set({ localFinishStats: { wpm, precision, score } }),
+
+  setMatchFinished: (results, reason) =>
+    set({
+      matchStatus: 'finished',
+      matchResults: results,
+      matchEndReason: reason,
+    }),
 
   reset: () => set(initialState),
 }));
