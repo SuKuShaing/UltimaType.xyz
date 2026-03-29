@@ -18,7 +18,8 @@
       "Bash(for f:*)",
       "Bash(do git:*)",
       "Bash(done)",
-      "Bash(grep -E \"\\\\.tsx?$\")"
+      "Bash(grep -E \"\\\\.tsx?$\")",
+      "Bash(ipconfig)"
     ]
   }
 }

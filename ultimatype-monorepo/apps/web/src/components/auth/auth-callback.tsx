@@ -8,12 +8,9 @@ export function AuthCallback() {
   const { handleCallback } = useAuth();
 
   useEffect(() => {
-    const success = handleCallback(searchParams);
-    if (success) {
-      navigate('/', { replace: true });
-    } else {
-      navigate('/login', { replace: true });
-    }
+    handleCallback(searchParams).then((success) => {
+      navigate(success ? '/' : '/login', { replace: true });
+    });
   }, [searchParams, handleCallback, navigate]);
 
   return (

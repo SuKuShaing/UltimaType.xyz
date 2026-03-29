@@ -33,16 +33,24 @@ export function useAuth() {
     window.location.href = '/';
   }
 
-  function handleCallback(params: URLSearchParams) {
-    const accessToken = params.get('accessToken');
-    const refreshToken = params.get('refreshToken');
-
-    if (accessToken && refreshToken) {
-      setTokens({ accessToken, refreshToken });
+  async function handleCallback(params: URLSearchParams) {
+    const code = params.get('code');
+    if (!code) return false;
+    try {
+      const tokens = await apiClient<{ accessToken: string; refreshToken: string }>(
+        '/auth/code',
+        {
+          method: 'POST',
+          body: JSON.stringify({ code }),
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
+      setTokens(tokens);
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }
 
   return {

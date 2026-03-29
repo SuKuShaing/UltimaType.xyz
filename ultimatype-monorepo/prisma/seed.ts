@@ -1,4 +1,10 @@
 import 'dotenv/config';
+
+if (process.env['NODE_ENV'] === 'production') {
+  console.error('Error: seed script is blocked in production environment');
+  process.exit(1);
+}
+
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as fs from 'fs';
