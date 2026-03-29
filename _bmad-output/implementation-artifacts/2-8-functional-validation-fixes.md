@@ -224,6 +224,108 @@ Created during Epic 2 retrospective functional validation phase (2026-03-28/29).
 
 ---
 
+### AC12: Bandera de país en resultados y lobby
+
+**Given** un jugador con `countryCode` configurado en su perfil
+**When** aparece en la lista de jugadores del lobby o en la tabla de resultados
+**Then** se muestra una bandera SVG (vía `country-flag-icons`) de su país antes de su nombre
+**And** la bandera mide ~16x12px, integrada con el cuadrado de color existente
+**And** si el jugador no tiene país configurado, no se muestra bandera
+**And** la bandera se renderiza consistentemente en Windows, macOS y Linux
+
+**Root cause:** `PlayerResult` no incluye `countryCode`. El modelo User ya tiene el campo en la DB y el perfil permite seleccionarlo, pero nunca se propaga a los payloads de `LOBBY_STATE` ni `MATCH_END`.
+
+**Fix approach:**
+- Instalar dependencia `country-flag-icons` (SVGs como componentes React, ~180KB gzipped, tree-shaking compatible)
+- Añadir `countryCode: string | null` a `PlayerResult` en el DTO compartido
+- En el backend, incluir `countryCode` del user al construir los payloads de `LOBBY_STATE` y `MATCH_END`
+- Crear componente `country-flag.tsx` wrapper que recibe `countryCode` y renderiza el SVG correspondiente
+- Renderizar `<CountryFlag>` antes del nombre en `match-results-overlay.tsx` y en la lista de jugadores del lobby
+
+**Nota sobre emojis de banderas:** Los flag emojis Unicode (🇨🇱 🇦🇷) NO se renderizan como banderas en Windows — se muestran como letras del código regional. Por eso se usa `country-flag-icons` con SVGs para garantizar consistencia multiplataforma.
+
+**Size:** Small-Moderate — DTO change, backend include en 2 payloads, componente nuevo + renderizado en 2 vistas.
+
+**Files:** `match-result.dto.ts`, backend (payloads LOBBY_STATE + MATCH_END), `match-results-overlay.tsx`, componente lobby (lista jugadores), nuevo `country-flag.tsx`
+
+**Dependency:** `country-flag-icons` (npm)
+
+---
+
+### AC13: Sistema de temas Dark/Light/System
+
+**Contexto:** Actualmente la paleta dark está definida en `styles.css` con `@theme`, pero algunas páginas usan inline styles hardcodeados (`app.tsx`, `profile-page.tsx`) y otras usan clases Tailwind. El resultado es que login/home se ven en light y lobby/arena/resultados en dark. La paleta light ya fue diseñada en los artefactos UX (`ux-color-themes.html`).
+
+**Paleta definida:**
+
+| Token | Dark | Light |
+|-------|------|-------|
+| `surface-base` | `#0F1F29` | `#F5FAFA` |
+| `surface-sunken` | `#1A2630` | `#EAEFEF` |
+| `surface-raised` | `#25343F` | `#FFFFFF` |
+| `text-main` | `#F8F9FA` | `#0F1F29` |
+| `text-muted` | `#8B949E` | `#64748B` |
+| `primary` | `#FF9B51` | `#FF9B51` |
+| `success` | `#4ADE80` | `#4ADE80` |
+| `error` | `#FB7185` | `#FB7185` |
+
+#### AC13a: Infraestructura del tema
+
+**Given** la aplicación cargando por primera vez
+**When** no hay preferencia guardada en `localStorage`
+**Then** detecta `prefers-color-scheme` del SO y aplica el tema correspondiente
+**And** un script inline en `index.html` previene FOUC (Flash of Unstyled Content)
+**And** la preferencia se persiste en `localStorage` key `theme`
+
+**Fix approach:**
+- Reestructurar `styles.css`: light como valores default en `@theme`, `.dark` class override con valores dark
+- Script inline en `index.html` que lee `localStorage` y aplica clase `dark` al `<html>` antes de que React cargue
+- Crear `use-theme.ts` con React Context: estado `'light' | 'dark' | 'system'`, escucha `prefers-color-scheme`, persiste en `localStorage`
+- Wrappear la app con `ThemeProvider` en `main.tsx`
+
+**Files:** `styles.css`, `index.html`, nuevo `use-theme.ts`, `main.tsx`
+
+#### AC13b: Toggle de tema en nav bar
+
+**Given** un usuario autenticado en cualquier página
+**When** hace click en el toggle de tema en el nav bar
+**Then** cicla entre Light → Dark → System
+**And** la UI se actualiza instantáneamente sin recarga
+**And** la preferencia persiste entre sesiones
+
+**Files:** nuevo `theme-toggle.tsx`
+
+#### AC13c: Nav bar global
+
+**Given** un usuario autenticado
+**When** navega por home, perfil, lobby o resultados
+**Then** ve un nav bar minimalista con logo "UltimaType", toggle de tema, y acceso a perfil
+**And** el nav bar participa del Focus Fade (opacidad 20%) durante la partida activa en arena
+**And** el nav bar no aparece en páginas de login/callback (usuario no autenticado)
+**And** la separación visual del nav bar usa jerarquía tonal (No-Line Rule), sin bordes
+
+**Fix approach:**
+- Crear `nav-bar.tsx` con logo, `<ThemeToggle>`, link a perfil
+- Integrar en el layout global para páginas autenticadas
+- Recibir opacidad del contexto de arena para participar del Focus Fade
+
+**Files:** nuevo `nav-bar.tsx`, `app.tsx` (layout)
+
+#### AC13d: Consistencia visual — migración de inline styles
+
+**Given** un usuario con tema seleccionado
+**When** navega por todas las páginas de la app
+**Then** todas respetan el tema elegido
+**And** los inline styles hardcodeados de `app.tsx` y `profile-page.tsx` están migrados a clases Tailwind que usan las custom properties del tema
+
+**Files:** `app.tsx`, `profile-page.tsx`
+
+**Orden de implementación recomendado:** AC13a → AC13b → AC13c → AC13d → AC12 (banderas requieren layout estabilizado).
+
+**Size:** Moderate-Large — CSS restructure, React context, nav bar nuevo, toggle, migración de inline styles en múltiples componentes, integración con Focus Fade.
+
+---
+
 ## Dev Checklist
 
 - [ ] AC1: Create local player caret with distinct visual style
@@ -255,4 +357,22 @@ Created during Epic 2 retrospective functional validation phase (2026-03-28/29).
 - [ ] AC11: Add SET_MAX_PLAYERS WebSocket handler (host only, lobby only)
 - [ ] AC11: Update joinRoom to validate against maxPlayers
 - [ ] AC11: Add max players selector UI in lobby
+- [ ] AC12: Install `country-flag-icons` npm dependency
+- [ ] AC12: Add `countryCode` to `PlayerResult` DTO in shared lib
+- [ ] AC12: Include `countryCode` in backend LOBBY_STATE and MATCH_END payloads
+- [ ] AC12: Create `country-flag.tsx` wrapper component
+- [ ] AC12: Render country flag in match-results-overlay player rows
+- [ ] AC12: Render country flag in lobby player list
+- [ ] AC13a: Restructure `styles.css` — light default + `.dark` override
+- [ ] AC13a: Add anti-FOUC script in `index.html`
+- [ ] AC13a: Create `use-theme.ts` hook + ThemeProvider context
+- [ ] AC13a: Wrap app with ThemeProvider in `main.tsx`
+- [ ] AC13b: Create `theme-toggle.tsx` component (Light/Dark/System cycle)
+- [ ] AC13c: Create `nav-bar.tsx` with logo, theme toggle, profile link
+- [ ] AC13c: Integrate nav bar in authenticated layout
+- [ ] AC13c: Nav bar participates in Focus Fade (20% opacity) during arena
+- [ ] AC13c: Nav bar hidden on login/callback pages
+- [ ] AC13d: Migrate `app.tsx` inline styles to Tailwind classes
+- [ ] AC13d: Migrate `profile-page.tsx` inline styles to Tailwind classes
+- [ ] AC13d: Verify all pages respect selected theme consistently
 - [ ] All existing tests pass (150 API + 77 web)
