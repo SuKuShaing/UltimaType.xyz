@@ -1,6 +1,6 @@
 # Story 2.7: Epic 2 Prep Sprint — Deuda Tecnica y Hardening
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -159,23 +159,65 @@ This story was created during the Epic 2 retrospective (2026-03-28). It consolid
 
 ## Dev Checklist
 
-- [ ] AC1: Create `setRoomStatusAtomically` Lua script in RoomsService
-- [ ] AC1: Refactor `endMatch()` to use atomic status transition
-- [ ] AC1: Add tests for concurrent endMatch scenarios
-- [ ] AC2: Remove finish detection from `handleCaretUpdate`
-- [ ] AC2: Verify client-only finish path works correctly
-- [ ] AC3: Clamp score to 0 in `calculateResults`
-- [ ] AC3: Add `missingChars` to `PlayerResult` in shared lib
-- [ ] AC3: Update `match-results-overlay.tsx` with new column and remove finished ternaries
-- [ ] AC3: Update large local stats block for DNF display
-- [ ] AC4: Add startTime null guard in `calculateResults`
-- [ ] AC5: Install and configure `@nestjs/throttler`
-- [ ] AC5: Implement WebSocket connection limit per userId
-- [ ] AC5: Implement room creation limit per userId
-- [ ] AC5: Implement server-side CARET_UPDATE throttle per socket
-- [ ] AC5: Document Cloudflare configuration settings
-- [ ] AC5: Verify trust proxy + real IP resolution with Cloudflare headers
-- [ ] AC6: Implement `onModuleDestroy` in GameGateway (timers only, no Redis)
-- [ ] AC7: Update deferred-work.md with resolved items
-- [ ] All existing tests pass (150 API + 77 web)
-- [ ] New tests for AC1, AC3, AC5 throttling, AC6 cleanup
+- [x] AC1: Create `setRoomStatusAtomically` Lua script in RoomsService
+- [x] AC1: Refactor `endMatch()` to use atomic status transition
+- [x] AC1: Add tests for concurrent endMatch scenarios
+- [x] AC2: Remove finish detection from `handleCaretUpdate`
+- [x] AC2: Verify client-only finish path works correctly
+- [x] AC3: Clamp score to 0 in `calculateResults`
+- [x] AC3: Add `missingChars` to `PlayerResult` in shared lib
+- [x] AC3: Update `match-results-overlay.tsx` with new column and remove finished ternaries
+- [x] AC3: Update large local stats block for DNF display
+- [x] AC4: Add startTime null guard in `calculateResults`
+- [x] AC5: Install and configure `@nestjs/throttler`
+- [x] AC5: Implement WebSocket connection limit per userId
+- [x] AC5: Implement room creation limit per userId
+- [x] AC5: Implement server-side CARET_UPDATE throttle per socket
+- [x] AC5: Document Cloudflare configuration settings
+- [x] AC5: Verify trust proxy + real IP resolution with Cloudflare headers
+- [x] AC6: Implement `onModuleDestroy` in GameGateway (timers only, no Redis)
+- [x] AC7: Update deferred-work.md with resolved items
+- [x] All existing tests pass (173 API + 83 web)
+- [x] New tests for AC1, AC3, AC5 throttling, AC6 cleanup
+
+## File List
+
+- `ultimatype-monorepo/apps/api/src/modules/rooms/rooms.service.ts` — Added `SET_STATUS_IF_PLAYING_LUA` and `setRoomStatusAtomically()`
+- `ultimatype-monorepo/apps/api/src/gateway/game.gateway.ts` — Refactored `endMatch()` to use atomic Lua, removed CARET_UPDATE finish detection, added `onModuleDestroy`, WS connection limit, caret throttle
+- `ultimatype-monorepo/apps/api/src/modules/matches/match-state.service.ts` — Clamped score to 0, added `missingChars` to results, added startTime null guard
+- `ultimatype-monorepo/libs/shared/src/dto/match-result.dto.ts` — Added `missingChars: number` to `PlayerResult`
+- `ultimatype-monorepo/apps/web/src/components/arena/match-results-overlay.tsx` — Added "Faltantes" column, removed DNF ternaries, added missing chars in local stats
+- `ultimatype-monorepo/apps/api/src/app/app.module.ts` — Added `ThrottlerModule` and global `ThrottlerGuard`
+- `ultimatype-monorepo/apps/api/src/modules/auth/auth.controller.ts` — Added `@Throttle`/`@SkipThrottle` decorators
+- `ultimatype-monorepo/apps/api/src/modules/rooms/rooms.controller.ts` — Added `@Throttle` on POST, room creation limit per userId
+- `docs/cloudflare-rate-limiting.md` — New: Cloudflare configuration documentation
+- `ultimatype-monorepo/apps/api/src/gateway/game.gateway.spec.ts` — Added tests for AC1, AC2, AC5, AC6
+- `ultimatype-monorepo/apps/api/src/modules/rooms/rooms.service.spec.ts` — Added test for `setRoomStatusAtomically`
+- `ultimatype-monorepo/apps/api/src/modules/matches/match-state.service.spec.ts` — Added tests for score clamp and startTime guard
+- `ultimatype-monorepo/apps/web/src/components/arena/match-results-overlay.spec.tsx` — Updated tests for Faltantes column
+- `_bmad-output/implementation-artifacts/deferred-work.md` — Marked resolved items
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — Updated story status
+
+## Change Log
+
+- **2026-03-29**: Story 2-7 implemented. All 7 ACs completed: atomic endMatch via Lua script, removed server-side CARET_UPDATE finish detection, score clamped to 0 with missingChars/Faltantes column, startTime null guard, @nestjs/throttler + WebSocket rate limits, onModuleDestroy timer cleanup, deferred-work.md updated. 173 API + 83 web tests passing (256 total).
+
+## Review Findings
+
+- [x] [Review][Decision] `userRoomCount` en `RoomsController` nunca decrementa y es in-memory — Resuelto: opción A, eliminado `userRoomCount` y `MAX_ROOMS_PER_USER` de `RoomsController` y `GameGateway`. Depende solo del `@Throttle` de 5 req/min. [rooms.controller.ts, game.gateway.ts]
+- [x] [Review][Patch] Código muerto: `userRoomCount` y `MAX_ROOMS_PER_USER` en `GameGateway` — eliminados [game.gateway.ts]
+- [x] [Review][Patch] `createRoom` lanza `Error` genérico — resuelto al eliminar el bloque [rooms.controller.ts]
+- [x] [Review][Defer] `SET_STATUS_IF_PLAYING_LUA` no refresca el TTL de la room tras transición de estado — pre-existente, baja probabilidad en matches normales (<24h) [rooms.service.ts] — deferred, pre-existing
+- [x] [Review][Defer] Race pre-existente: `handlePlayerFinishInternal` llama `getMatchStartedAt` en query separada después de que `cleanupMatch` puede haber borrado el key — pre-existente, wpm=0 en PLAYER_FINISH broadcast [game.gateway.ts] — deferred, pre-existing
+- [x] [Review][Defer] `roomState` puede ser null entre adquirir lock atómico y `getRoomState` — playerInfoMap queda vacío, results muestran 'Unknown' sin log de warning [game.gateway.ts:658] — deferred, pre-existing
+
+## Dev Agent Record
+
+### Implementation Notes
+- AC1: Created `SET_STATUS_IF_PLAYING_LUA` following the existing Lua script pattern in the project. `endMatch()` now acquires the "lock" atomically before fetching player info.
+- AC2: Removed 13 lines from `handleCaretUpdate` that called `getTextLength` and `isPlayerFinished`, also eliminating 2 Redis calls from the hot path.
+- AC3: Score clamping uses `Math.max(..., 0)`. `missingChars` added to both server `PlayerResult` and client overlay. The "Faltantes" column shows between "Prec." and "Puntos".
+- AC4: Guard added at the top of the for-loop in `calculateResults`, before any computation.
+- AC5: Three layers implemented — global ThrottlerGuard (120/min), per-endpoint overrides (10/min for auth, 5/min for room creation), WS guards (3 connections/user, 25 caret events/sec/socket, 2 rooms/user).
+- AC6: `onModuleDestroy` clears all `matchTimeouts` and `graceTimers` maps. Does NOT touch Redis — matches remain for reconnection after restart.
+- AC7: Marked 9 resolved items in deferred-work.md, added note for Moderado #7 refresh token rotation.

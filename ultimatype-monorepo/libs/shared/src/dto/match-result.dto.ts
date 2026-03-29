@@ -16,6 +16,7 @@ export interface PlayerResult {
   wpm: number;
   precision: number;
   score: number;
+  missingChars: number;
   finished: boolean;
   finishedAt: string | null;
 }

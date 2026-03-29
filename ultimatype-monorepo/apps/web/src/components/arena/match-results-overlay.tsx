@@ -35,6 +35,11 @@ export function MatchResultsOverlay({
             <p className="text-lg text-text-muted">
               {localResult.precision}% precisión
             </p>
+            {localResult.missingChars > 0 && (
+              <p className="mt-1 text-sm text-text-muted">
+                {localResult.missingChars} caracteres faltantes
+              </p>
+            )}
           </div>
         )}
 
@@ -56,6 +61,7 @@ export function MatchResultsOverlay({
               <th className="pb-2 pr-2">Jugador</th>
               <th className="pb-2 pr-2 text-right">WPM</th>
               <th className="pb-2 pr-2 text-right">Prec.</th>
+              <th className="pb-2 pr-2 text-right">Faltantes</th>
               <th className="pb-2 text-right">Puntos</th>
             </tr>
           </thead>
@@ -80,15 +86,10 @@ export function MatchResultsOverlay({
                     </span>
                     {r.displayName}
                   </td>
-                  <td className="py-1.5 pr-2 text-right">
-                    {r.finished ? r.wpm : '—'}
-                  </td>
-                  <td className="py-1.5 pr-2 text-right">
-                    {r.finished ? `${r.precision}%` : '—'}
-                  </td>
-                  <td className="py-1.5 text-right">
-                    {r.finished ? r.score : 'DNF'}
-                  </td>
+                  <td className="py-1.5 pr-2 text-right">{r.wpm}</td>
+                  <td className="py-1.5 pr-2 text-right">{r.precision}%</td>
+                  <td className="py-1.5 pr-2 text-right">{r.missingChars}</td>
+                  <td className="py-1.5 text-right">{r.score}</td>
                 </tr>
               );
             })}

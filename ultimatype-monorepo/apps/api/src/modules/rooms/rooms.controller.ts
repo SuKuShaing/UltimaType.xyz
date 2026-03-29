@@ -7,6 +7,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { RoomsService } from './rooms.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from '../users/users.service';
@@ -19,11 +20,13 @@ export class RoomsController {
   ) {}
 
   @Post()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @UseGuards(JwtAuthGuard)
   async createRoom(@Req() req: any) {
-    const user = await this.usersService.findById(req.user.userId);
-    const room = await this.roomsService.createRoom(req.user.userId, {
-      id: req.user.userId,
+    const userId = req.user.userId;
+    const user = await this.usersService.findById(userId);
+    const room = await this.roomsService.createRoom(userId, {
+      id: userId,
       displayName: user?.displayName ?? req.user.displayName,
       avatarUrl: user?.avatarUrl ?? null,
     });

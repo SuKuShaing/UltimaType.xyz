@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -41,12 +42,14 @@ export class AuthController {
   // ---- Google OAuth ----
 
   @Get('google')
+  @SkipThrottle()
   @UseGuards(GoogleAuthGuard)
   googleLogin() {
     // Guard redirects to Google
   }
 
   @Get('google/callback')
+  @SkipThrottle()
   @UseGuards(GoogleAuthGuard)
   async googleCallback(@Req() req: Request & { user: OAuthPassportUser; ip: string }, @Res() res: Response) {
     return this.handleOAuthCallback(req, res);
@@ -55,12 +58,14 @@ export class AuthController {
   // ---- GitHub OAuth ----
 
   @Get('github')
+  @SkipThrottle()
   @UseGuards(GithubAuthGuard)
   githubLogin() {
     // Guard redirects to GitHub
   }
 
   @Get('github/callback')
+  @SkipThrottle()
   @UseGuards(GithubAuthGuard)
   async githubCallback(@Req() req: Request & { user: OAuthPassportUser; ip: string }, @Res() res: Response) {
     return this.handleOAuthCallback(req, res);
@@ -69,6 +74,7 @@ export class AuthController {
   // ---- Token Refresh ----
 
   @Post('refresh')
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @UseGuards(JwtRefreshGuard)
   async refresh(@Req() req: Request & { user: JwtPassportUser }) {
     const userId = req.user.userId;
@@ -110,6 +116,7 @@ export class AuthController {
    * The code is a JWT (60s TTL) issued by handleOAuthCallback.
    */
   @Post('code')
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   async exchangeCode(@Body('code') code: string) {
     return this.authService.exchangeAuthCode(code);
   }

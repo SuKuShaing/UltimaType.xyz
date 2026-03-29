@@ -280,10 +280,12 @@ describe('MatchStateService', () => {
       expect(results[0].wpm).toBe(10);
       expect(results[0].precision).toBe(90);
       expect(results[0].score).toBe(90);
+      expect(results[0].missingChars).toBe(0);
       expect(results[1].playerId).toBe('user-2');
       expect(results[1].rank).toBe(2);
       expect(results[1].wpm).toBe(6.66);
       expect(results[1].score).toBe(66.59);
+      expect(results[1].missingChars).toBe(0);
       expect(results[1].finished).toBe(true);
     });
 
@@ -320,6 +322,49 @@ describe('MatchStateService', () => {
       expect(results[1].finished).toBe(false);
       expect(results[1].finishedAt).toBeNull();
       expect(results[1].score).toBeLessThan(results[0].score);
+    });
+
+    it('clampea score a 0 cuando penalización excede puntuación (AC3)', async () => {
+      const startedAt = '2026-03-28T00:00:00.000Z';
+      const textContent = 'A'.repeat(200); // textLength=200
+
+      redis.hgetall
+        .mockResolvedValueOnce({ startedAt, textContent })
+        .mockResolvedValueOnce({
+          'user-1': JSON.stringify({
+            position: 5, errors: 0, startedAt,
+            // DNF with only 5 chars typed, missingChars = 195, penalty = 390
+            totalKeystrokes: 5, errorKeystrokes: 0,
+          }),
+        });
+
+      const results = await service.calculateResults('ABC234', {
+        'user-1': { displayName: 'Alice', colorIndex: 0 },
+      });
+
+      expect(results[0].score).toBe(0);
+      expect(results[0].missingChars).toBe(195);
+    });
+
+    it('omite jugadores sin startTime con warning (AC4)', async () => {
+      const textContent = 'A'.repeat(60);
+
+      redis.hgetall
+        .mockResolvedValueOnce({ textContent }) // match data sin startedAt
+        .mockResolvedValueOnce({
+          'user-1': JSON.stringify({
+            position: 50, errors: 0,
+            // sin startedAt → null
+            finishedAt: '2026-03-28T00:01:00.000Z', totalKeystrokes: 50, errorKeystrokes: 0,
+          }),
+        });
+
+      const results = await service.calculateResults('ABC234', {
+        'user-1': { displayName: 'Alice', colorIndex: 0 },
+      });
+
+      // Player skipped because both matchStartedAt and state.startedAt are undefined
+      expect(results).toHaveLength(0);
     });
 
     it('desempate por finishedAt cuando scores son iguales', async () => {

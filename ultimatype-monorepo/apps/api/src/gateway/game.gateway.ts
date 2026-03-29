@@ -8,8 +8,9 @@ import {
   MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Server, Socket } from 'socket.io';
 import { verify } from 'jsonwebtoken';
 import { RoomsService } from '../modules/rooms/rooms.service';
@@ -29,10 +30,13 @@ import {
 } from '@ultimatype-monorepo/shared';
 
 const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
+const MAX_WS_CONNECTIONS_PER_USER = 3;
+const CARET_THROTTLE_MIN_INTERVAL_MS = 40; // 25 events/sec = 40ms interval
 
+@SkipThrottle()
 @WebSocketGateway()
 export class GameGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy
 {
   @WebSocketServer() server: Server;
   private readonly logger = new Logger(GameGateway.name);
@@ -42,6 +46,7 @@ export class GameGateway
   >();
   private matchTimeouts = new Map<string, NodeJS.Timeout>();
   private graceTimers = new Map<string, NodeJS.Timeout>();
+  private lastCaretTimestamp = new Map<string, number>();
 
   constructor(
     private roomsService: RoomsService,
@@ -50,6 +55,25 @@ export class GameGateway
     private matchStateService: MatchStateService,
     private configService: ConfigService,
   ) {}
+
+  onModuleDestroy() {
+    const activeConnections = this.connections.size;
+    if (activeConnections > 0) {
+      this.logger.warn(`Shutting down with ${activeConnections} active connections`);
+    }
+
+    for (const [roomCode, timeout] of this.matchTimeouts.entries()) {
+      clearTimeout(timeout);
+    }
+    this.matchTimeouts.clear();
+
+    for (const [key, timer] of this.graceTimers.entries()) {
+      clearTimeout(timer);
+    }
+    this.graceTimers.clear();
+
+    this.lastCaretTimestamp.clear();
+  }
 
   afterInit(server: Server) {
     // Configure CORS dynamically using ConfigService
@@ -76,10 +100,21 @@ export class GameGateway
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
+
+    const userId = client.data.user?.sub;
+    if (userId) {
+      const activeConnections = this.countUserConnections(userId);
+      if (activeConnections >= MAX_WS_CONNECTIONS_PER_USER) {
+        this.logger.warn(`User ${userId} exceeded max WS connections (${MAX_WS_CONNECTIONS_PER_USER})`);
+        client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Demasiadas conexiones simultáneas' });
+        client.disconnect(true);
+      }
+    }
   }
 
   async handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+    this.lastCaretTimestamp.delete(client.id);
     const conn = this.connections.get(client.id);
     if (!conn) return;
     this.connections.delete(client.id);
@@ -338,6 +373,14 @@ export class GameGateway
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Payload de caret inválido' });
       }
 
+      // Server-side caret throttle: drop if > 25 events/sec per socket
+      const now = Date.now();
+      const lastTs = this.lastCaretTimestamp.get(client.id) ?? 0;
+      if (now - lastTs < CARET_THROTTLE_MIN_INTERVAL_MS) {
+        return; // Silent drop
+      }
+      this.lastCaretTimestamp.set(client.id, now);
+
       const conn = this.connections.get(client.id);
       if (!conn) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'No estás en una sala' });
@@ -368,20 +411,6 @@ export class GameGateway
         position: data.position,
         timestamp: data.timestamp,
       });
-
-      // Check if player finished the text
-      const textLength = await this.matchStateService.getTextLength(
-        conn.roomCode,
-      );
-      if (
-        data.position >= textLength &&
-        !(await this.matchStateService.isPlayerFinished(
-          conn.roomCode,
-          conn.userId,
-        ))
-      ) {
-        await this.handlePlayerFinishInternal(conn.roomCode, conn.userId, 0, 0);
-      }
     } catch (err: any) {
       this.logger.error(`Error in caret update: ${err.message}`);
     }
@@ -613,21 +642,29 @@ export class GameGateway
     roomCode: string,
     reason: 'all_finished' | 'timeout',
   ): Promise<void> {
-    const roomState = await this.roomsService.getRoomState(roomCode);
-    if (!roomState || roomState.status === 'finished') return;
+    // Atomic status transition: only the first caller wins the race
+    const acquired = await this.roomsService.setRoomStatusAtomically(
+      roomCode,
+      'finished',
+    );
+    if (!acquired) return;
 
     this.clearMatchTimeout(roomCode);
     this.clearAllGraceTimersForRoom(roomCode);
 
+    // Fetch player info after acquiring the "lock"
+    const roomState = await this.roomsService.getRoomState(roomCode);
     const playerInfoMap: Record<
       string,
       { displayName: string; colorIndex: number }
     > = {};
-    for (const p of roomState.players) {
-      playerInfoMap[p.id] = {
-        displayName: p.displayName,
-        colorIndex: p.colorIndex,
-      };
+    if (roomState) {
+      for (const p of roomState.players) {
+        playerInfoMap[p.id] = {
+          displayName: p.displayName,
+          colorIndex: p.colorIndex,
+        };
+      }
     }
 
     const results = await this.matchStateService.calculateResults(
@@ -635,7 +672,6 @@ export class GameGateway
       playerInfoMap,
     );
 
-    await this.roomsService.setRoomStatus(roomCode, 'finished');
     await this.matchStateService.cleanupMatch(roomCode);
 
     this.server.to(roomCode).emit(WS_EVENTS.MATCH_END, {
@@ -705,6 +741,14 @@ export class GameGateway
     if (allActiveFinished) {
       await this.endMatch(roomCode, 'all_finished');
     }
+  }
+
+  private countUserConnections(userId: string): number {
+    let count = 0;
+    for (const conn of this.connections.values()) {
+      if (conn.userId === userId) count++;
+    }
+    return count;
   }
 
   private async resetAllPlayersReady(

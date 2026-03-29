@@ -120,6 +120,19 @@ redis.call('EXPIRE', playersKey, ttl)
 return 'OK'
 `;
 
+// Lua script: atomic set-status-if-playing (endMatch race guard)
+// Returns 'ok' if status was 'playing' and is now 'finished', nil otherwise
+const SET_STATUS_IF_PLAYING_LUA = `
+local roomKey = KEYS[1]
+local newStatus = ARGV[1]
+local current = redis.call('HGET', roomKey, 'status')
+if current == 'playing' then
+  redis.call('HSET', roomKey, 'status', newStatus)
+  return 'ok'
+end
+return nil
+`;
+
 @Injectable()
 export class RoomsService {
   private readonly logger = new Logger(RoomsService.name);
@@ -308,6 +321,20 @@ export class RoomsService {
   ): Promise<void> {
     const roomKey = `room:${code}`;
     await this.redis.hset(roomKey, 'status', status);
+  }
+
+  async setRoomStatusAtomically(
+    code: string,
+    newStatus: RoomState['status'],
+  ): Promise<boolean> {
+    const roomKey = `room:${code}`;
+    const result = await this.redis.eval(
+      SET_STATUS_IF_PLAYING_LUA,
+      1,
+      roomKey,
+      newStatus,
+    );
+    return result === 'ok';
   }
 
   private async refreshTTL(code: string): Promise<void> {

@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 2-7-epic-2-prep-sprint (2026-03-29)
+
+- **`SET_STATUS_IF_PLAYING_LUA` no refresca TTL** — `rooms.service.ts`. La transición atómica `playing → finished` no llama `EXPIRE` sobre las keys de la room, a diferencia de los otros scripts Lua del proyecto (`JOIN_ROOM_LUA`, `LEAVE_ROOM_LUA`). En matches de larga duración cerca del TTL (24h), la room podría expirar antes de que los jugadores actúen en la pantalla de resultados. Baja probabilidad en hackathon normal.
+- **Race en `handlePlayerFinishInternal` con `getMatchStartedAt`** — `game.gateway.ts`. Si `cleanupMatch` borra el key de match entre la llamada a `getMatchState` y `getMatchStartedAt`, el `startedAt` queda null → `elapsedMs=0` → `wpm=0` en el broadcast `PLAYER_FINISH`. Pre-existente antes de story 2-7. El resultado de `MATCH_END` (vía `calculateResults`) sí es correcto ya que está protegido por el lock atómico.
+- **`roomState` null entre lock atómico y `getRoomState`** — `game.gateway.ts:658`. Muy baja probabilidad (requiere que la room expire entre las dos llamadas Redis). Si ocurre, `playerInfoMap` queda vacío y los resultados muestran 'Unknown' para todos los jugadores. No hay log de warning en este path. Pre-existente, el spec describe explícitamente este patrón de two-step fetch.
+
 ## Deferred from: retrospectiva Epic 1 (2026-03-27)
 
 - **Enforcement de `kebab-case` sin herramienta automática** — La convención de que todos los archivos deben usar `kebab-case.ts` / `kebab-case.tsx` es una regla crítica del proyecto pero no está enforced por ningún linter ni Nx constraint. Actualmente depende de la disciplina manual del agente dev. Impacto: cualquier archivo creado con `camelCase` o `PascalCase` viola la convención sin que nadie lo detecte automáticamente. Solución propuesta: configurar una regla ESLint personalizada (`check-file` plugin) o un custom Nx generator que valide nombres de archivo en CI. Tratar en una historia de mejora de calidad antes del Epic 3.
@@ -15,8 +21,8 @@
 
 ## Deferred from: code review of story 1-2-oauth-2-0-integration-google-github (2026-03-26)
 
-- **Refresh token sin rotación ni invalidación** — `auth.service.ts`. No hay persistencia de refresh tokens (tabla o Redis). Imposible revocar tokens robados. Requiere diseño de tabla/Redis para token blacklist (post-MVP).
-- **Rate limiting ausente en endpoints auth** — `/auth/refresh`, `/auth/me`. Sin protección contra brute force. Requiere infraestructura de rate limiting (post-MVP).
+- **Refresh token sin rotación ni invalidación** — `auth.service.ts`. No hay persistencia de refresh tokens (tabla o Redis). Imposible revocar tokens robados. Requiere diseño de tabla/Redis para token blacklist (post-MVP). **Nota (Epic 2 retro):** al escalar a múltiples instancias, implementar rotación de refresh tokens con Redis blacklist (Opción B del retrospectiva Epic 2).
+- ~~**Rate limiting ausente en endpoints auth**~~ — ✅ RESUELTO en Story 2-7 (AC5): @nestjs/throttler configurado globalmente (120 req/min) con límites estrictos en `/auth/refresh` y `/auth/code` (10 req/min) y `/rooms` POST (5 req/min). WebSocket guards: max 3 conexiones/userId, throttle CARET_UPDATE 25/sec. Cloudflare config documentada.
 
 ## Deferred from: code review of 2-1-text-content-management (2026-03-27)
 
@@ -47,19 +53,19 @@
 ## Deferred from: code review of 2-5-real-time-scoring-match-end (2026-03-28)
 
 - **WPM en PLAYER_FINISH vs MATCH_END pueden divergir** — `game.gateway.ts:handlePlayerFinishInternal` y `match-state.service.ts:calculateResults` calculan WPM independientemente con diferentes timestamps. El valor intermedio (PLAYER_FINISH) puede diferir del final (MATCH_END). Aceptado para MVP; si se detectan diferencias notables, unificar en un único punto de cálculo.
-- **markPlayerFinished no es atómico** — `match-state.service.ts:markPlayerFinished`. El patrón hget→parse→hset sin atomicidad Redis puede causar doble-write en condiciones de carrera. La deduplicación via `isPlayerFinished` mitiga el impacto práctico. Reemplazar con Lua script si se detectan problemas en producción.
-- **areAllPlayersFinished no considera jugadores desconectados** — `match-state.service.ts:areAllPlayersFinished`. Si un jugador se desconecta mid-match y sigue en el hash Redis sin `finishedAt`, el match nunca termina (hasta timeout). Cubierto por Story 2-6 (disconnection handling).
-- **Disconnect mid-match con jugadores restantes** — `game.gateway.ts:handleDisconnect`. Si el jugador que se desconecta era el único sin terminar, el match queda atascado esperando que expire el timeout de 5 minutos. Cubierto por Story 2-6.
+- ~~**markPlayerFinished no es atómico**~~ — ✅ RESUELTO en Story 2-6: reemplazado con Lua script `MARK_PLAYER_FINISHED_LUA` que es atómico.
+- ~~**areAllPlayersFinished no considera jugadores desconectados**~~ — ✅ RESUELTO en Story 2-6: `checkMatchEndAfterDisconnect` verifica solo jugadores activos.
+- ~~**Disconnect mid-match con jugadores restantes**~~ — ✅ RESUELTO en Story 2-6: grace period + `checkMatchEndAfterDisconnect`.
 - **Parámetros sin tipo en métodos privados del gateway** — `game.gateway.ts:handlePlayerFinishInternal`, `endMatch`. Parámetros `roomCode`, `userId` etc. sin anotación TypeScript. Cosmético, agregar en limpieza futura.
-- **matchTimeouts no se limpia en reinicio del servidor** — `game.gateway.ts`. No hay `onModuleDestroy` para limpiar los `NodeJS.Timeout` pendientes. Relevante si NestJS se recarga en caliente (hot reload). Sin impacto en deploy normal.
-- **Empates en ranking sin criterio de desempate** — `match-state.service.ts:calculateResults`. Dos jugadores con igual score reciben rankeo arbitrario (orden del hash Redis). El campo `finishedAt` está disponible y sería el desempate natural. Agregar en refinamiento de UX post-MVP.
+- ~~**matchTimeouts no se limpia en reinicio del servidor**~~ — ✅ RESUELTO en Story 2-7 (AC6): `onModuleDestroy` implementado en GameGateway, limpia `matchTimeouts` y `graceTimers`.
+- ~~**Empates en ranking sin criterio de desempate**~~ — ✅ RESUELTO: `finishedAt` tiebreaker ya existe en `calculateResults` (DNF siempre después de los que terminaron, y entre finished, el que terminó antes gana).
 - **PLAYER_FINISH usado bidireccional (C→S y S→C)** — `libs/shared/src/websocket/events.ts`. El comentario dice "Client → Server" pero el servidor también emite este evento a los clientes. Funciona correctamente porque el listener del cliente filtra por `playerId !== localUserId`. Actualizar comentario en limpieza.
 
 ## Deferred from: code review of 2-6-disconnection-handling (2026-03-28)
 
-- **`endMatch()` TOCTOU** — `game.gateway.ts`. Dos llamadas concurrentes a `endMatch` pueden pasar el guard `roomState.status !== 'finished'` antes de que ninguna escriba el nuevo estado, emitiendo `MATCH_END` duplicado a los clientes. La nueva ruta `checkMatchEndAfterDisconnect` aumenta marginalmente la probabilidad. Resolver con un Lua script atómico para set-status-if-playing.
-- **`isPlayerFinished` + `markPlayerFinished` no atómico** — `match-state.service.ts`. Race condition de doble-write pre-existente (ver también deferred de 2-5). Reemplazar con Lua script si se detectan problemas en producción.
-- **`getPlayers()` sin manejo de `JSON.parse`** — `rooms.service.ts`. Dato corrupto en Redis (OOM, write truncado) lanza excepción no manejada que cancela el grace period sin setear el timer. El jugador queda marcado como desconectado pero sin timer de expiración → sala bloqueada indefinidamente. Agregar try/catch con logger y fallback de remoción inmediata.
+- ~~**`endMatch()` TOCTOU**~~ — ✅ RESUELTO en Story 2-7 (AC1): `endMatch` ahora usa `setRoomStatusAtomically` con Lua script `SET_STATUS_IF_PLAYING_LUA`. Solo el primer caller gana la race.
+- ~~**`isPlayerFinished` + `markPlayerFinished` no atómico**~~ — ✅ RESUELTO en Story 2-6: reemplazado con Lua script `MARK_PLAYER_FINISHED_LUA`.
+- ~~**`getPlayers()` sin manejo de `JSON.parse`**~~ — ✅ RESUELTO en Story 2-6: `getPlayers()` usa try/catch con `flatMap` y `logger.error` para datos corruptos.
 - **Socket singleton destruido en cleanup de `useLobby`** — `socket.ts + use-lobby.ts`. `disconnectSocket()` nulifica el singleton. Referencias directas `const socket = getSocket()` en `ArenaPage` apuntan al socket muerto tras un cambio de sala. Pre-existente; mitigar cuando se refactorice la gestión de ciclo de vida del socket.
 - **Sistema de revancha y transferencia de host (historia futura)** — Pre-existente desde story 2-5. El diseño correcto difiere del `MATCH_REMATCH` actual:
   - **Revancha**: solo el host puede iniciarla. Crea una **sala nueva** (no resetea la actual) con los mismos jugadores y espectadores; todos son redirigidos a esa sala. Requiere `createRoom` + join masivo + notificación WS a todos los presentes.

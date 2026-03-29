@@ -513,6 +513,30 @@ describe('RoomsService', () => {
     });
   });
 
+  describe('setRoomStatusAtomically', () => {
+    it('retorna true si el Lua script retorna ok', async () => {
+      mockRedis.eval.mockResolvedValue('ok');
+
+      const result = await service.setRoomStatusAtomically('ABC123', 'finished');
+
+      expect(result).toBe(true);
+      expect(mockRedis.eval).toHaveBeenCalledWith(
+        expect.any(String),
+        1,
+        'room:ABC123',
+        'finished',
+      );
+    });
+
+    it('retorna false si el Lua script retorna nil (status no era playing)', async () => {
+      mockRedis.eval.mockResolvedValue(null);
+
+      const result = await service.setRoomStatusAtomically('ABC123', 'finished');
+
+      expect(result).toBe(false);
+    });
+  });
+
   describe('canStart', () => {
     it('retorna true si hay 2+ jugadores y todos listos', async () => {
       mockRedis.hgetall.mockResolvedValue({

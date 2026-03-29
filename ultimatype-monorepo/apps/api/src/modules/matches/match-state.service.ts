@@ -225,13 +225,18 @@ export class MatchStateService {
     const results: PlayerResult[] = [];
 
     for (const [userId, state] of Object.entries(states)) {
+      const startTime = matchStartedAt ?? state.startedAt;
+      if (!startTime) {
+        this.logger.warn(`Skipping player ${userId} in ${roomCode}: missing startTime`);
+        continue;
+      }
+
       const info = playerInfoMap[userId] ?? {
         displayName: 'Unknown',
         colorIndex: 0,
       };
       const finished = !!state.finishedAt;
       const endTime = state.finishedAt ?? now;
-      const startTime = matchStartedAt ?? state.startedAt;
       const elapsedMs = Math.max(
         new Date(endTime).getTime() - new Date(startTime).getTime(),
         0,
@@ -249,7 +254,7 @@ export class MatchStateService {
       const precision = Math.round(precisionDecimal * 100);
 
       const missingChars = finished ? 0 : Math.max(textLength - state.position, 0);
-      const score = trunc2(wpm * 10 * precisionDecimal - missingChars * 2);
+      const score = Math.max(trunc2(wpm * 10 * precisionDecimal - missingChars * 2), 0);
 
       results.push({
         playerId: userId,
@@ -259,6 +264,7 @@ export class MatchStateService {
         wpm,
         precision,
         score,
+        missingChars,
         finished,
         finishedAt: state.finishedAt ?? null,
       });

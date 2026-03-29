@@ -12,6 +12,7 @@ const mockResults: PlayerResult[] = [
     wpm: 67,
     precision: 95,
     score: 637,
+    missingChars: 0,
     finished: true,
     finishedAt: '2026-03-28T00:05:00Z',
   },
@@ -23,6 +24,7 @@ const mockResults: PlayerResult[] = [
     wpm: 58,
     precision: 94,
     score: 545,
+    missingChars: 0,
     finished: true,
     finishedAt: '2026-03-28T00:05:10Z',
   },
@@ -31,9 +33,10 @@ const mockResults: PlayerResult[] = [
     displayName: 'Pedro',
     colorIndex: 3,
     rank: 3,
-    wpm: 0,
-    precision: 100,
+    wpm: 12,
+    precision: 80,
     score: 0,
+    missingChars: 42,
     finished: false,
     finishedAt: null,
   },
@@ -86,7 +89,7 @@ describe('MatchResultsOverlay', () => {
     expect(screen.getByText('545 pts')).toBeDefined();
   });
 
-  it('muestra DNF para jugadores que no terminaron', () => {
+  it('muestra columna Faltantes con missingChars para todos los jugadores', () => {
     render(
       <MatchResultsOverlay
         results={mockResults}
@@ -96,7 +99,36 @@ describe('MatchResultsOverlay', () => {
       />,
     );
 
-    expect(screen.getByText('DNF')).toBeDefined();
+    // Column header exists
+    expect(screen.getByText('Faltantes')).toBeDefined();
+    // DNF player shows 42 missing chars
+    expect(screen.getByText('42')).toBeDefined();
+  });
+
+  it('muestra caracteres faltantes en stats locales si missingChars > 0', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p3"
+        reason="timeout"
+        onRematch={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('42 caracteres faltantes')).toBeDefined();
+  });
+
+  it('no muestra caracteres faltantes en stats locales si missingChars es 0', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p1"
+        reason="all_finished"
+        onRematch={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/caracteres faltantes/)).toBeNull();
   });
 
   it('botón Revancha visible y llama onRematch al hacer click', () => {

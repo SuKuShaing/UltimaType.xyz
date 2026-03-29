@@ -17,6 +17,7 @@ describe('GameGateway', () => {
     setLevel: ReturnType<typeof vi.fn>;
     canStart: ReturnType<typeof vi.fn>;
     setRoomStatus: ReturnType<typeof vi.fn>;
+    setRoomStatusAtomically: ReturnType<typeof vi.fn>;
     markPlayerDisconnected: ReturnType<typeof vi.fn>;
     markPlayerConnected: ReturnType<typeof vi.fn>;
     isPlayerInRoom: ReturnType<typeof vi.fn>;
@@ -88,6 +89,7 @@ describe('GameGateway', () => {
       setLevel: vi.fn().mockResolvedValue(undefined),
       canStart: vi.fn().mockResolvedValue(true),
       setRoomStatus: vi.fn().mockResolvedValue(undefined),
+      setRoomStatusAtomically: vi.fn().mockResolvedValue(true),
       markPlayerDisconnected: vi.fn().mockResolvedValue(undefined),
       markPlayerConnected: vi.fn().mockResolvedValue(undefined),
       isPlayerInRoom: vi.fn().mockResolvedValue(true),
@@ -557,44 +559,58 @@ describe('GameGateway', () => {
     });
   });
 
-  describe('caret:update — detección de finish', () => {
+  describe('WebSocket caret throttle (AC5)', () => {
     beforeEach(async () => {
       await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
       roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'playing' });
       (mockSocket as any).volatile = { to: vi.fn().mockReturnValue({ emit: vi.fn() }) };
     });
 
-    it('dispara finish cuando position >= textLength y jugador no estaba finished', async () => {
-      matchStateService.getTextLength.mockResolvedValue(5);
-      matchStateService.isPlayerFinished.mockResolvedValue(false);
-      matchStateService.markPlayerFinished.mockResolvedValue({
-        finishedAt: '2026-03-28T00:01:00Z',
-        position: 5,
-      });
-      matchStateService.getMatchState.mockResolvedValue({
-        'user-1': { position: 5, errors: 0, startedAt: '2026-03-28T00:00:00Z' },
-      });
-      matchStateService.areAllPlayersFinished.mockResolvedValue(false);
+    it('drops caret update if sent within 40ms of previous', async () => {
+      vi.useFakeTimers();
+      try {
+        // First update goes through
+        await gateway.handleCaretUpdate(mockSocket as any, {
+          position: 1,
+          timestamp: Date.now(),
+        });
+        expect(matchStateService.updatePosition).toHaveBeenCalledTimes(1);
 
-      await gateway.handleCaretUpdate(mockSocket as any, {
-        position: 5,
-        timestamp: Date.now(),
-      });
+        // Second update within 40ms is dropped
+        vi.advanceTimersByTime(10);
+        await gateway.handleCaretUpdate(mockSocket as any, {
+          position: 2,
+          timestamp: Date.now(),
+        });
+        expect(matchStateService.updatePosition).toHaveBeenCalledTimes(1);
 
-      expect(matchStateService.markPlayerFinished).toHaveBeenCalledWith(
-        'ABC234', 'user-1', 0, 0,
-      );
+        // Third update after 40ms goes through
+        vi.advanceTimersByTime(40);
+        await gateway.handleCaretUpdate(mockSocket as any, {
+          position: 2,
+          timestamp: Date.now(),
+        });
+        expect(matchStateService.updatePosition).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('caret:update — no server-side finish detection (AC2)', () => {
+    beforeEach(async () => {
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'playing' });
+      (mockSocket as any).volatile = { to: vi.fn().mockReturnValue({ emit: vi.fn() }) };
     });
 
-    it('no dispara finish si jugador ya estaba finished', async () => {
-      matchStateService.getTextLength.mockResolvedValue(5);
-      matchStateService.isPlayerFinished.mockResolvedValue(true);
-
+    it('no llama getTextLength ni markPlayerFinished desde caret update', async () => {
       await gateway.handleCaretUpdate(mockSocket as any, {
         position: 5,
         timestamp: Date.now(),
       });
 
+      expect(matchStateService.getTextLength).not.toHaveBeenCalled();
       expect(matchStateService.markPlayerFinished).not.toHaveBeenCalled();
     });
   });
@@ -690,6 +706,117 @@ describe('GameGateway', () => {
         // Advance past grace period — but player.disconnected is false (reconnected)
         await vi.advanceTimersByTimeAsync(DISCONNECT_GRACE_PERIOD_MS);
 
+        expect(roomsService.leaveRoom).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('endMatch atomicity (AC1)', () => {
+    it('solo el primer caller de endMatch emite MATCH_END', async () => {
+      // Setup: join room, start match
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      roomsService.getRoomState.mockResolvedValue({
+        ...roomState,
+        status: 'playing',
+        players: [
+          { ...roomState.players[0], isReady: true },
+          { id: 'user-2', displayName: 'P2', avatarUrl: null, colorIndex: 1, isReady: true, disconnected: false },
+        ],
+      });
+      matchStateService.isPlayerFinished.mockResolvedValue(false);
+      matchStateService.markPlayerFinished.mockResolvedValue({
+        finishedAt: '2026-03-28T00:01:00Z',
+        position: 100,
+      });
+      matchStateService.getMatchState.mockResolvedValue({
+        'user-1': { position: 100, errors: 0, startedAt: '2026-03-28T00:00:00Z', totalKeystrokes: 50, errorKeystrokes: 5 },
+      });
+      matchStateService.areAllPlayersFinished.mockResolvedValue(true);
+      matchStateService.calculateResults.mockResolvedValue([]);
+
+      // First call wins
+      roomsService.setRoomStatusAtomically.mockResolvedValueOnce(true);
+      // Second call loses the race
+      roomsService.setRoomStatusAtomically.mockResolvedValueOnce(false);
+
+      await gateway.handlePlayerFinish(mockSocket as any, {
+        totalKeystrokes: 50,
+        errorKeystrokes: 5,
+      });
+
+      // setRoomStatusAtomically should have been called
+      expect(roomsService.setRoomStatusAtomically).toHaveBeenCalledWith('ABC234', 'finished');
+      // MATCH_END emitted once
+      const matchEndCalls = mockServer.emit.mock.calls.filter(
+        (c: any[]) => c[0] === WS_EVENTS.MATCH_END,
+      );
+      expect(matchEndCalls).toHaveLength(1);
+    });
+
+    it('no emite MATCH_END si setRoomStatusAtomically retorna false', async () => {
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      roomsService.getRoomState.mockResolvedValue({
+        ...roomState,
+        status: 'playing',
+      });
+      matchStateService.isPlayerFinished.mockResolvedValue(false);
+      matchStateService.markPlayerFinished.mockResolvedValue({
+        finishedAt: '2026-03-28T00:01:00Z',
+        position: 100,
+      });
+      matchStateService.getMatchState.mockResolvedValue({
+        'user-1': { position: 100, errors: 0, startedAt: '2026-03-28T00:00:00Z', totalKeystrokes: 50, errorKeystrokes: 5 },
+      });
+      matchStateService.areAllPlayersFinished.mockResolvedValue(true);
+
+      // Atomic call returns false — another path already ended the match
+      roomsService.setRoomStatusAtomically.mockResolvedValue(false);
+
+      await gateway.handlePlayerFinish(mockSocket as any, {
+        totalKeystrokes: 50,
+        errorKeystrokes: 5,
+      });
+
+      expect(matchStateService.calculateResults).not.toHaveBeenCalled();
+      const matchEndCalls = mockServer.emit.mock.calls.filter(
+        (c: any[]) => c[0] === WS_EVENTS.MATCH_END,
+      );
+      expect(matchEndCalls).toHaveLength(0);
+    });
+  });
+
+  describe('onModuleDestroy (AC6)', () => {
+    it('limpia todos los timers sin modificar Redis', async () => {
+      vi.useFakeTimers();
+      try {
+        // Setup: create a match timeout by starting a match
+        const playingRoom = {
+          ...roomState,
+          status: 'playing' as const,
+          players: [
+            { ...roomState.players[0], isReady: true },
+            { id: 'user-2', displayName: 'P2', avatarUrl: null, colorIndex: 1, isReady: true, disconnected: false },
+          ],
+        };
+        roomsService.getRoomState.mockResolvedValue(playingRoom);
+        roomsService.canStart.mockResolvedValue(true);
+
+        await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+        await gateway.handleStart(mockSocket as any, { code: 'ABC234' });
+
+        // Trigger a disconnect to create grace timer
+        await gateway.handleDisconnect(mockSocket as any);
+
+        // Now destroy
+        gateway.onModuleDestroy();
+
+        // Advance time past all possible timeouts — nothing should fire
+        await vi.advanceTimersByTimeAsync(600_000);
+
+        // endMatch and leaveRoom should NOT have been called by timers
+        expect(roomsService.setRoomStatusAtomically).not.toHaveBeenCalled();
         expect(roomsService.leaveRoom).not.toHaveBeenCalled();
       } finally {
         vi.useRealTimers();
