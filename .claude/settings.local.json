@@ -31,7 +31,8 @@
       "Bash(find /d/Progra/Proyectos_personales/UltimaType -path */shared/* -name *.ts -type f)",
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
       "Bash(python .agent/skills/bmad-init/scripts/bmad_init.py load --project-root . --all)",
-      "Bash(python3 .agent/skills/bmad-init/scripts/bmad_init.py load --project-root . --all)"
+      "Bash(python3 .agent/skills/bmad-init/scripts/bmad_init.py load --project-root . --all)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

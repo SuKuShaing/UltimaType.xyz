@@ -4,3 +4,5 @@
 - el botín listo tiene que tener un halo pulsante para que den ganas de presionarlo, ahora solo baja la opacidad y pasa desapercibido
 - la pantalla de resultados debe verse por encima del fondo, al tener el mismo color, se ve toda junta, debiese tener una sombra para que la separe del fondo
 - Cuando escribe muy rapido un usuario y el caret avanza rapido, en los demás usuarios no actualiza, cuando va lento si se sincroniza todo bien, pero empieza a andar rapido y se pierde la sincronización
+- A los textos que corresponda le faltan las ñ, es una letra como cualquier otra en español
+- Del nivel 3 en adelante faltan los acentos a las palabras
