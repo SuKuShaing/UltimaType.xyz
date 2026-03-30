@@ -24,6 +24,8 @@ describe('GameGateway', () => {
     isSpectatorInRoom: ReturnType<typeof vi.fn>;
     joinAsSpectator: ReturnType<typeof vi.fn>;
     leaveSpectator: ReturnType<typeof vi.fn>;
+    switchToSpectator: ReturnType<typeof vi.fn>;
+    resetAllPlayersReady: ReturnType<typeof vi.fn>;
   };
   let usersService: {
     findById: ReturnType<typeof vi.fn>;
@@ -99,6 +101,8 @@ describe('GameGateway', () => {
       isSpectatorInRoom: vi.fn().mockResolvedValue(false),
       joinAsSpectator: vi.fn(),
       leaveSpectator: vi.fn(),
+      switchToSpectator: vi.fn().mockResolvedValue(roomState),
+      resetAllPlayersReady: vi.fn().mockResolvedValue(undefined),
     };
     usersService = {
       findById: vi.fn().mockResolvedValue({
@@ -622,7 +626,7 @@ describe('GameGateway', () => {
   });
 
   describe('handleDisconnect', () => {
-    it('marca jugador como desconectado y emite PLAYER_DISCONNECTED en room waiting', async () => {
+    it('marca jugador como desconectado y emite LOBBY_STATE en room waiting', async () => {
       // First join
       await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
 
@@ -631,10 +635,7 @@ describe('GameGateway', () => {
       expect(roomsService.markPlayerDisconnected).toHaveBeenCalledWith('ABC234', 'user-1');
       expect(roomsService.leaveRoom).not.toHaveBeenCalled();
       expect(mockServer.to).toHaveBeenCalledWith('ABC234');
-      expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.PLAYER_DISCONNECTED, {
-        playerId: 'user-1',
-        roomCode: 'ABC234',
-      });
+      expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_STATE, roomState);
     });
 
     it('deja inmediatamente en room finished', async () => {
@@ -879,6 +880,265 @@ describe('GameGateway', () => {
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
         message: 'Código de sala inválido',
       });
+    });
+  });
+
+  describe('player:abandon', () => {
+    beforeEach(() => {
+      // Register socket as player in a playing room
+      (gateway as any).connections.set('socket-1', {
+        userId: 'user-1',
+        roomCode: 'ABC234',
+        role: 'player',
+      });
+      roomsService.getRoomState.mockResolvedValue({
+        ...roomState,
+        status: 'playing',
+      });
+      matchStateService.isPlayerFinished.mockResolvedValue(false);
+      matchStateService.markPlayerFinished.mockResolvedValue({
+        position: 50,
+        finishedAt: '2026-03-30T00:01:00Z',
+      });
+      matchStateService.getMatchState.mockResolvedValue({
+        'user-1': { totalKeystrokes: 100, errorKeystrokes: 5 },
+      });
+      matchStateService.getMatchStartedAt.mockResolvedValue('2026-03-30T00:00:00Z');
+      matchStateService.areAllPlayersFinished.mockResolvedValue(false);
+    });
+
+    it('trata el abandon como player:finish con stats parciales', async () => {
+      await gateway.handlePlayerAbandon(mockSocket as any, {
+        totalKeystrokes: 100,
+        errorKeystrokes: 5,
+      });
+
+      expect(matchStateService.markPlayerFinished).toHaveBeenCalledWith(
+        'ABC234',
+        'user-1',
+        100,
+        5,
+      );
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        WS_EVENTS.PLAYER_FINISH,
+        expect.objectContaining({ playerId: 'user-1' }),
+      );
+    });
+
+    it('ignora silenciosamente si la partida no esta en curso', async () => {
+      roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'waiting' });
+
+      await gateway.handlePlayerAbandon(mockSocket as any, {
+        totalKeystrokes: 50,
+        errorKeystrokes: 2,
+      });
+
+      expect(matchStateService.markPlayerFinished).not.toHaveBeenCalled();
+    });
+
+    it('ignora silenciosamente si el socket no esta registrado', async () => {
+      (gateway as any).connections.delete('socket-1');
+
+      await gateway.handlePlayerAbandon(mockSocket as any, {
+        totalKeystrokes: 50,
+        errorKeystrokes: 2,
+      });
+
+      expect(roomsService.getRoomState).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('lobby:kick-player', () => {
+    const hostSocket = {
+      id: 'socket-host',
+      data: { user: { sub: 'user-1', displayName: 'Host' } },
+      join: vi.fn(),
+      leave: vi.fn(),
+      emit: vi.fn(),
+    };
+    const targetSocket = {
+      id: 'socket-target',
+      data: { user: { sub: 'user-2', displayName: 'Target' } },
+      join: vi.fn(),
+      leave: vi.fn(),
+      emit: vi.fn(),
+    };
+
+    beforeEach(() => {
+      (gateway as any).connections.set('socket-host', {
+        userId: 'user-1',
+        roomCode: 'ABC234',
+        role: 'player',
+      });
+      (gateway as any).connections.set('socket-target', {
+        userId: 'user-2',
+        roomCode: 'ABC234',
+        role: 'player',
+      });
+      const twoPlayerRoomState = {
+        ...roomState,
+        players: [
+          { ...roomState.players[0] },
+          {
+            id: 'user-2',
+            displayName: 'Target',
+            avatarUrl: null,
+            colorIndex: 1,
+            isReady: false,
+            disconnected: false,
+          },
+        ],
+      };
+      roomsService.getRoomState.mockResolvedValue(twoPlayerRoomState);
+      roomsService.leaveRoom.mockResolvedValue(roomState);
+      gateway.server = mockServer as any;
+    });
+
+    it('expulsa al jugador y emite LOBBY_KICKED al target y LOBBY_STATE a la sala', async () => {
+      await gateway.handleKickPlayer(hostSocket as any, {
+        code: 'ABC234',
+        targetUserId: 'user-2',
+      });
+
+      // Should emit LOBBY_KICKED to target socket
+      expect(mockServer.to).toHaveBeenCalledWith('socket-target');
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        WS_EVENTS.LOBBY_KICKED,
+        expect.objectContaining({ message: expect.any(String) }),
+      );
+
+      // Should remove target from room
+      expect(roomsService.leaveRoom).toHaveBeenCalledWith('ABC234', 'user-2');
+
+      // Should broadcast updated state
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_STATE, roomState);
+    });
+
+    it('rechaza si el emisor no es el host', async () => {
+      const nonHostSocket = {
+        id: 'socket-target',
+        data: { user: { sub: 'user-2', displayName: 'Target' } },
+        join: vi.fn(),
+        leave: vi.fn(),
+        emit: vi.fn(),
+      };
+
+      await gateway.handleKickPlayer(nonHostSocket as any, {
+        code: 'ABC234',
+        targetUserId: 'user-1',
+      });
+
+      expect(nonHostSocket.emit).toHaveBeenCalledWith(
+        WS_EVENTS.LOBBY_ERROR,
+        expect.objectContaining({ message: expect.any(String) }),
+      );
+      expect(roomsService.leaveRoom).not.toHaveBeenCalled();
+    });
+
+    it('emite error si codigo de sala es invalido', async () => {
+      await gateway.handleKickPlayer(hostSocket as any, {
+        code: 'invalid',
+        targetUserId: 'user-2',
+      });
+
+      expect(hostSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'Código de sala inválido',
+      });
+    });
+  });
+
+  describe('lobby:move-to-spectator', () => {
+    const hostSocket = {
+      id: 'socket-host',
+      data: { user: { sub: 'user-1', displayName: 'Host' } },
+      join: vi.fn(),
+      leave: vi.fn(),
+      emit: vi.fn(),
+    };
+
+    beforeEach(() => {
+      (gateway as any).connections.set('socket-host', {
+        userId: 'user-1',
+        roomCode: 'ABC234',
+        role: 'player',
+      });
+      (gateway as any).connections.set('socket-target', {
+        userId: 'user-2',
+        roomCode: 'ABC234',
+        role: 'player',
+      });
+      const twoPlayerRoomState = {
+        ...roomState,
+        players: [
+          { ...roomState.players[0] },
+          {
+            id: 'user-2',
+            displayName: 'Target',
+            avatarUrl: null,
+            colorIndex: 1,
+            isReady: false,
+            disconnected: false,
+          },
+        ],
+      };
+      roomsService.getRoomState.mockResolvedValue(twoPlayerRoomState);
+      roomsService.switchToSpectator.mockResolvedValue({
+        ...roomState,
+        spectators: [{ id: 'user-2', displayName: 'Target', avatarUrl: null, joinedAt: '' }],
+      });
+      usersService.findById.mockResolvedValue({
+        id: 'user-2',
+        displayName: 'Target',
+        avatarUrl: null,
+      });
+      gateway.server = mockServer as any;
+    });
+
+    it('mueve al jugador a espectador y emite LOBBY_MOVED_TO_SPECTATOR al target', async () => {
+      await gateway.handleMoveToSpectator(hostSocket as any, {
+        code: 'ABC234',
+        targetUserId: 'user-2',
+      });
+
+      expect(roomsService.switchToSpectator).toHaveBeenCalledWith(
+        'ABC234',
+        'user-2',
+        expect.objectContaining({ id: 'user-2' }),
+      );
+
+      // Should emit LOBBY_MOVED_TO_SPECTATOR to target
+      expect(mockServer.to).toHaveBeenCalledWith('socket-target');
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        WS_EVENTS.LOBBY_MOVED_TO_SPECTATOR,
+        expect.objectContaining({ message: expect.any(String) }),
+      );
+
+      // Target's connection role should be updated to spectator
+      const targetConn = (gateway as any).connections.get('socket-target');
+      expect(targetConn?.role).toBe('spectator');
+    });
+
+    it('rechaza si el emisor no es el host', async () => {
+      const nonHostSocket = {
+        id: 'socket-target',
+        data: { user: { sub: 'user-2', displayName: 'Target' } },
+        join: vi.fn(),
+        leave: vi.fn(),
+        emit: vi.fn(),
+      };
+
+      await gateway.handleMoveToSpectator(nonHostSocket as any, {
+        code: 'ABC234',
+        targetUserId: 'user-1',
+      });
+
+      expect(nonHostSocket.emit).toHaveBeenCalledWith(
+        WS_EVENTS.LOBBY_ERROR,
+        expect.objectContaining({ message: expect.any(String) }),
+      );
+      expect(roomsService.switchToSpectator).not.toHaveBeenCalled();
     });
   });
 });

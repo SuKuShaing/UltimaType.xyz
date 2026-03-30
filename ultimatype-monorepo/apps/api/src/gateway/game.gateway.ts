@@ -156,10 +156,21 @@ export class GameGateway
       // Grace period for playing/waiting rooms — give player time to reconnect
       if (roomState.status === 'playing' || roomState.status === 'waiting') {
         await this.roomsService.markPlayerDisconnected(roomCode, userId);
-        this.server.to(roomCode).emit(WS_EVENTS.PLAYER_DISCONNECTED, {
-          playerId: userId,
-          roomCode,
-        });
+
+        if (roomState.status === 'waiting') {
+          // Lobby: broadcast LOBBY_STATE with player marked as disconnected so
+          // other players see an immediate visual disconnect indicator
+          const updatedState = await this.roomsService.getRoomState(roomCode);
+          if (updatedState) {
+            this.server.to(roomCode).emit(WS_EVENTS.LOBBY_STATE, updatedState);
+          }
+        } else {
+          // Arena: use PLAYER_DISCONNECTED event for in-match UI
+          this.server.to(roomCode).emit(WS_EVENTS.PLAYER_DISCONNECTED, {
+            playerId: userId,
+            roomCode,
+          });
+        }
 
         const timerKey = `${roomCode}:${userId}`;
         // Clear any existing grace timer for this player (e.g. multiple disconnects)
@@ -809,6 +820,133 @@ export class GameGateway
     }
   }
 
+  @SubscribeMessage(WS_EVENTS.PLAYER_ABANDON)
+  async handlePlayerAbandon(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { totalKeystrokes: number; errorKeystrokes: number },
+  ): Promise<void> {
+    try {
+      if (this.isSpectator(client.id)) return;
+      const conn = this.connections.get(client.id);
+      if (!conn) return;
+
+      const roomState = await this.roomsService.getRoomState(conn.roomCode);
+      if (!roomState || roomState.status !== 'playing') return; // silently ignore
+
+      await this.handlePlayerFinishInternal(
+        conn.roomCode,
+        conn.userId,
+        data?.totalKeystrokes ?? 0,
+        data?.errorKeystrokes ?? 0,
+      );
+    } catch (err: any) {
+      this.logger.error(`Error in player abandon: ${err.message}`);
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.LOBBY_KICK_PLAYER)
+  async handleKickPlayer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { code: string; targetUserId: string },
+  ): Promise<void> {
+    try {
+      if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+      }
+      if (!data?.targetUserId || typeof data.targetUserId !== 'string') {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Usuario objetivo inválido' });
+      }
+
+      const conn = this.connections.get(client.id);
+      if (!conn || conn.role !== 'player') return;
+
+      const roomState = await this.roomsService.getRoomState(data.code);
+      if (!roomState || roomState.status !== 'waiting') return;
+
+      // Verify caller is the host
+      if (roomState.hostId !== conn.userId) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Solo el host puede expulsar jugadores' });
+      }
+
+      // Find target socket and emit kick notification before removing
+      const targetSocketId = this.findSocketIdByUserId(data.targetUserId, data.code);
+      if (targetSocketId) {
+        this.server.to(targetSocketId).emit(WS_EVENTS.LOBBY_KICKED, {
+          message: 'El host te sacó de la partida',
+        });
+      }
+
+      const updatedState = await this.roomsService.leaveRoom(data.code, data.targetUserId);
+      if (updatedState) {
+        this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, updatedState);
+      }
+
+      // Remove target from connections
+      if (targetSocketId) {
+        this.connections.delete(targetSocketId);
+      }
+    } catch (err: any) {
+      this.logger.error(`Error in kick player: ${err.message}`);
+      client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.LOBBY_MOVE_TO_SPECTATOR)
+  async handleMoveToSpectator(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { code: string; targetUserId: string },
+  ): Promise<void> {
+    try {
+      if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+      }
+      if (!data?.targetUserId || typeof data.targetUserId !== 'string') {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Usuario objetivo inválido' });
+      }
+
+      const conn = this.connections.get(client.id);
+      if (!conn || conn.role !== 'player') return;
+
+      const roomState = await this.roomsService.getRoomState(data.code);
+      if (!roomState || roomState.status !== 'waiting') return;
+
+      // Verify caller is the host
+      if (roomState.hostId !== conn.userId) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Solo el host puede mover jugadores' });
+      }
+
+      // Get target user info for spectator slot
+      const targetUser = await this.usersService.findById(data.targetUserId);
+      const targetPlayer = roomState.players.find((p) => p.id === data.targetUserId);
+      if (!targetPlayer) return;
+
+      const updatedState = await this.roomsService.switchToSpectator(data.code, data.targetUserId, {
+        id: data.targetUserId,
+        displayName: targetUser?.displayName ?? targetPlayer.displayName,
+        avatarUrl: targetUser?.avatarUrl ?? null,
+        countryCode: targetUser?.countryCode ?? null,
+      });
+
+      // Update target's role in connections
+      const targetSocketId = this.findSocketIdByUserId(data.targetUserId, data.code);
+      if (targetSocketId) {
+        this.connections.set(targetSocketId, {
+          userId: data.targetUserId,
+          roomCode: data.code,
+          role: 'spectator',
+        });
+        this.server.to(targetSocketId).emit(WS_EVENTS.LOBBY_MOVED_TO_SPECTATOR, {
+          message: 'El host te cambió a espectador',
+        });
+      }
+
+      this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, updatedState);
+    } catch (err: any) {
+      this.logger.error(`Error in move to spectator: ${err.message}`);
+      client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
   private async handlePlayerFinishInternal(
     roomCode: string,
     userId: string,
@@ -989,6 +1127,15 @@ export class GameGateway
   private isSpectator(socketId: string): boolean {
     const conn = this.connections.get(socketId);
     return conn?.role === 'spectator';
+  }
+
+  private findSocketIdByUserId(userId: string, roomCode: string): string | undefined {
+    for (const [socketId, conn] of this.connections.entries()) {
+      if (conn.userId === userId && conn.roomCode === roomCode) {
+        return socketId;
+      }
+    }
+    return undefined;
   }
 
   private countUserConnections(userId: string): number {

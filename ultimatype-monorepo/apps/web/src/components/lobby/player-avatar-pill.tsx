@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { PlayerInfo, PLAYER_COLORS } from '@ultimatype-monorepo/shared';
 import { CountryFlag } from '../ui/country-flag';
 
@@ -5,39 +6,46 @@ interface PlayerAvatarPillProps {
   player: PlayerInfo;
   isHost: boolean;
   isLocal: boolean;
+  menuContent?: React.ReactNode;
 }
 
 export function PlayerAvatarPill({
   player,
   isHost,
   isLocal,
+  menuContent,
 }: PlayerAvatarPillProps) {
+  const [imgError, setImgError] = useState(false);
   const color = PLAYER_COLORS[player.colorIndex] ?? PLAYER_COLORS[0];
-  const initials = player.displayName
-    .split(' ')
-    .filter(Boolean)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || '?';
+  const initials =
+    player.displayName
+      .split(' ')
+      .filter(Boolean)
+      .map((w) => w[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || '?';
 
   return (
     <div
-      className="flex items-center gap-3 rounded-lg bg-surface-raised px-4 py-3"
+      className={`flex items-center gap-3 rounded-lg bg-surface-raised px-4 py-3 transition-opacity ${
+        player.disconnected ? 'opacity-50 grayscale' : ''
+      }`}
       data-testid="player-avatar-pill"
     >
       {/* Color indicator */}
       <div
         className="h-3 w-3 shrink-0 rounded-full"
-        style={{ backgroundColor: color }}
+        style={{ backgroundColor: player.disconnected ? '#64748B' : color }}
       />
 
       {/* Avatar */}
-      {player.avatarUrl ? (
+      {player.avatarUrl && !imgError ? (
         <img
           src={player.avatarUrl}
           alt={player.displayName}
           className="h-8 w-8 rounded-full object-cover"
+          onError={() => setImgError(true)}
         />
       ) : (
         <div
@@ -67,12 +75,25 @@ export function PlayerAvatarPill({
         )}
       </div>
 
-      {/* Ready state */}
+      {/* Ready state / disconnected status */}
       <span
-        className={`shrink-0 text-xs font-semibold ${player.isReady ? 'text-success' : 'text-text-muted'}`}
+        className={`shrink-0 text-xs font-semibold ${
+          player.disconnected
+            ? 'text-error'
+            : player.isReady
+              ? 'text-success'
+              : 'text-text-muted'
+        }`}
       >
-        {player.isReady ? 'Listo' : 'Esperando'}
+        {player.disconnected
+          ? 'Saliendo...'
+          : player.isReady
+            ? 'Listo'
+            : 'Esperando'}
       </span>
+
+      {/* Optional menu (own options or host controls) */}
+      {menuContent && <div className="shrink-0">{menuContent}</div>}
     </div>
   );
 }

@@ -8,6 +8,7 @@ interface LiveTextCanvasProps {
   onPositionChange: (position: number) => void;
   isActive?: boolean;
   disabled?: boolean;
+  caretColor?: string;
 }
 
 export function LiveTextCanvas({
@@ -15,6 +16,7 @@ export function LiveTextCanvas({
   onPositionChange,
   isActive = true,
   disabled = false,
+  caretColor = '#FF9B51',
 }: LiveTextCanvasProps) {
   const spanRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -192,10 +194,10 @@ export function LiveTextCanvas({
           style={{
             width: '3px',
             height: '1.2em',
-            backgroundColor: '#FF9B51',
+            backgroundColor: caretColor,
             borderRadius: '1px',
             transform: 'translate(0px, 0px)',
-            boxShadow: '0 0 6px rgba(255, 155, 81, 0.6)',
+            boxShadow: `0 0 6px ${caretColor}99`,
             zIndex: 10,
           }}
         />

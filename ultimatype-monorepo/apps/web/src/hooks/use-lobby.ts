@@ -11,6 +11,10 @@ import {
   RejoinStatePayload,
 } from '@ultimatype-monorepo/shared';
 
+interface LobbyNotificationPayload {
+  message: string;
+}
+
 export interface LobbyErrorPayload {
   message?: string;
   code?: string;
@@ -29,6 +33,8 @@ interface UseLobbyReturn {
   isSpectator: boolean;
   isSwitchingRole: boolean;
   autoSpectateMessage: string | null;
+  kickedMessage: string | null;
+  movedToSpectatorMessage: string | null;
   toggleReady: (ready: boolean) => void;
   selectLevel: (level: number) => void;
   setTimeLimit: (timeLimit: number) => void;
@@ -40,6 +46,10 @@ interface UseLobbyReturn {
   switchToSpectator: () => void;
   switchToPlayer: () => void;
   clearAutoSpectateMessage: () => void;
+  kickPlayer: (targetUserId: string) => void;
+  moveToSpectator: (targetUserId: string) => void;
+  clearKickedMessage: () => void;
+  clearMovedToSpectatorMessage: () => void;
 }
 
 function buildErrorMessage(data: LobbyErrorPayload): string {
@@ -58,6 +68,8 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
   const [isSpectator, setIsSpectator] = useState(spectateMode);
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
   const [autoSpectateMessage, setAutoSpectateMessage] = useState<string | null>(null);
+  const [kickedMessage, setKickedMessage] = useState<string | null>(null);
+  const [movedToSpectatorMessage, setMovedToSpectatorMessage] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const matchStartedRef = useRef(false);
   const pendingRejoinRef = useRef<string | null>(null);
@@ -152,6 +164,14 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
       setAutoSpectateMessage(data.message);
     });
 
+    s.on(WS_EVENTS.LOBBY_KICKED, (data: LobbyNotificationPayload) => {
+      setKickedMessage(data.message ?? 'El host te sacó de la partida');
+    });
+
+    s.on(WS_EVENTS.LOBBY_MOVED_TO_SPECTATOR, (data: LobbyNotificationPayload) => {
+      setMovedToSpectatorMessage(data.message ?? 'El host te cambió a espectador');
+    });
+
     if (s.connected) {
       setIsConnected(true);
       if (!hasJoinedRef.current) {
@@ -173,6 +193,8 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
       s.off(WS_EVENTS.LOBBY_ERROR);
       s.off(WS_EVENTS.MATCH_START);
       s.off(WS_EVENTS.LOBBY_AUTO_SPECTATE);
+      s.off(WS_EVENTS.LOBBY_KICKED);
+      s.off(WS_EVENTS.LOBBY_MOVED_TO_SPECTATOR);
       if (rejoinHandler) s.off(WS_EVENTS.REJOIN_STATE, rejoinHandler);
       hasJoinedRef.current = false;
       pendingRejoinRef.current = null;
@@ -243,6 +265,28 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
     setAutoSpectateMessage(null);
   }, []);
 
+  const kickPlayer = useCallback(
+    (targetUserId: string) => {
+      socket?.emit(WS_EVENTS.LOBBY_KICK_PLAYER, { code, targetUserId });
+    },
+    [socket, code],
+  );
+
+  const moveToSpectator = useCallback(
+    (targetUserId: string) => {
+      socket?.emit(WS_EVENTS.LOBBY_MOVE_TO_SPECTATOR, { code, targetUserId });
+    },
+    [socket, code],
+  );
+
+  const clearKickedMessage = useCallback(() => {
+    setKickedMessage(null);
+  }, []);
+
+  const clearMovedToSpectatorMessage = useCallback(() => {
+    setMovedToSpectatorMessage(null);
+  }, []);
+
   return {
     roomState,
     error,
@@ -252,6 +296,8 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
     isSpectator,
     isSwitchingRole,
     autoSpectateMessage,
+    kickedMessage,
+    movedToSpectatorMessage,
     toggleReady,
     selectLevel,
     setTimeLimit,
@@ -263,5 +309,9 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
     switchToSpectator,
     switchToPlayer,
     clearAutoSpectateMessage,
+    kickPlayer,
+    moveToSpectator,
+    clearKickedMessage,
+    clearMovedToSpectatorMessage,
   };
 }

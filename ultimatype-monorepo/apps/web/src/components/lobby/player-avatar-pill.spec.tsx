@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { PlayerAvatarPill } from './player-avatar-pill';
 import { PlayerInfo } from '@ultimatype-monorepo/shared';
@@ -10,6 +10,7 @@ describe('PlayerAvatarPill', () => {
     avatarUrl: null,
     colorIndex: 0,
     isReady: false,
+    disconnected: false,
   };
 
   it('renderiza el nombre del jugador', () => {
@@ -78,5 +79,38 @@ describe('PlayerAvatarPill', () => {
     );
     const pill = screen.getByTestId('player-avatar-pill');
     expect(pill.className).not.toContain('border');
+  });
+
+  it('muestra Saliendo y aplica grayscale cuando el jugador esta desconectado', () => {
+    const disconnectedPlayer = { ...basePlayer, disconnected: true };
+    render(
+      <PlayerAvatarPill player={disconnectedPlayer} isHost={false} isLocal={false} />,
+    );
+    expect(screen.getByText('Saliendo...')).toBeTruthy();
+    const pill = screen.getByTestId('player-avatar-pill');
+    expect(pill.className).toContain('grayscale');
+    expect(pill.className).toContain('opacity-50');
+  });
+
+  it('muestra iniciales como fallback cuando la imagen falla al cargar', () => {
+    const playerWithAvatar = { ...basePlayer, avatarUrl: 'https://example.com/broken.png' };
+    render(
+      <PlayerAvatarPill player={playerWithAvatar} isHost={false} isLocal={false} />,
+    );
+    const img = screen.getByAltText('Test Player');
+    fireEvent.error(img);
+    expect(screen.getByText('TP')).toBeTruthy();
+  });
+
+  it('renderiza menuContent cuando se proporciona', () => {
+    render(
+      <PlayerAvatarPill
+        player={basePlayer}
+        isHost={false}
+        isLocal={false}
+        menuContent={<button>Opciones</button>}
+      />,
+    );
+    expect(screen.getByText('Opciones')).toBeTruthy();
   });
 });

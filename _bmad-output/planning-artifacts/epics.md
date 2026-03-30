@@ -314,7 +314,47 @@ So that I can watch the match even if the 20-player limit is reached (up to 100 
 **Then** they are allocated to one of the 100 spectator slots in Redis
 **And** they cannot trigger match actions (like "Ready" or "Start").
 
-### Story 3.2: Live Spectator View
+### Story 3.2: Lobby, Race & Host Controls Fixes
+
+As a player or host,
+I want all known UI/UX bugs to be fixed and missing host controls to be available,
+So that the core multiplayer experience is polished before spectator features are added.
+
+**Acceptance Criteria:**
+
+**Given** any player in the lobby or race
+**When** they interact with the UI
+**Then** flags are correctly aligned in results, the waiting room title is fully visible, the "Listo" button has a pulse animation, the theme toggle icon is a monitor/PC, and the "..." menu is inside the player card.
+
+**Given** a player joining a room for the first time
+**When** they enter the lobby
+**Then** the avatar of other players loads correctly (not only from the second session onwards).
+
+**Given** a player who leaves the room
+**When** their connection drops
+**Then** the remaining players see an immediate visual indication (greyed out / "Disconnected") before the player is fully removed.
+
+**Given** a player in an active race
+**When** they want to exit early
+**Then** a visible exit button allows them to leave and displays their partial score at the moment they exited.
+
+**Given** a player in a race
+**When** they type and advance through the text
+**Then** their caret position is correctly broadcasted and remains in sync on all other clients throughout the entire race (no desync after a few words).
+
+**Given** a player assigned a color at room creation
+**When** the race starts
+**Then** their own caret displays that assigned color (not always orange).
+
+**Given** a host hovering over another player's card in the lobby
+**When** they click the "..." menu
+**Then** they see options: "Sacar jugador" and "Pasar a espectador"; upon selection, the affected player sees a notification message accordingly.
+
+**Given** the UI in light mode
+**When** any screen is displayed
+**Then** all unselected buttons have sufficient contrast against the background (background is slightly darker than pure white) across all views.
+
+### Story 3.3: Live Spectator View
 
 As a spectator,
 I want to see the live text canvas and all moving carets without participating myself,
@@ -327,7 +367,7 @@ So that I can enjoy the competition as an audience member.
 **Then** the spectator's client receives and renders the WebSocket caret broadcasts identically to players
 **But** their keyboard input is ignored and they don't have a personal caret.
 
-### Story 3.3: Spectator to Player Transition
+### Story 3.4: Spectator to Player Transition
 
 As a spectator in the post-match results screen,
 I want to click a button to join the next match as a player,

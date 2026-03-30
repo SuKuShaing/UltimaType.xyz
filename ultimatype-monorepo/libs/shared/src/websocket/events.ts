@@ -32,4 +32,12 @@ export const WS_EVENTS = {
   // Disconnection: Server → Client (broadcast)
   PLAYER_DISCONNECTED: 'player:disconnected',
   PLAYER_RECONNECTED: 'player:reconnected',
+  // Match abandon: Client → Server
+  PLAYER_ABANDON: 'player:abandon',
+  // Host controls: Client → Server
+  LOBBY_KICK_PLAYER: 'lobby:kick-player',
+  LOBBY_MOVE_TO_SPECTATOR: 'lobby:move-to-spectator',
+  // Host controls: Server → Client (direct to target)
+  LOBBY_KICKED: 'lobby:kicked',
+  LOBBY_MOVED_TO_SPECTATOR: 'lobby:moved-to-spectator',
 } as const;

@@ -7,6 +7,7 @@ const THROTTLE_MS = 50; // 20Hz
 
 export function useCaretSync(socket: Socket | null) {
   const lastEmitTimeRef = useRef(0);
+  const pendingEmitRef = useRef<{ position: number; timer: ReturnType<typeof setTimeout> } | null>(null);
 
   useEffect(() => {
     if (!socket) return;
@@ -22,12 +23,42 @@ export function useCaretSync(socket: Socket | null) {
     };
   }, [socket]);
 
+  // Cleanup trailing timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pendingEmitRef.current) {
+        clearTimeout(pendingEmitRef.current.timer);
+        pendingEmitRef.current = null;
+      }
+    };
+  }, []);
+
   const emitCaretUpdate = useCallback((position: number) => {
     if (!socket) return;
     const now = Date.now();
-    if (now - lastEmitTimeRef.current >= THROTTLE_MS) {
+    const elapsed = now - lastEmitTimeRef.current;
+
+    if (elapsed >= THROTTLE_MS) {
+      // Emit immediately (leading edge)
+      if (pendingEmitRef.current) {
+        clearTimeout(pendingEmitRef.current.timer);
+        pendingEmitRef.current = null;
+      }
       socket.emit(WS_EVENTS.CARET_UPDATE, { position, timestamp: now });
       lastEmitTimeRef.current = now;
+    } else {
+      // Schedule trailing emit so the last position is always sent
+      if (pendingEmitRef.current) {
+        clearTimeout(pendingEmitRef.current.timer);
+      }
+      const remaining = THROTTLE_MS - elapsed;
+      const timer = setTimeout(() => {
+        pendingEmitRef.current = null;
+        const emitTime = Date.now();
+        socket.emit(WS_EVENTS.CARET_UPDATE, { position, timestamp: emitTime });
+        lastEmitTimeRef.current = emitTime;
+      }, remaining);
+      pendingEmitRef.current = { position, timer };
     }
   }, [socket]);
 

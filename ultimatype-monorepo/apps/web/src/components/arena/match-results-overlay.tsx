@@ -81,18 +81,18 @@ export function MatchResultsOverlay({
                 >
                   <td className="py-1.5 pr-2">{r.rank}</td>
                   <td className="py-1.5 pr-2">
-                    <span className="mr-2 inline-block">
+                    <div className="flex items-center gap-1.5">
                       <span
-                        className="inline-block h-3 w-3 rounded-sm"
+                        className="inline-block h-3 w-3 shrink-0 rounded-sm"
                         style={{ backgroundColor: color }}
                       />
-                    </span>
-                    {r.countryCode && (
-                      <span className="mr-1.5 inline-block align-middle">
-                        <CountryFlag countryCode={r.countryCode} size={16} />
-                      </span>
-                    )}
-                    {r.displayName}
+                      {r.countryCode && (
+                        <span className="shrink-0">
+                          <CountryFlag countryCode={r.countryCode} size={16} />
+                        </span>
+                      )}
+                      {r.displayName}
+                    </div>
                   </td>
                   <td className="py-1.5 pr-2 text-right">{r.wpm}</td>
                   <td className="py-1.5 pr-2 text-right">{r.precision}%</td>

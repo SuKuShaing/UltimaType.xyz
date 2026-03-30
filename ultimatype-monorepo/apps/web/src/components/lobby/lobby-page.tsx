@@ -37,6 +37,8 @@ export function LobbyPage() {
     isSpectator,
     isSwitchingRole,
     autoSpectateMessage,
+    kickedMessage,
+    movedToSpectatorMessage,
     toggleReady,
     selectLevel,
     setTimeLimit,
@@ -46,6 +48,10 @@ export function LobbyPage() {
     switchToSpectator,
     switchToPlayer,
     clearAutoSpectateMessage,
+    kickPlayer,
+    moveToSpectator,
+    clearKickedMessage,
+    clearMovedToSpectatorMessage,
   } = useLobby(code, user?.id);
 
   const [copied, setCopied] = useState(false);
@@ -84,6 +90,23 @@ export function LobbyPage() {
       clearAutoSpectateMessage();
     }
   }, [autoSpectateMessage, addToast, clearAutoSpectateMessage]);
+
+  // Kicked toast + navigate home
+  useEffect(() => {
+    if (kickedMessage) {
+      addToast(kickedMessage, 'error');
+      clearKickedMessage();
+      setTimeout(() => navigate('/'), 2000);
+    }
+  }, [kickedMessage, addToast, clearKickedMessage, navigate]);
+
+  // Moved to spectator toast
+  useEffect(() => {
+    if (movedToSpectatorMessage) {
+      addToast(movedToSpectatorMessage, 'info');
+      clearMovedToSpectatorMessage();
+    }
+  }, [movedToSpectatorMessage, addToast, clearMovedToSpectatorMessage]);
 
   // Close menu on outside click
   useEffect(() => {
@@ -139,7 +162,7 @@ export function LobbyPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-surface-base px-4 py-8 font-sans text-text-main">
+    <div className="flex min-h-screen flex-col items-center bg-surface-base px-4 pt-16 pb-8 font-sans text-text-main">
       {/* Toast container */}
       {toasts.length > 0 && (
         <div className="fixed right-4 top-4 z-50 flex flex-col gap-2">
@@ -205,16 +228,13 @@ export function LobbyPage() {
           {roomState?.players.map((player) => {
             const isOwnCard = player.id === user?.id;
             const menuOpen = openMenuFor === `player-${player.id}`;
-            return (
-              <div key={player.id} className="relative flex items-center gap-2">
-                <div className="flex-1">
-                  <PlayerAvatarPill
-                    player={player}
-                    isHost={player.id === roomState.hostId}
-                    isLocal={isOwnCard}
-                  />
-                </div>
-                {isOwnCard && roomState.status === 'waiting' && (
+
+            const menuContent = (() => {
+              if (roomState.status !== 'waiting') return null;
+
+              // Own card: switch to spectator
+              if (isOwnCard) {
+                return (
                   <div className="relative">
                     <button
                       onClick={(e) => {
@@ -222,7 +242,7 @@ export function LobbyPage() {
                         setOpenMenuFor(menuOpen ? null : `player-${player.id}`);
                       }}
                       disabled={isSwitchingRole}
-                      className="rounded p-1 text-text-muted hover:bg-surface-raised hover:text-text-main disabled:opacity-40"
+                      className="rounded p-1 text-text-muted hover:bg-surface-base hover:text-text-main disabled:opacity-40"
                       title="Opciones"
                     >
                       {isSwitchingRole ? (
@@ -242,8 +262,60 @@ export function LobbyPage() {
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                );
+              }
+
+              // Host viewing another player: kick / move to spectator
+              if (isHost && !isOwnCard) {
+                return (
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuFor(menuOpen ? null : `player-${player.id}`);
+                      }}
+                      className="rounded p-1 text-text-muted hover:bg-surface-base hover:text-text-main"
+                      title="Opciones del host"
+                    >
+                      ···
+                    </button>
+                    {menuOpen && (
+                      <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-surface-raised py-1 shadow-lg">
+                        <button
+                          onClick={() => {
+                            setOpenMenuFor(null);
+                            kickPlayer(player.id);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-error hover:bg-surface-base"
+                        >
+                          Sacar jugador
+                        </button>
+                        <button
+                          onClick={() => {
+                            setOpenMenuFor(null);
+                            moveToSpectator(player.id);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-surface-base"
+                        >
+                          Pasar a espectador
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return null;
+            })();
+
+            return (
+              <PlayerAvatarPill
+                key={player.id}
+                player={player}
+                isHost={player.id === roomState.hostId}
+                isLocal={isOwnCard}
+                menuContent={menuContent}
+              />
             );
           })}
         </div>
@@ -426,7 +498,7 @@ export function LobbyPage() {
             className={`flex-1 rounded-lg px-4 py-3 text-sm font-bold transition-colors ${
               currentPlayer.isReady
                 ? 'bg-success/20 text-success'
-                : 'bg-primary text-surface-base'
+                : 'animate-pulse bg-primary text-surface-base'
             }`}
           >
             {currentPlayer.isReady ? 'Listo ✓' : 'Listo'}
