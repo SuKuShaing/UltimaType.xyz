@@ -57,6 +57,11 @@ export function LobbyPage() {
   const [copied, setCopied] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    action: 'kick' | 'moveToSpectator';
+    playerId: string;
+    playerName: string;
+  } | null>(null);
   const hasConnectedRef = useRef(false);
 
   const addToast = useCallback((message: string, type: Toast['type'] = 'info') => {
@@ -93,11 +98,11 @@ export function LobbyPage() {
 
   // Kicked toast + navigate home
   useEffect(() => {
-    if (kickedMessage) {
-      addToast(kickedMessage, 'error');
-      clearKickedMessage();
-      setTimeout(() => navigate('/'), 2000);
-    }
+    if (!kickedMessage) return;
+    addToast(kickedMessage, 'error');
+    clearKickedMessage();
+    const tid = setTimeout(() => navigate('/'), 2000);
+    return () => clearTimeout(tid);
   }, [kickedMessage, addToast, clearKickedMessage, navigate]);
 
   // Moved to spectator toast
@@ -284,7 +289,7 @@ export function LobbyPage() {
                         <button
                           onClick={() => {
                             setOpenMenuFor(null);
-                            kickPlayer(player.id);
+                            setConfirmModal({ action: 'kick', playerId: player.id, playerName: player.displayName });
                           }}
                           className="w-full px-4 py-2 text-left text-sm text-error hover:bg-surface-base"
                         >
@@ -293,7 +298,7 @@ export function LobbyPage() {
                         <button
                           onClick={() => {
                             setOpenMenuFor(null);
-                            moveToSpectator(player.id);
+                            setConfirmModal({ action: 'moveToSpectator', playerId: player.id, playerName: player.displayName });
                           }}
                           className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-surface-base"
                         >
@@ -519,6 +524,53 @@ export function LobbyPage() {
           </button>
         )}
       </div>
+
+      {/* Host action confirmation modal */}
+      {confirmModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setConfirmModal(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-surface-base px-8 py-8 text-center shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-2 text-lg font-bold text-text-main">
+              {confirmModal.action === 'kick' ? '¿Sacar jugador?' : '¿Pasar a espectador?'}
+            </p>
+            <p className="mb-6 text-sm text-text-muted">
+              {confirmModal.action === 'kick'
+                ? `${confirmModal.playerName} será expulsado de la sala.`
+                : `${confirmModal.playerName} pasará a ser espectador.`}
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="rounded-lg bg-surface-raised px-6 py-2 text-sm font-medium text-text-muted transition-colors hover:text-text-main"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirmModal.action === 'kick') {
+                    kickPlayer(confirmModal.playerId);
+                  } else {
+                    moveToSpectator(confirmModal.playerId);
+                  }
+                  setConfirmModal(null);
+                }}
+                className={`rounded-lg px-6 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 ${
+                  confirmModal.action === 'kick' ? 'bg-error' : 'bg-primary'
+                }`}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
