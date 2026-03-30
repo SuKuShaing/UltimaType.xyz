@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of 3-2-lobby-race-fixes-and-host-controls (2026-03-30)
+
+- **Stale socket en closure del trailing timer de useCaretSync** — `use-caret-sync.ts`. Si el socket cambia (reconexión) mientras hay un timer pendiente (≤50ms), el emit va al socket antiguo. Socket.io maneja sockets desconectados gracefully; impacto: un frame de caret congelado durante reconexión. Resolver si se implementa reconexión mid-arena.
+
 ## Deferred from: code review of 3-1-spectator-mode-room-capacity-management (2026-03-30)
 
 - **AC2: Mensaje de error cuando ambos slots llenos es 'Sala llena de espectadores' en lugar de 'Sala llena' per spec** — `game.gateway.ts / rooms.service.ts`. Cuando la sala está llena de jugadores Y espectadores, el error que recibe el cliente es 'Sala llena de espectadores' pero AC2 especifica solo 'Sala llena'. Mensaje más informativo, bajo impacto; ajustar si se quiere conformidad estricta con el spec.

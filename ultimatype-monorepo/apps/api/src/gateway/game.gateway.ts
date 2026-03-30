@@ -833,6 +833,9 @@ export class GameGateway
       const roomState = await this.roomsService.getRoomState(conn.roomCode);
       if (!roomState || roomState.status !== 'playing') return; // silently ignore
 
+      const alreadyFinished = await this.matchStateService.isPlayerFinished(conn.roomCode, conn.userId);
+      if (alreadyFinished) return;
+
       await this.handlePlayerFinishInternal(
         conn.roomCode,
         conn.userId,
@@ -859,6 +862,7 @@ export class GameGateway
 
       const conn = this.connections.get(client.id);
       if (!conn || conn.role !== 'player') return;
+      if (conn.roomCode !== data.code) return;
 
       const roomState = await this.roomsService.getRoomState(data.code);
       if (!roomState || roomState.status !== 'waiting') return;
@@ -868,22 +872,22 @@ export class GameGateway
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Solo el host puede expulsar jugadores' });
       }
 
-      // Find target socket and emit kick notification before removing
-      const targetSocketId = this.findSocketIdByUserId(data.targetUserId, data.code);
-      if (targetSocketId) {
-        this.server.to(targetSocketId).emit(WS_EVENTS.LOBBY_KICKED, {
-          message: 'El host te sacó de la partida',
-        });
+      // Prevent host from kicking themselves
+      if (data.targetUserId === conn.userId) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'No puedes expulsarte a ti mismo' });
+      }
+
+      // Notify and remove ALL sockets of the target user in this room (handles multi-tab)
+      const targetSocketIds = this.findAllSocketIdsByUserId(data.targetUserId, data.code);
+      for (const sid of targetSocketIds) {
+        this.server.to(sid).emit(WS_EVENTS.LOBBY_KICKED, { message: 'El host te sacó de la partida' });
+        this.server.in(sid).socketsLeave(data.code);
+        this.connections.delete(sid);
       }
 
       const updatedState = await this.roomsService.leaveRoom(data.code, data.targetUserId);
       if (updatedState) {
         this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, updatedState);
-      }
-
-      // Remove target from connections
-      if (targetSocketId) {
-        this.connections.delete(targetSocketId);
       }
     } catch (err: any) {
       this.logger.error(`Error in kick player: ${err.message}`);
@@ -906,6 +910,7 @@ export class GameGateway
 
       const conn = this.connections.get(client.id);
       if (!conn || conn.role !== 'player') return;
+      if (conn.roomCode !== data.code) return;
 
       const roomState = await this.roomsService.getRoomState(data.code);
       if (!roomState || roomState.status !== 'waiting') return;
@@ -1136,6 +1141,16 @@ export class GameGateway
       }
     }
     return undefined;
+  }
+
+  private findAllSocketIdsByUserId(userId: string, roomCode: string): string[] {
+    const socketIds: string[] = [];
+    for (const [socketId, conn] of this.connections.entries()) {
+      if (conn.userId === userId && conn.roomCode === roomCode) {
+        socketIds.push(socketId);
+      }
+    }
+    return socketIds;
   }
 
   private countUserConnections(userId: string): number {

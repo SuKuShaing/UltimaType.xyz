@@ -1,6 +1,6 @@
 # Story 3.2: Lobby, Race & Host Controls Fixes
 
-Status: review
+Status: done
 
 ## Story
 
@@ -470,3 +470,18 @@ Claude Sonnet 4.6
 - `apps/web/src/components/arena/arena-page.tsx`
 - `apps/api/src/gateway/game.gateway.ts`
 - `apps/api/src/gateway/game.gateway.spec.ts`
+
+### Review Findings
+
+- [x] [Review][Patch] Confirmación antes de expulsar/mover a espectador — modal de confirmación agregado para kick y move-to-spectator [lobby-page.tsx]
+- [x] [Review][Patch] Authorization bypass: sin validación `conn.roomCode === data.code` en handleKickPlayer y handleMoveToSpectator [game.gateway.ts:~862,~908]
+- [x] [Review][Patch] Socket del jugador expulsado permanece en canal Socket.IO — `socketsLeave` agregado [game.gateway.ts:~887]
+- [x] [Review][Patch] El host puede expulsarse a sí mismo — guard `targetUserId !== conn.userId` agregado [game.gateway.ts:~862]
+- [x] [Review][Patch] `setTimeout` de navegación post-kick sin cleanup — cleanup agregado [lobby-page.tsx:~95]
+- [x] [Review][Patch] Overlay de abandono no prevenía MatchResultsOverlay — `setAbandonedStats(null)` en MATCH_END handler [arena-page.tsx:~97]
+- [x] [Review][Patch] `handlePlayerAbandon` no verificaba `isPlayerFinished` — check agregado antes de delegar [game.gateway.ts:~831]
+- [x] [Review][Patch] `handleConfirmAbandon` emitía sin verificar `socket.connected` — guard agregado [arena-page.tsx:~173]
+- [x] [Review][Patch] Al kick con múltiples sockets del mismo usuario: ahora `findAllSocketIdsByUserId` notifica y limpia todos [game.gateway.ts:~872]
+- [x] [Review][Patch] Race kick+start: ya manejado por re-fetch existente en línea 493 + guard `status !== 'waiting'` en kick handler — no requirió cambios
+
+- [x] [Review][Defer] Stale socket en trailing timer de `useCaretSync` — ventana de 50ms, impacto de un frame de caret, solo en reconexión [use-caret-sync.ts:~55] — deferred, benign

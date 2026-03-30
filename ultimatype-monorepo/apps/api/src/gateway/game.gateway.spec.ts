@@ -55,6 +55,7 @@ describe('GameGateway', () => {
   };
   let mockServer: {
     to: ReturnType<typeof vi.fn>;
+    in: ReturnType<typeof vi.fn>;
     emit: ReturnType<typeof vi.fn>;
     use: ReturnType<typeof vi.fn>;
     opts: Record<string, any>;
@@ -145,6 +146,7 @@ describe('GameGateway', () => {
 
     mockServer = {
       to: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnValue({ socketsLeave: vi.fn() }),
       emit: vi.fn(),
       use: vi.fn(),
       opts: {},

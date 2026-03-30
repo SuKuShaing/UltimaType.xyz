@@ -95,6 +95,7 @@ export function ArenaPage({
   // Listen for MATCH_END events
   useEffect(() => {
     const handleMatchEnd = (payload: MatchEndPayload) => {
+      setAbandonedStats(null);
       arenaStore
         .getState()
         .setMatchFinished(payload.results, payload.reason);
@@ -169,7 +170,8 @@ export function ArenaPage({
         ? Math.round(((totalKeystrokes - errorKeystrokes) / totalKeystrokes) * 100)
         : 100;
 
-    // Notify server
+    // Notify server — only if connected; skip if reconnecting to avoid lost event
+    if (!socket.connected) return;
     socket.emit(WS_EVENTS.PLAYER_ABANDON, { totalKeystrokes, errorKeystrokes });
 
     // Show partial results
