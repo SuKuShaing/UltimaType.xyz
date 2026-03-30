@@ -9,6 +9,7 @@ import { FocusWPMCounter } from './focus-wpm-counter';
 import { MatchResultsOverlay } from './match-results-overlay';
 import { WaitingForOthersOverlay } from './waiting-for-others-overlay';
 import { ReconnectingOverlay } from './reconnecting-overlay';
+import { SpectatorLeaderboard } from './spectator-leaderboard';
 import {
   MatchStartPayload,
   MatchEndPayload,
@@ -181,21 +182,24 @@ export function ArenaPage({
   const isPlaying = matchStatus === 'playing';
 
   // Toggle body class for NavBar Focus Fade (single CSS variable controls all fade opacity)
+  // Spectators never get Focus Fade — they see full UI + leaderboard
   useEffect(() => {
-    if (isPlaying) {
+    if (isPlaying && !isSpectator) {
       document.body.classList.add('arena-active');
     } else {
       document.body.classList.remove('arena-active');
     }
     return () => document.body.classList.remove('arena-active');
-  }, [isPlaying]);
+  }, [isPlaying, isSpectator]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base px-4 py-8 font-sans text-text-main">
-      <FocusWPMCounter matchStatus={matchStatus} />
+      {!isSpectator && <FocusWPMCounter matchStatus={matchStatus} />}
 
-      {/* Perimeter UI — fades via --focus-fade-opacity during race */}
-      <div className={`w-full max-w-3xl ${isPlaying ? 'focus-faded' : ''}`}>
+      {/* Perimeter UI — fades via --focus-fade-opacity during race (players only, not spectators) */}
+      <div className={`w-full max-w-3xl ${isPlaying && !isSpectator ? 'focus-faded' : ''}`}>
+        {/* Live leaderboard for spectators during race */}
+        {isSpectator && matchStatus === 'playing' && <SpectatorLeaderboard />}
         {/* Room header / player list area — populated by future stories */}
       </div>
 
