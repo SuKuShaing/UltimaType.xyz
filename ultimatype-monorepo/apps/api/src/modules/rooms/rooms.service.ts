@@ -7,6 +7,7 @@ import {
   RoomState,
   MAX_PLAYERS,
   isValidLevel,
+  isValidTimeLimit,
 } from '@ultimatype-monorepo/shared';
 
 const generateRoomCode = customAlphabet('ABCDEFGHJKMNPQRSTUVWXYZ23456789', 6);
@@ -18,6 +19,7 @@ interface UserInfo {
   id: string;
   displayName: string;
   avatarUrl: string | null;
+  countryCode: string | null;
 }
 
 // Lua script: atomic join with capacity check, color assignment, and TTL refresh
@@ -30,6 +32,7 @@ local avatarUrl = ARGV[3]
 local maxPlayers = tonumber(ARGV[4])
 local ttl = tonumber(ARGV[5])
 local joinedAt = ARGV[6]
+local countryCode = ARGV[7]
 
 local roomCode = redis.call('HGET', roomKey, 'code')
 if not roomCode then
@@ -46,9 +49,10 @@ if existing then
   return 'ALREADY_IN_ROOM'
 end
 
+local roomMaxPlayers = tonumber(redis.call('HGET', roomKey, 'maxPlayers')) or maxPlayers
 local count = redis.call('HLEN', playersKey)
-if count >= maxPlayers then
-  return redis.error_reply('La sala esta llena (maximo 20 jugadores)')
+if count >= roomMaxPlayers then
+  return redis.error_reply('Sala llena')
 end
 
 local allPlayers = redis.call('HVALS', playersKey)
@@ -69,6 +73,7 @@ local player = cjson.encode({
   id = userId,
   displayName = displayName,
   avatarUrl = avatarUrl ~= '' and avatarUrl or cjson.null,
+  countryCode = countryCode ~= '' and countryCode or cjson.null,
   colorIndex = colorIndex,
   isReady = false,
   joinedAt = joinedAt,
@@ -167,12 +172,14 @@ export class RoomsService {
       status: 'waiting',
       createdAt: now,
       maxPlayers: String(MAX_PLAYERS),
+      timeLimit: '0',
     });
 
     const player: PlayerInfo = {
       id: hostInfo.id,
       displayName: hostInfo.displayName,
       avatarUrl: hostInfo.avatarUrl,
+      countryCode: hostInfo.countryCode,
       colorIndex: 0,
       isReady: false,
       joinedAt: now,
@@ -189,6 +196,7 @@ export class RoomsService {
       status: 'waiting',
       players: [player],
       maxPlayers: MAX_PLAYERS,
+      timeLimit: 0,
     };
   }
 
@@ -212,6 +220,7 @@ export class RoomsService {
       String(MAX_PLAYERS),
       String(ROOM_TTL),
       now,
+      userInfo.countryCode ?? '',
     ) as string;
 
     if (result === 'ALREADY_IN_ROOM') {
@@ -262,6 +271,7 @@ export class RoomsService {
       status: roomData.status as RoomState['status'],
       players,
       maxPlayers: Number(roomData.maxPlayers),
+      timeLimit: Number(roomData.timeLimit ?? 0),
     };
   }
 
@@ -289,6 +299,60 @@ export class RoomsService {
     await this.refreshTTL(code);
   }
 
+  async setMaxPlayers(
+    code: string,
+    userId: string,
+    maxPlayers: number,
+  ): Promise<void> {
+    const roomKey = `room:${code}`;
+    const roomData = await this.redis.hgetall(roomKey);
+
+    if (!roomData.code) {
+      throw new Error('Sala no encontrada');
+    }
+
+    if (roomData.hostId !== userId) {
+      throw new Error('Solo el host puede cambiar el máximo de jugadores');
+    }
+
+    if (!Number.isInteger(maxPlayers) || maxPlayers < 2 || maxPlayers > 20) {
+      throw new Error('Máximo de jugadores inválido (2-20)');
+    }
+
+    await this.redis.hset(roomKey, 'maxPlayers', String(maxPlayers));
+    await this.refreshTTL(code);
+  }
+
+  async setTimeLimit(
+    code: string,
+    userId: string,
+    timeLimit: number,
+  ): Promise<void> {
+    const roomKey = `room:${code}`;
+    const roomData = await this.redis.hgetall(roomKey);
+
+    if (!roomData.code) {
+      throw new Error('Sala no encontrada');
+    }
+
+    if (roomData.hostId !== userId) {
+      throw new Error('Solo el host puede cambiar el límite de tiempo');
+    }
+
+    if (!isValidTimeLimit(timeLimit)) {
+      throw new Error('Límite de tiempo inválido');
+    }
+
+    await this.redis.hset(roomKey, 'timeLimit', String(timeLimit));
+    await this.refreshTTL(code);
+  }
+
+  async getTimeLimit(code: string): Promise<number> {
+    const roomKey = `room:${code}`;
+    const value = await this.redis.hget(roomKey, 'timeLimit');
+    return Number(value ?? 0);
+  }
+
   async setReady(
     code: string,
     userId: string,
@@ -311,7 +375,7 @@ export class RoomsService {
     const playersKey = `room:${code}:players`;
     const players = await this.getPlayers(playersKey);
 
-    if (players.length < 2) return false;
+    if (players.length < 1) return false;
     return players.every((p) => p.isReady);
   }
 

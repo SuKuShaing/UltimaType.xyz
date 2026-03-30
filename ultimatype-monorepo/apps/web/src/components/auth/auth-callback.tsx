@@ -9,7 +9,13 @@ export function AuthCallback() {
 
   useEffect(() => {
     handleCallback(searchParams).then((success) => {
-      navigate(success ? '/' : '/login', { replace: true });
+      if (success) {
+        const redirect = sessionStorage.getItem('redirectAfterLogin') || '/';
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirect, { replace: true });
+      } else {
+        navigate('/login', { replace: true });
+      }
     });
   }, [searchParams, handleCallback, navigate]);
 

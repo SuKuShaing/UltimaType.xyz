@@ -12,24 +12,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!isFetchingProfile && !isAuthenticated) {
+      sessionStorage.setItem(
+        'redirectAfterLogin',
+        window.location.pathname + window.location.search,
+      );
       navigate('/');
     }
   }, [isFetchingProfile, isAuthenticated, navigate]);
 
   if (isFetchingProfile || !isAuthenticated) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: "'Space Grotesk', sans-serif",
-          backgroundColor: '#0F1F29',
-          color: '#F8F9FA',
-        }}
-      >
-        <span style={{ opacity: 0.5, fontSize: '2rem' }}>_</span>
+      <div className="flex min-h-screen items-center justify-center bg-surface-base font-sans text-text-main">
+        <span className="text-2xl opacity-50">_</span>
       </div>
     );
   }

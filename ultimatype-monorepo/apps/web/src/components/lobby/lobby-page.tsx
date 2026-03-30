@@ -4,7 +4,17 @@ import { useLobby } from '../../hooks/use-lobby';
 import { useAuth } from '../../hooks/use-auth';
 import { PlayerAvatarPill } from './player-avatar-pill';
 import { ArenaPage } from '../arena/arena-page';
-import { DIFFICULTY_LEVELS } from '@ultimatype-monorepo/shared';
+import { DIFFICULTY_LEVELS, TIME_LIMIT_OPTIONS } from '@ultimatype-monorepo/shared';
+
+const TIME_LIMIT_LABELS: Record<number, string> = {
+  0: 'Sin límite',
+  30_000: '30s',
+  60_000: '1 min',
+  120_000: '2 min',
+  180_000: '3 min',
+  240_000: '4 min',
+  300_000: '5 min',
+};
 
 export function LobbyPage() {
   const { code = '' } = useParams<{ code: string }>();
@@ -18,8 +28,11 @@ export function LobbyPage() {
     matchData,
     toggleReady,
     selectLevel,
+    setTimeLimit,
+    setMaxPlayers,
     startMatch,
     leaveRoom,
+    resetMatch,
   } = useLobby(code);
 
   const [copied, setCopied] = useState(false);
@@ -28,7 +41,7 @@ export function LobbyPage() {
   const currentPlayer = roomState?.players.find((p) => p.id === user?.id);
   const otherPlayers = roomState?.players.filter((p) => p.id !== user?.id) ?? [];
   const allOthersReady =
-    roomState && roomState.players.length >= 2 && otherPlayers.every((p) => p.isReady);
+    roomState && otherPlayers.every((p) => p.isReady);
   const roomLink = `${window.location.origin}/room/${code}`;
 
   const handleCopyLink = async () => {
@@ -50,7 +63,13 @@ export function LobbyPage() {
 
   // Transition to arena when match starts
   if (matchStarted && matchData && user) {
-    return <ArenaPage matchData={matchData} localUserId={user.id} />;
+    return (
+      <ArenaPage
+        matchData={matchData}
+        localUserId={user.id}
+        onReturnToLobby={resetMatch}
+      />
+    );
   }
 
   return (
@@ -119,13 +138,61 @@ export function LobbyPage() {
         </div>
       )}
 
-      {/* Non-host: show selected level */}
+      {/* Time limit selector (host only) */}
+      {isHost && roomState && (
+        <div className="mb-6 w-full max-w-md">
+          <h2 className="mb-3 text-sm font-semibold text-text-muted">
+            Límite de Tiempo
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {TIME_LIMIT_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setTimeLimit(opt)}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  roomState.timeLimit === opt
+                    ? 'bg-primary text-surface-base'
+                    : 'bg-surface-raised text-text-muted hover:text-text-main'
+                }`}
+              >
+                {TIME_LIMIT_LABELS[opt] ?? `${opt / 1000}s`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Max players selector (host only) */}
+      {isHost && roomState && (
+        <div className="mb-6 w-full max-w-md">
+          <h2 className="mb-3 text-sm font-semibold text-text-muted">
+            Máximo de Jugadores
+          </h2>
+          <select
+            value={roomState.maxPlayers}
+            onChange={(e) => setMaxPlayers(Number(e.target.value))}
+            className="w-full rounded-lg bg-surface-raised px-3 py-2 text-sm font-medium text-text-main"
+          >
+            {Array.from({ length: 19 }, (_, i) => i + 2).map((n) => (
+              <option key={n} value={n}>
+                {n} jugadores
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Non-host: show selected level and time limit */}
       {!isHost && roomState && (
         <div className="mb-6 text-center">
           <span className="text-sm text-text-muted">Nivel: </span>
           <span className="font-semibold text-primary">
             {DIFFICULTY_LEVELS.find((dl) => dl.level === roomState.level)?.name ??
               roomState.level}
+          </span>
+          <span className="ml-4 text-sm text-text-muted">Tiempo: </span>
+          <span className="font-semibold text-primary">
+            {TIME_LIMIT_LABELS[roomState.timeLimit] ?? `${roomState.timeLimit / 1000}s`}
           </span>
         </div>
       )}

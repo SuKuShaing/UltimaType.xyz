@@ -309,6 +309,7 @@ describe('RoomsService', () => {
           },
         ],
         maxPlayers: 20,
+        timeLimit: 0,
       });
     });
   });
@@ -562,7 +563,7 @@ describe('RoomsService', () => {
       expect(result).toBe(true);
     });
 
-    it('retorna false si hay menos de 2 jugadores', async () => {
+    it('retorna true si hay 1 jugador listo (solo play)', async () => {
       mockRedis.hgetall.mockResolvedValue({
         'user-1': JSON.stringify({
           id: 'user-1',
@@ -573,6 +574,13 @@ describe('RoomsService', () => {
           joinedAt: '2026-03-27T00:00:00.000Z',
         }),
       });
+
+      const result = await service.canStart('ABC123');
+      expect(result).toBe(true);
+    });
+
+    it('retorna false si no hay jugadores', async () => {
+      mockRedis.hgetall.mockResolvedValue({});
 
       const result = await service.canStart('ABC123');
       expect(result).toBe(false);

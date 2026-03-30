@@ -12,6 +12,7 @@ export interface PlayerResult {
   playerId: string;
   displayName: string;
   colorIndex: number;
+  countryCode: string | null;
   rank: number;
   wpm: number;
   precision: number;

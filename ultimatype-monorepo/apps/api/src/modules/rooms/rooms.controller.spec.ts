@@ -19,6 +19,7 @@ describe('RoomsController', () => {
     displayName: 'Test User',
     avatarUrl: 'https://example.com/avatar.png',
     email: 'test@example.com',
+    countryCode: 'CL',
   };
 
   beforeEach(() => {
@@ -55,6 +56,7 @@ describe('RoomsController', () => {
         id: 'user-1',
         displayName: 'Test User',
         avatarUrl: 'https://example.com/avatar.png',
+        countryCode: 'CL',
       });
     });
 
@@ -76,6 +78,7 @@ describe('RoomsController', () => {
         id: 'user-1',
         displayName: 'JWT Name',
         avatarUrl: null,
+        countryCode: null,
       });
     });
   });

@@ -1,10 +1,12 @@
 import { PlayerResult, PLAYER_COLORS } from '@ultimatype-monorepo/shared';
+import { CountryFlag } from '../ui/country-flag';
 
 interface MatchResultsOverlayProps {
   results: PlayerResult[];
   localUserId: string;
   reason: 'all_finished' | 'timeout';
   onRematch: () => void;
+  onExit: () => void;
 }
 
 export function MatchResultsOverlay({
@@ -12,6 +14,7 @@ export function MatchResultsOverlay({
   localUserId,
   reason,
   onRematch,
+  onExit,
 }: MatchResultsOverlayProps) {
   const localResult = results.find((r) => r.playerId === localUserId);
 
@@ -84,6 +87,11 @@ export function MatchResultsOverlay({
                         style={{ backgroundColor: color }}
                       />
                     </span>
+                    {r.countryCode && (
+                      <span className="mr-1.5 inline-block align-middle">
+                        <CountryFlag countryCode={r.countryCode} size={16} />
+                      </span>
+                    )}
                     {r.displayName}
                   </td>
                   <td className="py-1.5 pr-2 text-right">{r.wpm}</td>
@@ -96,8 +104,15 @@ export function MatchResultsOverlay({
           </tbody>
         </table>
 
-        {/* Rematch button */}
-        <div className="text-center">
+        {/* Action buttons */}
+        <div className="flex items-center justify-center gap-4">
+          <button
+            type="button"
+            onClick={onExit}
+            className="rounded-lg bg-surface-raised px-6 py-3 text-lg font-medium text-text-muted transition-colors hover:text-text-main"
+          >
+            Salir
+          </button>
           <button
             type="button"
             onClick={onRematch}

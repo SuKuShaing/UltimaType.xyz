@@ -1,6 +1,6 @@
 # Story 2.8: Functional Validation Fixes
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -328,51 +328,130 @@ Created during Epic 2 retrospective functional validation phase (2026-03-28/29).
 
 ## Dev Checklist
 
-- [ ] AC1: Create local player caret with distinct visual style
-- [ ] AC1: Position caret at current local position using span refs
-- [ ] AC1: Verify caret follows line wrapping
-- [ ] AC2: Replace getCharX with getCharPosition using getBoundingClientRect
-- [ ] AC2: Add Y axis tracking to MultiplayerCaret
-- [ ] AC2: Fix disconnectedLabelRef positioning
-- [ ] AC2: Fix spring initialization jump
-- [ ] AC2: Visual testing with multi-line texts
-- [ ] AC3: Save intended URL in sessionStorage from ProtectedRoute
-- [ ] AC3: Read and consume saved URL in AuthCallback
-- [ ] AC4: Already done — verify tests pass
-- [ ] AC5: Add room code input + "Unirse" button to home screen
-- [ ] AC5: Validate code format before navigating
-- [ ] AC6: Change canStart to allow 1 player
-- [ ] AC6: Update error message
-- [ ] AC6: Update related tests
-- [ ] AC7: Add TIME_LIMIT_OPTIONS constant and SET_TIME_LIMIT event to shared lib
-- [ ] AC7: Add timeLimit field to room state in Redis
-- [ ] AC7: Add SET_TIME_LIMIT WebSocket handler (host only, lobby only)
-- [ ] AC7: Update startMatchTimeout to use room's timeLimit
-- [ ] AC7: Add time limit selector UI in lobby
-- [ ] AC7: Verify timed matches end correctly with custom time limits
-- [ ] AC8: Adjust FocusWPMCounter position and opacity
-- [ ] AC9: Debug and fix rematch button
-- [ ] AC10: Add "Salir" button to results overlay
-- [ ] AC11: Add maxPlayers field to room state in Redis
-- [ ] AC11: Add SET_MAX_PLAYERS WebSocket handler (host only, lobby only)
-- [ ] AC11: Update joinRoom to validate against maxPlayers
-- [ ] AC11: Add max players selector UI in lobby
-- [ ] AC12: Install `country-flag-icons` npm dependency
-- [ ] AC12: Add `countryCode` to `PlayerResult` DTO in shared lib
-- [ ] AC12: Include `countryCode` in backend LOBBY_STATE and MATCH_END payloads
-- [ ] AC12: Create `country-flag.tsx` wrapper component
-- [ ] AC12: Render country flag in match-results-overlay player rows
-- [ ] AC12: Render country flag in lobby player list
-- [ ] AC13a: Restructure `styles.css` — light default + `.dark` override
-- [ ] AC13a: Add anti-FOUC script in `index.html`
-- [ ] AC13a: Create `use-theme.ts` hook + ThemeProvider context
-- [ ] AC13a: Wrap app with ThemeProvider in `main.tsx`
-- [ ] AC13b: Create `theme-toggle.tsx` component (Light/Dark/System cycle)
-- [ ] AC13c: Create `nav-bar.tsx` with logo, theme toggle, profile link
-- [ ] AC13c: Integrate nav bar in authenticated layout
-- [ ] AC13c: Nav bar participates in Focus Fade (20% opacity) during arena
-- [ ] AC13c: Nav bar hidden on login/callback pages
-- [ ] AC13d: Migrate `app.tsx` inline styles to Tailwind classes
-- [ ] AC13d: Migrate `profile-page.tsx` inline styles to Tailwind classes
-- [ ] AC13d: Verify all pages respect selected theme consistently
-- [ ] All existing tests pass (150 API + 77 web)
+- [x] AC1: Create local player caret with distinct visual style
+- [x] AC1: Position caret at current local position using span refs
+- [x] AC1: Verify caret follows line wrapping
+- [x] AC2: Replace getCharX with getCharPosition using getBoundingClientRect
+- [x] AC2: Add Y axis tracking to MultiplayerCaret
+- [x] AC2: Fix disconnectedLabelRef positioning
+- [x] AC2: Fix spring initialization jump
+- [x] AC2: Visual testing with multi-line texts
+- [x] AC3: Save intended URL in sessionStorage from ProtectedRoute
+- [x] AC3: Read and consume saved URL in AuthCallback
+- [x] AC4: Already done — verify tests pass
+- [x] AC5: Add room code input + "Unirse" button to home screen
+- [x] AC5: Validate code format before navigating
+- [x] AC6: Change canStart to allow 1 player
+- [x] AC6: Update error message
+- [x] AC6: Update related tests
+- [x] AC7: Add TIME_LIMIT_OPTIONS constant and SET_TIME_LIMIT event to shared lib
+- [x] AC7: Add timeLimit field to room state in Redis
+- [x] AC7: Add SET_TIME_LIMIT WebSocket handler (host only, lobby only)
+- [x] AC7: Update startMatchTimeout to use room's timeLimit
+- [x] AC7: Add time limit selector UI in lobby
+- [x] AC7: Verify timed matches end correctly with custom time limits
+- [x] AC8: Adjust FocusWPMCounter position and opacity
+- [x] AC9: Debug and fix rematch button
+- [x] AC10: Add "Salir" button to results overlay
+- [x] AC11: Add maxPlayers field to room state in Redis
+- [x] AC11: Add SET_MAX_PLAYERS WebSocket handler (host only, lobby only)
+- [x] AC11: Update joinRoom to validate against maxPlayers
+- [x] AC11: Add max players selector UI in lobby
+- [x] AC12: Install `country-flag-icons` npm dependency
+- [x] AC12: Add `countryCode` to `PlayerResult` DTO in shared lib
+- [x] AC12: Include `countryCode` in backend LOBBY_STATE and MATCH_END payloads
+- [x] AC12: Create `country-flag.tsx` wrapper component
+- [x] AC12: Render country flag in match-results-overlay player rows
+- [x] AC12: Render country flag in lobby player list
+- [x] AC13a: Restructure `styles.css` — light default + `.dark` override
+- [x] AC13a: Add anti-FOUC script in `index.html`
+- [x] AC13a: Create `use-theme.ts` hook + ThemeProvider context
+- [x] AC13a: Wrap app with ThemeProvider in `main.tsx`
+- [x] AC13b: Create `theme-toggle.tsx` component (Light/Dark/System cycle)
+- [x] AC13c: Create `nav-bar.tsx` with logo, theme toggle, profile link
+- [x] AC13c: Integrate nav bar in authenticated layout
+- [x] AC13c: Nav bar participates in Focus Fade (20% opacity) during arena
+- [x] AC13c: Nav bar hidden on login/callback pages
+- [x] AC13d: Migrate `app.tsx` inline styles to Tailwind classes
+- [x] AC13d: Migrate `profile-page.tsx` inline styles to Tailwind classes
+- [x] AC13d: Verify all pages respect selected theme consistently
+- [x] All existing tests pass (174 API + 83 web)
+
+---
+
+## Dev Agent Record
+
+### Implementation Notes
+- AC1: Added local caret in `live-text-canvas.tsx` using `offsetLeft`/`offsetTop` relative to inner text div, 3px wide with primary orange glow, instant positioning via transform
+- AC2: Replaced `getCharX` with `getCharPosition` using `getBoundingClientRect` relative to container, added Y axis spring interpolation, fixed disconnected label positioning, snap-to-target on first frame to prevent (0,0) jump
+- AC3: `ProtectedRoute` saves `pathname+search` to `sessionStorage`, `AuthCallback` reads and consumes it after successful exchange
+- AC5: Added `JoinRoomInput` component in home screen with 6-char uppercase alphanumeric validation
+- AC6: Changed `canStart` threshold from `< 2` to `< 1`, updated error message and tests
+- AC7: Full time limit feature — shared constants/validation, Redis field, WS handler, lobby UI buttons
+- AC8: Increased FocusWPMCounter opacity from 0.15 to 0.3 for readability, added `mb-6` for spacing
+- AC9: Fixed rematch by resetting `matchStarted`/`matchData` in `useLobby` LOBBY_STATE listener when `status==='waiting'`, exposed `resetMatch` and passed `onReturnToLobby` prop
+- AC10: Added "Salir" button next to "Revancha" that triggers `handleGoHome`
+- AC11: Full max players feature — `setMaxPlayers` service method, WS handler, Lua script reads `roomMaxPlayers` from room hash, dropdown in lobby
+- AC12: Installed `country-flag-icons`, added `countryCode` to `PlayerInfo`/`PlayerResult`, propagated through Redis Lua scripts, gateway, match results; created `CountryFlag` SVG component, rendered in lobby pills and results table
+- AC13: Full theme system — light default + `.dark` CSS override, anti-FOUC script, `ThemeProvider` with `useTheme` hook (light/dark/system cycle), `ThemeToggle` component, `NavBar` with logo/toggle/profile, migrated inline styles in `app.tsx` and `profile-page.tsx` to Tailwind classes
+
+### Completion Notes
+All 13 acceptance criteria implemented. 174 API tests pass, 83 web tests pass. Lint passes with 0 errors (warnings only). No regressions introduced.
+
+---
+
+## File List
+
+### New files
+- `apps/web/src/hooks/use-theme.ts`
+- `apps/web/src/components/ui/theme-toggle.tsx`
+- `apps/web/src/components/ui/nav-bar.tsx`
+- `apps/web/src/components/ui/country-flag.tsx`
+
+### Modified files
+- `apps/web/src/components/arena/live-text-canvas.tsx` (AC1: local caret)
+- `apps/web/src/components/arena/multiplayer-caret.tsx` (AC2: XY positioning fix)
+- `apps/web/src/components/arena/arena-page.tsx` (AC10: onExit prop)
+- `apps/web/src/components/arena/match-results-overlay.tsx` (AC10: Salir button, AC12: flags)
+- `apps/web/src/components/arena/focus-wpm-counter.tsx` (AC8: opacity + spacing)
+- `apps/web/src/components/auth/protected-route.tsx` (AC3: redirect, AC13d: Tailwind)
+- `apps/web/src/components/auth/auth-callback.tsx` (AC3: redirect consume)
+- `apps/web/src/components/lobby/lobby-page.tsx` (AC6: solo, AC7: time limit, AC9: rematch, AC11: max players)
+- `apps/web/src/components/lobby/player-avatar-pill.tsx` (AC12: flags)
+- `apps/web/src/components/profile/profile-page.tsx` (AC13d: Tailwind migration)
+- `apps/web/src/hooks/use-lobby.ts` (AC7: setTimeLimit, AC9: resetMatch, AC11: setMaxPlayers)
+- `apps/web/src/app/app.tsx` (AC5: join room, AC13c: NavBar, AC13d: Tailwind)
+- `apps/web/src/main.tsx` (AC13a: ThemeProvider)
+- `apps/web/src/styles.css` (AC13a: light/dark themes)
+- `apps/web/index.html` (AC13a: anti-FOUC)
+- `apps/api/src/modules/rooms/rooms.service.ts` (AC6: canStart, AC7: timeLimit, AC11: maxPlayers, AC12: countryCode)
+- `apps/api/src/modules/rooms/rooms.controller.ts` (AC12: countryCode)
+- `apps/api/src/gateway/game.gateway.ts` (AC6: error msg, AC7: time limit handler + timeout, AC11: max players handler, AC12: countryCode)
+- `apps/api/src/modules/matches/match-state.service.ts` (AC12: countryCode in calculateResults)
+- `libs/shared/src/websocket/events.ts` (AC7: SET_TIME_LIMIT, AC11: SET_MAX_PLAYERS)
+- `libs/shared/src/dto/room.dto.ts` (AC7: timeLimit, AC12: countryCode)
+- `libs/shared/src/dto/match-result.dto.ts` (AC12: countryCode)
+- `libs/shared/src/constants/match-config.ts` (AC7: TIME_LIMIT_OPTIONS)
+
+### Modified test files
+- `apps/api/src/modules/rooms/rooms.service.spec.ts` (AC6: solo play test)
+- `apps/api/src/modules/rooms/rooms.controller.spec.ts` (AC12: countryCode)
+- `apps/api/src/gateway/game.gateway.spec.ts` (AC6: error message)
+- `apps/web/src/components/arena/focus-wpm-counter.spec.tsx` (AC8: opacity)
+
+---
+
+## Change Log
+
+- 2026-03-29: Implemented all 13 ACs for Story 2.8 functional validation fixes
+  - AC1-2: Fixed local + opponent caret rendering and positioning
+  - AC3: Post-login redirect preserves intended URL
+  - AC5: Join room by code input on home screen
+  - AC6: Solo play support (1 player)
+  - AC7: Configurable time limit (7 options)
+  - AC8: FocusWPMCounter opacity and spacing
+  - AC9: Rematch button fix
+  - AC10: Exit button on results screen
+  - AC11: Configurable max players (2-20)
+  - AC12: Country flags via SVG in lobby + results
+  - AC13: Full dark/light/system theme with nav bar

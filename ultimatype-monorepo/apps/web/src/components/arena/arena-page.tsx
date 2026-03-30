@@ -207,6 +207,7 @@ export function ArenaPage({
             localUserId={localUserId}
             reason={matchEndReason}
             onRematch={handleRematch}
+            onExit={handleGoHome}
           />
         )}
 

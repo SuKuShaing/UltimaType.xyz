@@ -20,6 +20,7 @@ import { MatchStateService } from '../modules/matches/match-state.service';
 import {
   WS_EVENTS,
   isValidLevel,
+  isValidTimeLimit,
   MATCH_TIMEOUT_MS,
   DISCONNECT_GRACE_PERIOD_MS,
   PlayerFinishClientPayload,
@@ -202,6 +203,7 @@ export class GameGateway
         id: userId,
         displayName: user?.displayName ?? client.data.user.displayName,
         avatarUrl: user?.avatarUrl ?? null,
+        countryCode: user?.countryCode ?? null,
       });
 
       client.join(data.code);
@@ -291,6 +293,54 @@ export class GameGateway
     }
   }
 
+  @SubscribeMessage(WS_EVENTS.LOBBY_SET_MAX_PLAYERS)
+  async handleSetMaxPlayers(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { code: string; maxPlayers: number },
+  ) {
+    try {
+      if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+      }
+      if (!Number.isInteger(data.maxPlayers) || data.maxPlayers < 2 || data.maxPlayers > 20) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Máximo de jugadores inválido (2-20)' });
+      }
+
+      const userId = client.data.user.sub;
+      await this.roomsService.setMaxPlayers(data.code, userId, data.maxPlayers);
+      const state = await this.roomsService.getRoomState(data.code);
+      if (state) {
+        this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
+      }
+    } catch (err: any) {
+      client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.LOBBY_SET_TIME_LIMIT)
+  async handleSetTimeLimit(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { code: string; timeLimit: number },
+  ) {
+    try {
+      if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+      }
+      if (!isValidTimeLimit(data.timeLimit)) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Límite de tiempo inválido' });
+      }
+
+      const userId = client.data.user.sub;
+      await this.roomsService.setTimeLimit(data.code, userId, data.timeLimit);
+      const state = await this.roomsService.getRoomState(data.code);
+      if (state) {
+        this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
+      }
+    } catch (err: any) {
+      client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
   @SubscribeMessage(WS_EVENTS.LOBBY_START)
   async handleStart(
     @ConnectedSocket() client: Socket,
@@ -318,7 +368,7 @@ export class GameGateway
       const canStart = await this.roomsService.canStart(data.code);
       if (!canStart) {
         throw new Error(
-          'Se necesitan al menos 2 jugadores y todos deben estar listos',
+          'Todos los jugadores deben estar listos para iniciar',
         );
       }
 
@@ -356,8 +406,10 @@ export class GameGateway
         players: updatedState.players,
       });
 
-      // Start match timeout
-      this.startMatchTimeout(data.code);
+      // Start match timeout — use room's timeLimit or default
+      const roomTimeLimit = await this.roomsService.getTimeLimit(data.code);
+      const effectiveTimeout = roomTimeLimit > 0 ? roomTimeLimit : MATCH_TIMEOUT_MS;
+      this.startMatchTimeout(data.code, effectiveTimeout);
     } catch (err: any) {
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
     }
@@ -656,13 +708,14 @@ export class GameGateway
     const roomState = await this.roomsService.getRoomState(roomCode);
     const playerInfoMap: Record<
       string,
-      { displayName: string; colorIndex: number }
+      { displayName: string; colorIndex: number; countryCode: string | null }
     > = {};
     if (roomState) {
       for (const p of roomState.players) {
         playerInfoMap[p.id] = {
           displayName: p.displayName,
           colorIndex: p.colorIndex,
+          countryCode: p.countryCode,
         };
       }
     }
@@ -681,7 +734,7 @@ export class GameGateway
     });
   }
 
-  private startMatchTimeout(roomCode: string): void {
+  private startMatchTimeout(roomCode: string, timeoutMs: number = MATCH_TIMEOUT_MS): void {
     this.clearMatchTimeout(roomCode);
     const timeout = setTimeout(() => {
       this.matchTimeouts.delete(roomCode);
@@ -690,7 +743,7 @@ export class GameGateway
           `Error ending match by timeout for ${roomCode}: ${err.message}`,
         );
       });
-    }, MATCH_TIMEOUT_MS);
+    }, timeoutMs);
     this.matchTimeouts.set(roomCode, timeout);
   }
 

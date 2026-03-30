@@ -29,6 +29,7 @@ export class RoomsController {
       id: userId,
       displayName: user?.displayName ?? req.user.displayName,
       avatarUrl: user?.avatarUrl ?? null,
+      countryCode: user?.countryCode ?? null,
     });
     return { code: room.code, link: `/room/${room.code}` };
   }

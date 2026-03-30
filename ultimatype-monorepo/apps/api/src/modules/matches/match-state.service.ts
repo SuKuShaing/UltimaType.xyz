@@ -211,7 +211,7 @@ export class MatchStateService {
 
   async calculateResults(
     roomCode: string,
-    playerInfoMap: Record<string, { displayName: string; colorIndex: number }>,
+    playerInfoMap: Record<string, { displayName: string; colorIndex: number; countryCode: string | null }>,
   ): Promise<PlayerResult[]> {
     const matchKey = `match:${roomCode}`;
     const matchData = await this.redis.hgetall(matchKey);
@@ -234,6 +234,7 @@ export class MatchStateService {
       const info = playerInfoMap[userId] ?? {
         displayName: 'Unknown',
         colorIndex: 0,
+        countryCode: null,
       };
       const finished = !!state.finishedAt;
       const endTime = state.finishedAt ?? now;
@@ -260,6 +261,7 @@ export class MatchStateService {
         playerId: userId,
         displayName: info.displayName,
         colorIndex: info.colorIndex,
+        countryCode: info.countryCode,
         rank: 0,
         wpm,
         precision,

@@ -5,127 +5,6 @@ import { COUNTRIES } from '@ultimatype-monorepo/shared';
 import { useAuth } from '../../hooks/use-auth';
 import { apiClient } from '../../lib/api-client';
 
-const styles = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontFamily: "'Space Grotesk', sans-serif",
-    backgroundColor: '#0F1F29',
-    color: '#F8F9FA',
-    padding: '24px',
-  },
-  card: {
-    backgroundColor: '#1A2630',
-    borderRadius: '16px',
-    padding: '40px',
-    width: '100%',
-    maxWidth: '480px',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    marginBottom: '32px',
-  },
-  avatar: {
-    width: '64px',
-    height: '64px',
-    borderRadius: '50%',
-    backgroundColor: '#25343F',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '24px',
-    fontWeight: 600,
-    color: '#FF9B51',
-    overflow: 'hidden' as const,
-    flexShrink: 0,
-  },
-  avatarImg: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover' as const,
-  },
-  displayName: {
-    fontSize: '1.25rem',
-    fontWeight: 600,
-    marginBottom: '4px',
-  },
-  email: {
-    color: '#8B949E',
-    fontSize: '0.875rem',
-  },
-  field: {
-    marginBottom: '20px',
-  },
-  label: {
-    display: 'block',
-    fontSize: '0.75rem',
-    color: '#8B949E',
-    marginBottom: '8px',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-  },
-  select: {
-    width: '100%',
-    backgroundColor: '#0F1F29',
-    color: '#F8F9FA',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '12px 16px',
-    fontSize: '0.9375rem',
-    fontFamily: "'Space Grotesk', sans-serif",
-    cursor: 'pointer',
-    appearance: 'none' as const,
-    outline: 'none',
-  },
-  buttonPrimary: {
-    width: '100%',
-    backgroundColor: '#FF9B51',
-    color: '#0F1F29',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '12px 24px',
-    fontSize: '0.9375rem',
-    fontWeight: 600,
-    fontFamily: "'Space Grotesk', sans-serif",
-    cursor: 'pointer',
-    marginTop: '8px',
-  },
-  buttonDisabled: {
-    opacity: 0.4,
-    cursor: 'not-allowed',
-  },
-  buttonBack: {
-    background: 'none',
-    border: 'none',
-    color: '#8B949E',
-    fontSize: '0.875rem',
-    fontFamily: "'Space Grotesk', sans-serif",
-    cursor: 'pointer',
-    marginBottom: '24px',
-    padding: '0',
-  },
-  feedback: {
-    marginTop: '12px',
-    fontSize: '0.875rem',
-    textAlign: 'center' as const,
-  },
-  feedbackSuccess: {
-    color: '#4ADE80',
-  },
-  feedbackError: {
-    color: '#FB7185',
-  },
-  noCountry: {
-    color: '#8B949E',
-    fontStyle: 'italic' as const,
-  },
-};
-
 export function ProfilePage() {
   const { user, isFetchingProfile, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -165,8 +44,8 @@ export function ProfilePage() {
 
   if (isFetchingProfile || !isAuthenticated || !user) {
     return (
-      <div style={styles.container}>
-        <span style={{ opacity: 0.5, fontSize: '2rem' }}>_</span>
+      <div className="flex min-h-screen items-center justify-center bg-surface-base font-sans text-text-main">
+        <span className="text-2xl opacity-50">_</span>
       </div>
     );
   }
@@ -200,52 +79,52 @@ export function ProfilePage() {
   const effectiveCountry = selectedCountry || user.countryCode || '';
 
   return (
-    <div style={styles.container}>
-      <div style={{ width: '100%', maxWidth: '480px' }}>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base p-6 pt-16 font-sans text-text-main">
+      <div className="w-full max-w-md">
         <button
-          style={styles.buttonBack}
+          className="mb-6 bg-transparent p-0 text-sm text-text-muted hover:text-text-main"
           onClick={() => navigate('/')}
           aria-label="Volver al inicio"
         >
           ← Volver
         </button>
 
-        <div style={styles.card}>
-          <div style={styles.header}>
-            <div style={styles.avatar}>
+        <div className="rounded-2xl bg-surface-sunken p-10">
+          <div className="mb-8 flex items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-raised text-2xl font-semibold text-primary">
               {user.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
                   alt={`Avatar de ${user.displayName}`}
-                  style={styles.avatarImg}
+                  className="h-full w-full object-cover"
                 />
               ) : (
                 displayInitials
               )}
             </div>
             <div>
-              <div style={styles.displayName}>{user.displayName}</div>
-              <div style={styles.email}>{user.email}</div>
+              <div className="text-xl font-semibold">{user.displayName}</div>
+              <div className="text-sm text-text-muted">{user.email}</div>
             </div>
           </div>
 
-          <div style={styles.field}>
-            <label htmlFor="country-select" style={styles.label}>
+          <div className="mb-5">
+            <label htmlFor="country-select" className="mb-2 block text-xs uppercase tracking-wide text-text-muted">
               País
             </label>
             {!selectedCountry && !user.countryCode && (
-              <div style={{ ...styles.email, ...styles.noCountry, marginBottom: '8px' }}>
+              <div className="mb-2 text-sm italic text-text-muted">
                 Sin país asignado
               </div>
             )}
             {!selectedCountry && currentCountryName && (
-              <div style={{ marginBottom: '8px', fontSize: '0.9375rem' }}>
+              <div className="mb-2 text-sm">
                 {currentCountryName}
               </div>
             )}
             <select
               id="country-select"
-              style={styles.select}
+              className="w-full appearance-none rounded-lg bg-surface-base px-4 py-3 text-sm text-text-main font-sans"
               value={effectiveCountry}
               onChange={(e) => handleCountryChange(e.target.value)}
               aria-label="Seleccionar país"
@@ -260,10 +139,7 @@ export function ProfilePage() {
           </div>
 
           <button
-            style={{
-              ...styles.buttonPrimary,
-              ...((!hasChanged || mutation.isPending) ? styles.buttonDisabled : {}),
-            }}
+            className="mt-2 w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-surface-base font-sans disabled:cursor-not-allowed disabled:opacity-40"
             onClick={handleSave}
             disabled={!hasChanged || mutation.isPending}
             aria-label="Guardar cambios de perfil"
@@ -272,13 +148,13 @@ export function ProfilePage() {
           </button>
 
           {successMessage && (
-            <div style={{ ...styles.feedback, ...styles.feedbackSuccess }}>
+            <div className="mt-3 text-center text-sm text-success">
               {successMessage}
             </div>
           )}
 
           {mutation.isError && (
-            <div style={{ ...styles.feedback, ...styles.feedbackError }}>
+            <div className="mt-3 text-center text-sm text-error">
               Error al guardar. Intenta nuevamente.
             </div>
           )}

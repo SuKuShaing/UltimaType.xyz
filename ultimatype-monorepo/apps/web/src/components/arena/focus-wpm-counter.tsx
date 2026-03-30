@@ -35,11 +35,11 @@ export function FocusWPMCounter({ matchStatus }: FocusWPMCounterProps) {
     return () => clearInterval(id);
   }, [matchStatus]);
 
-  const opacity = matchStatus === 'playing' ? 0.15 : 1;
+  const opacity = matchStatus === 'playing' ? 0.3 : 1;
 
   return (
     <div
-      className="flex flex-col items-center gap-1"
+      className="mb-6 flex flex-col items-center gap-1"
       style={{ opacity, transition: 'opacity 0.5s ease' }}
     >
       <span

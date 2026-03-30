@@ -22,7 +22,8 @@
       "Bash(ipconfig)",
       "Bash(find D:PrograProyectos_personalesUltimaType/ultimatype-monorepo -type f -name *.ts -path */apps/api/src/*)",
       "Bash(find D:PrograProyectos_personalesUltimaType/ultimatype-monorepo -type f -name *.tsx -path */apps/web/src/*)",
-      "Bash(grep -r lua D:PrograProyectos_personalesUltimaType/ultimatype-monorepo --include=*.ts --include=*.tsx -l)"
+      "Bash(grep -r lua D:PrograProyectos_personalesUltimaType/ultimatype-monorepo --include=*.ts --include=*.tsx -l)",
+      "Bash(find /d/Progra/Proyectos_personales/UltimaType -path */libs/shared* -type f \\\\\\(-name *.ts -o -name *.tsx \\\\\\))"
     ]
   }
 }

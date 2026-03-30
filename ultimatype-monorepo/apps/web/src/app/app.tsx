@@ -1,4 +1,5 @@
-import { Route, Routes, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Route, Routes, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import { AuthButtons } from '../components/ui/auth-buttons';
 import { AuthCallback } from '../components/auth/auth-callback';
@@ -6,12 +7,58 @@ import { ProtectedRoute } from '../components/auth/protected-route';
 import { ProfilePage } from '../components/profile/profile-page';
 import { LobbyPage } from '../components/lobby/lobby-page';
 import { CreateRoomButton } from '../components/lobby/create-room-button';
+import { NavBar } from '../components/ui/nav-bar';
+
+const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
+
+function JoinRoomInput() {
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleJoin = () => {
+    const normalized = code.trim().toUpperCase();
+    if (!ROOM_CODE_REGEX.test(normalized)) {
+      setError('Código inválido (6 caracteres, letras y números)');
+      return;
+    }
+    setError('');
+    navigate(`/room/${normalized}`);
+  };
+
+  return (
+    <div className="mb-4 flex flex-col items-center gap-2">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(''); }}
+          onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+          placeholder="Código de sala"
+          maxLength={6}
+          className="w-36 rounded-lg bg-surface-raised px-4 py-2 text-center text-sm uppercase tracking-widest text-text-main font-sans"
+          aria-label="Código de sala para unirse"
+        />
+        <button
+          onClick={handleJoin}
+          className="rounded-lg bg-primary px-6 py-2 text-sm font-semibold text-surface-base font-sans"
+        >
+          Unirse
+        </button>
+      </div>
+      {error && <span className="text-xs text-error">{error}</span>}
+    </div>
+  );
+}
 
 export function App() {
   const { user, isAuthenticated, isFetchingProfile, logout } = useAuth();
 
   return (
-    <div>
+    <div className="font-sans">
+      {/* NavBar for authenticated users — hidden on callback */}
+      {isAuthenticated && <NavBar />}
+
       <Routes>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
@@ -33,27 +80,18 @@ export function App() {
         <Route
           path="*"
           element={
-            <div
-              style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'Space Grotesk', sans-serif",
-              }}
-            >
-              <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+            <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base font-sans text-text-main">
+              <h1 className="mb-4 text-5xl font-bold">
                 UltimaType
               </h1>
 
               {isFetchingProfile && (
-                <span style={{ opacity: 0.5 }}>_</span>
+                <span className="opacity-50">_</span>
               )}
 
               {!isFetchingProfile && !isAuthenticated && (
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ marginBottom: '24px', color: '#999' }}>
+                <div className="text-center">
+                  <p className="mb-6 text-text-muted">
                     Inicia sesión para competir
                   </p>
                   <AuthButtons />
@@ -61,45 +99,22 @@ export function App() {
               )}
 
               {isAuthenticated && user && (
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '1.2rem', marginBottom: '8px' }}>
+                <div className="text-center">
+                  <p className="mb-2 text-lg">
                     ¡Hola, {user.displayName}!
                   </p>
-                  <p style={{ color: '#999', marginBottom: '24px' }}>
+                  <p className="mb-6 text-text-muted">
                     {user.email}
                   </p>
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '16px' }}>
+                  <div className="mb-4 flex justify-center gap-3">
                     <CreateRoomButton />
                   </div>
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                    <Link
-                      to="/profile"
-                      style={{
-                        padding: '8px 24px',
-                        fontSize: '14px',
-                        borderRadius: '8px',
-                        backgroundColor: '#FF9B51',
-                        color: '#0F1F29',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        fontFamily: "'Space Grotesk', sans-serif",
-                      }}
-                      aria-label="Ver mi perfil"
-                    >
-                      Mi Perfil
-                    </Link>
+                  <JoinRoomInput />
+                  <div className="flex justify-center gap-3">
                     <button
                       id="logout"
                       onClick={logout}
-                      style={{
-                        padding: '8px 24px',
-                        fontSize: '14px',
-                        border: '1px solid #333',
-                        borderRadius: '8px',
-                        backgroundColor: 'transparent',
-                        color: '#999',
-                        cursor: 'pointer',
-                      }}
+                      className="rounded-lg border border-surface-raised bg-transparent px-6 py-2 text-sm text-text-muted transition-colors hover:text-text-main"
                       aria-label="Cerrar sesión"
                     >
                       Cerrar sesión

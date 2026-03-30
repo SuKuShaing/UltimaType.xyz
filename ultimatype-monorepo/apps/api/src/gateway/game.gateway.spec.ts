@@ -345,7 +345,7 @@ describe('GameGateway', () => {
       expect(mockSocket.emit).toHaveBeenCalledWith(
         WS_EVENTS.LOBBY_ERROR,
         expect.objectContaining({
-          message: expect.stringContaining('2 jugadores'),
+          message: expect.stringContaining('listos'),
         }),
       );
     });

@@ -20,9 +20,43 @@ export function LiveTextCanvas({
   const inputRef = useRef<HTMLInputElement>(null);
   const positionRef = useRef(0);
   const errorsRef = useRef<Set<number>>(new Set());
+  const localCaretRef = useRef<HTMLDivElement>(null);
 
   const localFinishedRef = useRef(false);
   const canType = isActive && !disabled && !localFinishedRef.current;
+
+  const updateLocalCaret = useCallback((position: number) => {
+    const caret = localCaretRef.current;
+    if (!caret) return;
+
+    let targetSpan: HTMLSpanElement | null = null;
+    let atEnd = false;
+
+    if (position < spanRefs.current.length) {
+      targetSpan = spanRefs.current[position];
+    } else if (spanRefs.current.length > 0) {
+      targetSpan = spanRefs.current[spanRefs.current.length - 1];
+      atEnd = true;
+    }
+
+    if (!targetSpan) return;
+
+    const left = atEnd
+      ? targetSpan.offsetLeft + targetSpan.offsetWidth
+      : targetSpan.offsetLeft;
+    const top = targetSpan.offsetTop;
+
+    caret.style.transform = `translate(${left}px, ${top}px)`;
+    caret.style.height = `${targetSpan.offsetHeight}px`;
+  }, []);
+
+  // Position caret initially once spans are rendered
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      updateLocalCaret(positionRef.current);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [text, updateLocalCaret]);
 
   // Focus the hidden input on mount and when isActive changes
   useEffect(() => {
@@ -67,6 +101,7 @@ export function LiveTextCanvas({
           errorsRef.current.delete(newPos);
           positionRef.current = newPos;
           onPositionChange(newPos);
+          updateLocalCaret(newPos);
         }
         return;
       }
@@ -92,6 +127,7 @@ export function LiveTextCanvas({
       const newPos = pos + 1;
       positionRef.current = newPos;
       onPositionChange(newPos);
+      updateLocalCaret(newPos);
 
       // Detect finish
       if (newPos === text.length) {
@@ -105,7 +141,7 @@ export function LiveTextCanvas({
         });
       }
     },
-    [text, onPositionChange, isActive, disabled],
+    [text, onPositionChange, isActive, disabled, updateLocalCaret],
   );
 
   return (
@@ -147,6 +183,22 @@ export function LiveTextCanvas({
             {char}
           </span>
         ))}
+
+        {/* Local player caret */}
+        <div
+          ref={localCaretRef}
+          className="pointer-events-none absolute left-0 top-0"
+          data-testid="local-caret"
+          style={{
+            width: '3px',
+            height: '1.2em',
+            backgroundColor: '#FF9B51',
+            borderRadius: '1px',
+            transform: 'translate(0px, 0px)',
+            boxShadow: '0 0 6px rgba(255, 155, 81, 0.6)',
+            zIndex: 10,
+          }}
+        />
       </div>
     </div>
   );

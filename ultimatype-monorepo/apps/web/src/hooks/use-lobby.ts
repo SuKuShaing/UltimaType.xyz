@@ -17,8 +17,11 @@ interface UseLobbyReturn {
   matchData: MatchStartPayload | null;
   toggleReady: (ready: boolean) => void;
   selectLevel: (level: number) => void;
+  setTimeLimit: (timeLimit: number) => void;
+  setMaxPlayers: (maxPlayers: number) => void;
   startMatch: () => void;
   leaveRoom: () => void;
+  resetMatch: () => void;
 }
 
 export function useLobby(code: string): UseLobbyReturn {
@@ -89,6 +92,11 @@ export function useLobby(code: string): UseLobbyReturn {
     s.on(WS_EVENTS.LOBBY_STATE, (state: RoomState) => {
       setRoomState(state);
       setError(null);
+      // Reset match state when room returns to waiting (rematch)
+      if (state.status === 'waiting') {
+        setMatchStarted(false);
+        setMatchData(null);
+      }
     });
 
     s.on(WS_EVENTS.LOBBY_ERROR, (data: { message: string }) => {
@@ -139,6 +147,20 @@ export function useLobby(code: string): UseLobbyReturn {
     [socket, code],
   );
 
+  const setTimeLimit = useCallback(
+    (timeLimit: number) => {
+      socket?.emit(WS_EVENTS.LOBBY_SET_TIME_LIMIT, { code, timeLimit });
+    },
+    [socket, code],
+  );
+
+  const setMaxPlayers = useCallback(
+    (maxPlayers: number) => {
+      socket?.emit(WS_EVENTS.LOBBY_SET_MAX_PLAYERS, { code, maxPlayers });
+    },
+    [socket, code],
+  );
+
   const startMatch = useCallback(() => {
     socket?.emit(WS_EVENTS.LOBBY_START, { code });
   }, [socket, code]);
@@ -146,6 +168,11 @@ export function useLobby(code: string): UseLobbyReturn {
   const leaveRoom = useCallback(() => {
     socket?.emit(WS_EVENTS.LOBBY_LEAVE, { code });
   }, [socket, code]);
+
+  const resetMatch = useCallback(() => {
+    setMatchStarted(false);
+    setMatchData(null);
+  }, []);
 
   return {
     roomState,
@@ -155,7 +182,10 @@ export function useLobby(code: string): UseLobbyReturn {
     matchData,
     toggleReady,
     selectLevel,
+    setTimeLimit,
+    setMaxPlayers,
     startMatch,
     leaveRoom,
+    resetMatch,
   };
 }

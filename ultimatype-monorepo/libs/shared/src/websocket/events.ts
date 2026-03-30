@@ -5,6 +5,8 @@ export const WS_EVENTS = {
   LOBBY_READY: 'lobby:ready',
   LOBBY_SELECT_LEVEL: 'lobby:select-level',
   LOBBY_START: 'lobby:start',
+  LOBBY_SET_TIME_LIMIT: 'lobby:set-time-limit',
+  LOBBY_SET_MAX_PLAYERS: 'lobby:set-max-players',
   // Server → Client
   LOBBY_STATE: 'lobby:state',
   LOBBY_ERROR: 'lobby:error',

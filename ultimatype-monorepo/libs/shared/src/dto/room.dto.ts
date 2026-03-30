@@ -2,6 +2,7 @@ export interface PlayerInfo {
   id: string;
   displayName: string;
   avatarUrl: string | null;
+  countryCode: string | null;
   colorIndex: number;
   isReady: boolean;
   joinedAt: string;
@@ -15,6 +16,7 @@ export interface RoomState {
   status: 'waiting' | 'playing' | 'finished';
   players: PlayerInfo[];
   maxPlayers: number;
+  timeLimit: number;
 }
 
 export interface CreateRoomResponse {

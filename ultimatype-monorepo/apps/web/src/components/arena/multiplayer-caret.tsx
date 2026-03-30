@@ -27,35 +27,50 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
   const caretRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
   const disconnectedLabelRef = useRef<HTMLDivElement>(null);
-  const springState = useRef({ current: 0, velocity: 0, target: 0 });
+  const springState = useRef({ currentX: 0, currentY: 0, velocityX: 0, velocityY: 0, target: 0, initialized: false });
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef(0);
   const colorRef = useRef('#FF9B51');
   const displayNameRef = useRef('');
   const disconnectedRef = useRef(false);
 
-  const updateCaretPosition = (xPos: number) => {
+  const updateCaretPosition = (xPos: number, yPos: number) => {
+    const transform = `translate(${xPos}px, ${yPos}px)`;
     if (caretRef.current) {
-      caretRef.current.style.transform = `translateX(${xPos}px)`;
+      caretRef.current.style.transform = transform;
     }
     if (labelRef.current) {
-      labelRef.current.style.transform = `translateX(${xPos}px)`;
+      labelRef.current.style.transform = `translate(${xPos}px, ${yPos - 18}px)`;
+    }
+    if (disconnectedLabelRef.current && disconnectedRef.current) {
+      disconnectedLabelRef.current.style.transform = `translate(${xPos + 60}px, ${yPos - 18}px)`;
     }
   };
 
-  const getCharX = (charIndex: number): number => {
-    if (!containerRef.current) return 0;
+  const getCharPosition = (charIndex: number): { x: number; y: number } => {
+    if (!containerRef.current) return { x: 0, y: 0 };
     const spans = containerRef.current.querySelectorAll<HTMLSpanElement>('span[data-index]');
+    const containerRect = containerRef.current.getBoundingClientRect();
+
+    let span: HTMLSpanElement | null = null;
+    let atEnd = false;
+
     if (charIndex < spans.length) {
-      const span = spans[charIndex];
-      return span.offsetLeft;
+      span = spans[charIndex];
+    } else if (spans.length > 0) {
+      span = spans[spans.length - 1];
+      atEnd = true;
     }
-    // If past last char, position after the last span
-    if (spans.length > 0) {
-      const lastSpan = spans[spans.length - 1];
-      return lastSpan.offsetLeft + lastSpan.offsetWidth;
-    }
-    return 0;
+
+    if (!span) return { x: 0, y: 0 };
+
+    const spanRect = span.getBoundingClientRect();
+    const x = atEnd
+      ? spanRect.right - containerRect.left
+      : spanRect.left - containerRect.left;
+    const y = spanRect.top - containerRect.top;
+
+    return { x, y };
   };
 
   const animate = (time: number) => {
@@ -64,21 +79,37 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
     lastTimeRef.current = time;
 
     const s = springState.current;
-    const targetX = getCharX(s.target);
-    const result = springInterpolate(s.current, targetX, s.velocity, 300, 25, dt);
+    const target = getCharPosition(s.target);
 
-    s.current = result.position;
-    s.velocity = result.velocity;
+    // On first frame, snap to target to avoid jump from (0,0)
+    if (!s.initialized) {
+      s.currentX = target.x;
+      s.currentY = target.y;
+      s.initialized = true;
+    }
 
-    updateCaretPosition(s.current);
+    const resultX = springInterpolate(s.currentX, target.x, s.velocityX, 300, 25, dt);
+    const resultY = springInterpolate(s.currentY, target.y, s.velocityY, 300, 25, dt);
+
+    s.currentX = resultX.position;
+    s.velocityX = resultX.velocity;
+    s.currentY = resultY.position;
+    s.velocityY = resultY.velocity;
+
+    updateCaretPosition(s.currentX, s.currentY);
 
     // Continue animating if not settled
-    if (Math.abs(result.velocity) > 0.01 || Math.abs(s.current - targetX) > 0.5) {
+    const xSettled = Math.abs(resultX.velocity) < 0.01 && Math.abs(s.currentX - target.x) < 0.5;
+    const ySettled = Math.abs(resultY.velocity) < 0.01 && Math.abs(s.currentY - target.y) < 0.5;
+
+    if (!xSettled || !ySettled) {
       rafRef.current = requestAnimationFrame(animate);
     } else {
-      s.current = targetX;
-      s.velocity = 0;
-      updateCaretPosition(targetX);
+      s.currentX = target.x;
+      s.currentY = target.y;
+      s.velocityX = 0;
+      s.velocityY = 0;
+      updateCaretPosition(target.x, target.y);
       rafRef.current = null;
     }
   };
@@ -98,7 +129,7 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
 
     if (caretRef.current) {
       caretRef.current.style.opacity = opacity;
-      caretRef.current.className = `pointer-events-none absolute top-0${pulseClass ? ` ${pulseClass}` : ''}`;
+      caretRef.current.className = `pointer-events-none absolute left-0 top-0${pulseClass ? ` ${pulseClass}` : ''}`;
     }
     if (labelRef.current) {
       labelRef.current.style.opacity = labelOpacity;
@@ -149,14 +180,14 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
       {/* Player name label */}
       <div
         ref={labelRef}
-        className="pointer-events-none absolute -top-5 whitespace-nowrap text-xs font-medium"
-        style={{ opacity: 0.7, transform: 'translateX(0px)' }}
+        className="pointer-events-none absolute left-0 top-0 whitespace-nowrap text-xs font-medium"
+        style={{ opacity: 0.7, transform: 'translate(0px, -18px)' }}
       />
       {/* Disconnected suffix label — hidden by default, shown via DOM */}
       <div
         ref={disconnectedLabelRef}
-        className="pointer-events-none absolute -top-5 whitespace-nowrap text-xs text-muted animate-pulse"
-        style={{ display: 'none', opacity: 0.4, transform: 'translateX(0px)' }}
+        className="pointer-events-none absolute left-0 top-0 whitespace-nowrap text-xs text-muted animate-pulse"
+        style={{ display: 'none', opacity: 0.4, transform: 'translate(60px, -18px)' }}
         data-testid={`disconnected-label-${playerId}`}
       >
         (desconectado)
@@ -164,11 +195,11 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
       {/* Caret bar */}
       <div
         ref={caretRef}
-        className="pointer-events-none absolute top-0"
+        className="pointer-events-none absolute left-0 top-0"
         style={{
           width: '2px',
           height: '1.2em',
-          transform: 'translateX(0px)',
+          transform: 'translate(0px, 0px)',
           transition: 'none',
         }}
       />

@@ -1,4 +1,5 @@
 import { PlayerInfo, PLAYER_COLORS } from '@ultimatype-monorepo/shared';
+import { CountryFlag } from '../ui/country-flag';
 
 interface PlayerAvatarPillProps {
   player: PlayerInfo;
@@ -49,6 +50,11 @@ export function PlayerAvatarPill({
 
       {/* Name and badges */}
       <div className="flex flex-1 items-center gap-2 overflow-hidden">
+        {player.countryCode && (
+          <span className="shrink-0">
+            <CountryFlag countryCode={player.countryCode} size={16} />
+          </span>
+        )}
         <span
           className={`truncate text-sm font-medium ${isLocal ? 'text-primary' : 'text-text-main'}`}
         >
