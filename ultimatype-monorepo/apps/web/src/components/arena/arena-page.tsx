@@ -15,20 +15,17 @@ import {
   PlayerFinishPayload,
   PlayerDisconnectedPayload,
   PlayerReconnectedPayload,
-  RoomState,
   WS_EVENTS,
 } from '@ultimatype-monorepo/shared';
 
 interface ArenaPageProps {
   matchData: MatchStartPayload;
   localUserId: string;
-  onReturnToLobby: () => void;
 }
 
 export function ArenaPage({
   matchData,
   localUserId,
-  onReturnToLobby,
 }: ArenaPageProps) {
   const textContainerRef = useRef<HTMLDivElement>(null);
   const otherPlayerIdsRef = useRef<string[]>([]);
@@ -91,19 +88,6 @@ export function ArenaPage({
     };
   }, [socket]);
 
-  // Listen for LOBBY_STATE (rematch transitions back to lobby)
-  useEffect(() => {
-    const handleLobbyState = (state: RoomState) => {
-      if (state.status === 'waiting' && matchStatus === 'finished') {
-        onReturnToLobby();
-      }
-    };
-    socket.on(WS_EVENTS.LOBBY_STATE, handleLobbyState);
-    return () => {
-      socket.off(WS_EVENTS.LOBBY_STATE, handleLobbyState);
-    };
-  }, [socket, onReturnToLobby, matchStatus]);
-
   // Listen for PLAYER_DISCONNECTED events
   useEffect(() => {
     const handlePlayerDisconnected = (payload: PlayerDisconnectedPayload) => {
@@ -152,19 +136,22 @@ export function ArenaPage({
 
   const isPlaying = matchStatus === 'playing';
 
+  // Toggle body class for NavBar Focus Fade (single CSS variable controls all fade opacity)
+  useEffect(() => {
+    if (isPlaying) {
+      document.body.classList.add('arena-active');
+    } else {
+      document.body.classList.remove('arena-active');
+    }
+    return () => document.body.classList.remove('arena-active');
+  }, [isPlaying]);
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base px-4 py-8 font-sans text-text-main">
       <FocusWPMCounter matchStatus={matchStatus} />
 
-      {/* Perimeter UI — fades to 15% opacity during race */}
-      <div
-        className="w-full max-w-3xl"
-        style={{
-          opacity: isPlaying ? 0.15 : 1,
-          transition: 'opacity 0.5s ease',
-          pointerEvents: isPlaying ? 'none' : 'auto',
-        }}
-      >
+      {/* Perimeter UI — fades via --focus-fade-opacity during race */}
+      <div className={`w-full max-w-3xl ${isPlaying ? 'focus-faded' : ''}`}>
         {/* Room header / player list area — populated by future stories */}
       </div>
 

@@ -1,5 +1,14 @@
 # Deferred Work
 
+## Deferred from: code review of 2-8-functional-validation-fixes (2026-03-29)
+
+- **Race condition no-atómica entre `hset` y `hgetall` en setMaxPlayers/setTimeLimit** — `rooms.service.ts` / `game.gateway.ts`. El `hset` y el posterior `hgetall`+broadcast son dos llamadas Redis separadas. Otro evento WS entre ambas podría causar un broadcast con snapshot parcialmente stale. Bajo riesgo en práctica; mismo patrón que otros handlers existentes.
+- **`disconnectedLabelRef` queda stale si el jugador reconecta** — `multiplayer-caret.tsx`. La posición del label de desconexión solo se actualiza cuando `disconnectedRef.current === true`. Si el jugador reconecta y desconecta de nuevo, el label puede saltar. Bajo impacto visual.
+- **Inconsistencia en sistemas de coordenadas: local caret (`offsetLeft/offsetTop`) vs multiplayer caret (`getBoundingClientRect`)** — `live-text-canvas.tsx` vs `multiplayer-caret.tsx`. Si un ancestro CSS aplica `transform`, los sistemas divergen. Funciona actualmente sin transforms.
+- **NavBar brevemente visible en `/auth/callback`** — `app.tsx`. Si el profile fetch resuelve antes del `navigate('/')` en AuthCallback, `isAuthenticated` se vuelve true y NavBar se renderiza momentáneamente en la página de callback. Transient, sin impacto funcional.
+- **Local caret visible en estado blurred (countdown/post-match)** — `live-text-canvas.tsx`. El caret es sibling dentro del div que recibe `filter: blur(8px)`, así que se blur junto con el texto. Pero queda visible en posición final post-match sin indicador de que el typing terminó.
+- **`setMaxPlayers` debería transicionar jugadores excedentes a espectador** — `rooms.service.ts`. Actualmente, si el host reduce `maxPlayers` por debajo del count actual, se lanza error. El comportamiento ideal: los últimos jugadores en entrar pasan a rol espectador. Requiere infraestructura de espectador de Epic 3 (rol `spectator`, broadcast diferenciado, UI espectador). Implementar junto con Story 3-1 (spectator-mode-room-capacity-management) o en retrospectiva de Epic 3.
+
 ## Deferred from: code review of 2-7-epic-2-prep-sprint (2026-03-29)
 
 - **`SET_STATUS_IF_PLAYING_LUA` no refresca TTL** — `rooms.service.ts`. La transición atómica `playing → finished` no llama `EXPIRE` sobre las keys de la room, a diferencia de los otros scripts Lua del proyecto (`JOIN_ROOM_LUA`, `LEAVE_ROOM_LUA`). En matches de larga duración cerca del TTL (24h), la room podría expirar antes de que los jugadores actúen en la pantalla de resultados. Baja probabilidad en hackathon normal.

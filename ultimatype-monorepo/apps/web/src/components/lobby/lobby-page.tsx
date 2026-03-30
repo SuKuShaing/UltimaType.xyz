@@ -7,7 +7,7 @@ import { ArenaPage } from '../arena/arena-page';
 import { DIFFICULTY_LEVELS, TIME_LIMIT_OPTIONS } from '@ultimatype-monorepo/shared';
 
 const TIME_LIMIT_LABELS: Record<number, string> = {
-  0: 'Sin límite',
+  0: 'Finalizar texto',
   30_000: '30s',
   60_000: '1 min',
   120_000: '2 min',
@@ -32,7 +32,6 @@ export function LobbyPage() {
     setMaxPlayers,
     startMatch,
     leaveRoom,
-    resetMatch,
   } = useLobby(code);
 
   const [copied, setCopied] = useState(false);
@@ -67,7 +66,6 @@ export function LobbyPage() {
       <ArenaPage
         matchData={matchData}
         localUserId={user.id}
-        onReturnToLobby={resetMatch}
       />
     );
   }
@@ -182,7 +180,7 @@ export function LobbyPage() {
         </div>
       )}
 
-      {/* Non-host: show selected level and time limit */}
+      {/* Non-host: show selected level, time limit, and max players */}
       {!isHost && roomState && (
         <div className="mb-6 text-center">
           <span className="text-sm text-text-muted">Nivel: </span>
@@ -193,6 +191,10 @@ export function LobbyPage() {
           <span className="ml-4 text-sm text-text-muted">Tiempo: </span>
           <span className="font-semibold text-primary">
             {TIME_LIMIT_LABELS[roomState.timeLimit] ?? `${roomState.timeLimit / 1000}s`}
+          </span>
+          <span className="ml-4 text-sm text-text-muted">Máx: </span>
+          <span className="font-semibold text-primary">
+            {roomState.maxPlayers} jugadores
           </span>
         </div>
       )}

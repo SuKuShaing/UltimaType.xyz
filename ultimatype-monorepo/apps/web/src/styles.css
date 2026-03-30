@@ -13,6 +13,10 @@
   --font-sans: 'Space Grotesk', system-ui, sans-serif;
 }
 
+:root {
+  --focus-fade-opacity: 0.15;
+}
+
 /* Dark theme override */
 .dark {
   --color-surface-base: #0F1F29;
@@ -20,4 +24,17 @@
   --color-surface-raised: #25343F;
   --color-text-main: #F8F9FA;
   --color-text-muted: #8B949E;
+}
+
+/* Focus Fade: reduces perimeter UI opacity during active match */
+.focus-faded {
+  opacity: var(--focus-fade-opacity);
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+body.arena-active .nav-bar-global {
+  opacity: var(--focus-fade-opacity);
+  pointer-events: none;
+  transition: opacity 0.5s ease;
 }

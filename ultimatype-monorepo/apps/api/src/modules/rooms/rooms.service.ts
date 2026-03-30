@@ -315,6 +315,10 @@ export class RoomsService {
       throw new Error('Solo el host puede cambiar el máximo de jugadores');
     }
 
+    if (roomData.status !== 'waiting') {
+      throw new Error('Solo se puede cambiar en la sala de espera');
+    }
+
     if (!Number.isInteger(maxPlayers) || maxPlayers < 2 || maxPlayers > 20) {
       throw new Error('Máximo de jugadores inválido (2-20)');
     }
@@ -337,6 +341,10 @@ export class RoomsService {
 
     if (roomData.hostId !== userId) {
       throw new Error('Solo el host puede cambiar el límite de tiempo');
+    }
+
+    if (roomData.status !== 'waiting') {
+      throw new Error('Solo se puede cambiar en la sala de espera');
     }
 
     if (!isValidTimeLimit(timeLimit)) {

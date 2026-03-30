@@ -31,8 +31,13 @@ export function useLobby(code: string): UseLobbyReturn {
   const [matchStarted, setMatchStarted] = useState(false);
   const [matchData, setMatchData] = useState<MatchStartPayload | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const matchStartedRef = useRef(false);
   const pendingRejoinRef = useRef<string | null>(null);
   const hasJoinedRef = useRef(false);
+
+  useEffect(() => {
+    matchStartedRef.current = matchStarted;
+  }, [matchStarted]);
 
   useEffect(() => {
     const s = connectSocket();
@@ -93,7 +98,7 @@ export function useLobby(code: string): UseLobbyReturn {
       setRoomState(state);
       setError(null);
       // Reset match state when room returns to waiting (rematch)
-      if (state.status === 'waiting') {
+      if (state.status === 'waiting' && matchStartedRef.current) {
         setMatchStarted(false);
         setMatchData(null);
       }

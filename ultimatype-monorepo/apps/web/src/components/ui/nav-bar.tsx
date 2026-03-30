@@ -1,20 +1,9 @@
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from './theme-toggle';
 
-interface NavBarProps {
-  opacity?: number;
-}
-
-export function NavBar({ opacity = 1 }: NavBarProps) {
+export function NavBar() {
   return (
-    <nav
-      className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between bg-surface-sunken px-4 py-2"
-      style={{
-        opacity,
-        transition: 'opacity 0.5s ease',
-        pointerEvents: opacity < 0.5 ? 'none' : 'auto',
-      }}
-    >
+    <nav className="nav-bar-global fixed left-0 right-0 top-0 z-40 flex items-center justify-between bg-surface-sunken px-4 py-2 transition-opacity duration-500">
       <Link to="/" className="text-lg font-bold text-primary no-underline">
         UltimaType
       </Link>

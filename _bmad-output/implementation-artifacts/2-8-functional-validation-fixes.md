@@ -1,6 +1,6 @@
 # Story 2.8: Functional Validation Fixes
 
-Status: review
+Status: done
 
 ## Story
 
@@ -438,6 +438,22 @@ All 13 acceptance criteria implemented. 174 API tests pass, 83 web tests pass. L
 - `apps/api/src/modules/rooms/rooms.controller.spec.ts` (AC12: countryCode)
 - `apps/api/src/gateway/game.gateway.spec.ts` (AC6: error message)
 - `apps/web/src/components/arena/focus-wpm-counter.spec.tsx` (AC8: opacity)
+
+---
+
+## Review Findings
+
+- [x] [Review][Patch] `setMaxPlayers`/`setTimeLimit` no verifican `status === 'waiting'` — fixed: lobby-only guard added
+- [x] [Review][Patch][Defer→Epic3] `setMaxPlayers` reduce below current count → ideal: excess players become spectators — deferred to Epic 3 spectator infrastructure
+- [x] [Review][Patch] `use-lobby.ts` LOBBY_STATE handler resetea arena sin guardia `matchStarted` — fixed: added ref guard + removed duplicate listener in arena-page
+- [x] [Review][Patch] NavBar NO participa del Focus Fade — fixed: CSS variable `--focus-fade-opacity` + `body.arena-active` class
+- [x] [Review][Patch] AC7 label incorrecto: "Sin límite" → "Finalizar texto"
+- [x] [Review][Patch] AC11 non-host no ve `maxPlayers` en lobby — fixed: added display
+- [x] [Review][Defer] Race condition no-atómica entre `hset` y `hgetall` en setMaxPlayers/setTimeLimit — deferred, pre-existing
+- [x] [Review][Defer] `disconnectedLabelRef` queda stale si el jugador reconecta — deferred, pre-existing
+- [x] [Review][Defer] Inconsistencia en sistemas de coordenadas: local caret (`offsetLeft`) vs multiplayer (`getBoundingClientRect`) — deferred, pre-existing
+- [x] [Review][Defer] NavBar brevemente visible en `/auth/callback` (transient race) — deferred, pre-existing
+- [x] [Review][Defer] Local caret visible en estado blurred (countdown/post-match) sin indicador visual — deferred, pre-existing
 
 ---
 
