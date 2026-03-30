@@ -1,4 +1,4 @@
-import { render, act } from '@testing-library/react';
+import { render, act, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ArenaPage } from './arena-page';
 import { arenaStore } from '../../hooks/use-arena-store';
@@ -82,6 +82,19 @@ describe('ArenaPage — Focus Fade para espectadores', () => {
 
     const wpmEl = container.querySelector('[data-wpm]');
     expect(wpmEl).toBeNull();
+  });
+
+  it('NO renderiza SpectatorLeaderboard cuando matchStatus es countdown', () => {
+    render(
+      <ArenaPage
+        matchData={MATCH_DATA}
+        localUserId={LOCAL_USER_ID}
+        isSpectator={true}
+      />,
+    );
+
+    // matchStatus === 'countdown' — leaderboard solo aparece en 'playing'
+    expect(screen.queryByText('Clasificación en vivo')).toBeNull();
   });
 
   it('renderiza FocusWPMCounter cuando isSpectator=false', () => {

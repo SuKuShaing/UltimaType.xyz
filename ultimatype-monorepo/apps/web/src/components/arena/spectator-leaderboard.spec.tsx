@@ -50,6 +50,7 @@ describe('SpectatorLeaderboard', () => {
 
     expect(screen.queryByText('Alice')).toBeNull();
     expect(screen.getByText('Bob')).toBeTruthy();
+    expect(screen.getByText('Carol')).toBeTruthy();
   });
 
   it('no renderiza nada cuando no hay jugadores activos', () => {

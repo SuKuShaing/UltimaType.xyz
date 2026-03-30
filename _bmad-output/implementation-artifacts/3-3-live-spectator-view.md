@@ -1,6 +1,6 @@
 # Story 3.3: Live Spectator View
 
-Status: review
+Status: done
 
 ## Story
 
@@ -169,6 +169,18 @@ so that I can enjoy the competition as a full audience experience.
   - **"does not render FocusWPMCounter for spectators"**: render con `isSpectator={true}`, verificar que el elemento con `data-wpm` no existe en el DOM
 
 - [x] 3.3 Verificar que todos los tests existentes siguen pasando (189 API + 86 web)
+
+### Review Findings
+
+- [x] [Review][Decision] LobbyPage confirmation modal incluido fuera de scope de story 3-3 — absorbido en este commit (cambios correctos, overhead de reescribir historial no justificado)
+- [x] [Review][Patch] Progress bar puede mostrar >100% — `Math.min(Math.round(...), 100)` aplicado. [spectator-leaderboard.tsx:19]
+- [x] [Review][Dismiss] Test de FocusWPMCounter solo valida countdown — falso positivo: condición `!isSpectator` es estática, independiente de matchStatus. Test correcto tal como está.
+- [x] [Review][Patch] Test de jugadores desconectados no valida que Carol siga en el ranking — `expect(screen.getByText('Carol')).toBeTruthy()` agregado. [spectator-leaderboard.spec.tsx:52]
+- [x] [Review][Patch] Falta test que verifique ausencia del SpectatorLeaderboard cuando `matchStatus !== 'playing'` — test "NO renderiza SpectatorLeaderboard cuando matchStatus es countdown" agregado. [arena-page.spec.tsx]
+- [x] [Review][Defer] `textLength === 0` muestra 0% para todos antes de que llegue el texto (diseño esperado, guard en place) [spectator-leaderboard.tsx] — deferred, pre-existing
+- [x] [Review][Defer] Sort inestable para jugadores con igual position (cosmético, V8 es estable en práctica) [spectator-leaderboard.tsx] — deferred, pre-existing
+- [x] [Review][Defer] Ghost caret del espectador si el server incluye su ID en el array `players` de MATCH_START — pre-existente desde story 3-1 [arena-page.tsx] — deferred, pre-existing
+- [x] [Review][Defer] `caret:sync`-driven reordering no cubierto en unit tests (requeriría mock de socket events, fuera del alcance de tests unitarios) — deferred, pre-existing
 
 ---
 

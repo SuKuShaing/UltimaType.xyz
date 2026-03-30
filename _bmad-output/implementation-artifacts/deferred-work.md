@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review de 3-3-live-spectator-view (2026-03-30)
+
+- **`textLength === 0` muestra 0% para todos antes de que llegue el texto** — `spectator-leaderboard.tsx`. La guard `textLength > 0` suprime la división por cero pero no indica que los datos están cargando. Bajo impacto visual (ventana brevísima entre join y MATCH_START).
+- **Sort inestable para jugadores con igual position** — `spectator-leaderboard.tsx`. Dos jugadores en 0% al inicio de carrera pueden renderizar en orden arbitrario y causar parpadeo de números. V8 es stable sort en práctica; cosmético.
+- **Ghost caret del espectador si server incluye su ID en players array** — `arena-page.tsx`. Si `matchData.players` incluye el `localUserId` del espectador (e.g., jugador promovido a espectador mid-flight), se renderiza un `MultiplayerCaret` que nunca se mueve. Pre-existente desde story 3-1.
+- **`caret:sync`-driven reordering no cubierto en unit tests** — `spectator-leaderboard.spec.tsx`. El test usa `updatePlayerPosition` directo al store; no hay cobertura del path socket → `useCaretSync` → store → rerender. Requeriría mock de socket events, fuera del alcance de unit tests.
+
 ## Deferred from: code review of 3-2-lobby-race-fixes-and-host-controls (2026-03-30)
 
 - **Stale socket en closure del trailing timer de useCaretSync** — `use-caret-sync.ts`. Si el socket cambia (reconexión) mientras hay un timer pendiente (≤50ms), el emit va al socket antiguo. Socket.io maneja sockets desconectados gracefully; impacto: un frame de caret congelado durante reconexión. Resolver si se implementa reconexión mid-arena.

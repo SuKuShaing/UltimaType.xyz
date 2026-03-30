@@ -35,7 +35,8 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-03-30T18:55:00-03:00
+last_updated: 2026-03-30T19:40:00-03:00
+# 2026-03-30: Story 3-3 code review completed, set to done (3 patches applied, 95 web tests passing).
 # 2026-03-30: Story 3-3 implementation complete, set to review (189 API + 94 web tests passing).
 # 2026-03-30: Story 3-3 created, set to ready-for-dev. Frontend-only: Focus Fade fix + SpectatorLeaderboard component.
 # 2026-03-30: Story 3-2 code review completed, set to done (9 patches applied, 189 API + 86 web tests passing).
@@ -77,7 +78,7 @@ development_status:
   epic-3: in-progress
   3-1-spectator-mode-room-capacity-management: done
   3-2-lobby-race-fixes-and-host-controls: done
-  3-3-live-spectator-view: review
+  3-3-live-spectator-view: done
   3-4-spectator-to-player-transition: backlog
   epic-3-retrospective: optional
   epic-4: backlog

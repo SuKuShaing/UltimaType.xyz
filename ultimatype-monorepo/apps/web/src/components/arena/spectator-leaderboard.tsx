@@ -16,7 +16,7 @@ export function SpectatorLeaderboard() {
       <h3 className="mb-2 text-xs font-semibold text-text-muted">Clasificación en vivo</h3>
       <div className="flex flex-col gap-1.5">
         {sorted.map(([id, player], index) => {
-          const progress = textLength > 0 ? Math.round((player.position / textLength) * 100) : 0;
+          const progress = textLength > 0 ? Math.min(Math.round((player.position / textLength) * 100), 100) : 0;
           const color = PLAYER_COLORS[player.colorIndex] ?? PLAYER_COLORS[0];
           return (
             <div key={id} className="flex items-center gap-2">

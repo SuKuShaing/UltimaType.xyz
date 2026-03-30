@@ -406,8 +406,19 @@ So that I can see my typing progression over time.
 
 **Given** an authenticated user in their Profile screen
 **When** they view their history section
-**Then** they see a list of recent matches with their respective WPM, precision, and level
+**Then** they see a list of recent matches with their respective WPM, precision, level, and date played
 **And** calculated metrics for their all-time "Average WPM" and "Best WPM".
+
+**Given** an authenticated user viewing their history section
+**When** they select a time range filter ("Últimos 7 días", "Últimos 30 días", "Todo el tiempo")
+**Then** the match list updates to show only matches played within that range
+**And** the "Average WPM" metric recalculates to reflect only the filtered matches
+**And** "Best WPM" always reflects the all-time best regardless of the active filter.
+
+**Given** an authenticated user viewing their history section
+**When** they select a difficulty level filter (niveles 1–5 o "Todos")
+**Then** the match list updates to show only matches played at that level
+**And** the time range and level filters can be combined simultaneously.
 
 ### Story 4.3: Global Leaderboard
 
