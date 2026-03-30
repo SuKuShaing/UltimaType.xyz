@@ -1,0 +1,6 @@
+- Que al iniciar el focus esté en el input para poder escribir
+- Fuí a otra pestaña mientras jugaba, al volver a esta toque fuera del texto y no escribia, lo que espero es que al volver a la página mientras estamos compitiendo, el focus se ponga inmeditamente en el texto, cosa de hacer click en la página y que pueda escribir, todo esto es mientras estoy en competencia
+- que la revancha solo la pueda iniciar el host
+- el botín listo tiene que tener un halo pulsante para que den ganas de presionarlo, ahora solo baja la opacidad y pasa desapercibido
+- la pantalla de resultados debe verse por encima del fondo, al tener el mismo color, se ve toda junta, debiese tener una sombra para que la separe del fondo
+- Cuando escribe muy rapido un usuario y el caret avanza rapido, en los demás usuarios no actualiza, cuando va lento si se sincroniza todo bien, pero empieza a andar rapido y se pierde la sincronización
