@@ -23,6 +23,8 @@ import {
   isValidTimeLimit,
   MATCH_TIMEOUT_MS,
   DISCONNECT_GRACE_PERIOD_MS,
+  MAX_SPECTATORS,
+  ROOM_ERROR_CODES,
   PlayerFinishClientPayload,
   RejoinStatePayload,
   RejoinMatchState,
@@ -43,7 +45,7 @@ export class GameGateway
   private readonly logger = new Logger(GameGateway.name);
   private connections = new Map<
     string,
-    { userId: string; roomCode: string }
+    { userId: string; roomCode: string; role: 'player' | 'spectator' }
   >();
   private matchTimeouts = new Map<string, NodeJS.Timeout>();
   private graceTimers = new Map<string, NodeJS.Timeout>();
@@ -120,9 +122,34 @@ export class GameGateway
     if (!conn) return;
     this.connections.delete(client.id);
 
-    const { userId, roomCode } = conn;
+    const { userId, roomCode, role } = conn;
 
     try {
+      // Spectators: 30s grace period (same as players) to survive network blips.
+      // Only start the timer if this is the last socket for this user in this room.
+      if (role === 'spectator') {
+        const remainingInRoom = this.countUserConnectionsInRoom(userId, roomCode);
+        if (remainingInRoom > 0) return; // another tab still connected
+
+        const timerKey = `spectator:${roomCode}:${userId}`;
+        this.clearGraceTimer(timerKey);
+
+        const timer = setTimeout(async () => {
+          this.graceTimers.delete(timerKey);
+          try {
+            const state = await this.roomsService.leaveSpectator(roomCode, userId);
+            if (state) {
+              this.server.to(roomCode).emit(WS_EVENTS.LOBBY_STATE, state);
+            }
+          } catch (err) {
+            this.logger.error(`Error in spectator grace expiry for ${userId} in ${roomCode}`, err);
+          }
+        }, DISCONNECT_GRACE_PERIOD_MS);
+
+        this.graceTimers.set(timerKey, timer);
+        return;
+      }
+
       const roomState = await this.roomsService.getRoomState(roomCode);
       if (!roomState) return;
 
@@ -198,8 +225,73 @@ export class GameGateway
 
       const userId = client.data.user.sub;
       const user = await this.usersService.findById(userId);
+      const userInfo = {
+        id: userId,
+        displayName: user?.displayName ?? client.data.user.displayName,
+        avatarUrl: user?.avatarUrl ?? null,
+        countryCode: user?.countryCode ?? null,
+      };
 
-      const state = await this.roomsService.joinRoom(data.code, userId, {
+      let autoSpectate = false;
+      let state;
+      try {
+        state = await this.roomsService.joinRoom(data.code, userId, userInfo);
+      } catch (joinErr: any) {
+        if (joinErr.message === ROOM_ERROR_CODES.ROOM_FULL) {
+          // Player slots full — try auto-spectate
+          try {
+            state = await this.roomsService.joinAsSpectator(data.code, userId, userInfo);
+            autoSpectate = true;
+          } catch (spectatorErr: any) {
+            if (spectatorErr.message === ROOM_ERROR_CODES.SPECTATORS_FULL) {
+              // Both slots full — send rich error with actual counts
+              const roomStateForError = await this.roomsService.getRoomState(data.code);
+              return client.emit(WS_EVENTS.LOBBY_ERROR, {
+                code: ROOM_ERROR_CODES.SPECTATORS_FULL,
+                playerCount: roomStateForError?.players.length ?? 0,
+                maxPlayers: roomStateForError?.maxPlayers ?? 0,
+                spectatorCount: roomStateForError?.spectators.length ?? 0,
+                maxSpectators: MAX_SPECTATORS,
+              });
+            }
+            throw spectatorErr;
+          }
+        } else {
+          throw joinErr;
+        }
+      }
+
+      client.join(data.code);
+      this.connections.set(client.id, {
+        userId,
+        roomCode: data.code,
+        role: autoSpectate ? 'spectator' : 'player',
+      });
+
+      this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
+
+      if (autoSpectate) {
+        client.emit(WS_EVENTS.LOBBY_AUTO_SPECTATE, { message: 'Sala llena - te uniste como espectador' });
+      }
+    } catch (err: any) {
+      client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.LOBBY_SPECTATE)
+  async handleSpectateJoin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { code: string },
+  ) {
+    try {
+      if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+      }
+
+      const userId = client.data.user.sub;
+      const user = await this.usersService.findById(userId);
+
+      const state = await this.roomsService.joinAsSpectator(data.code, userId, {
         id: userId,
         displayName: user?.displayName ?? client.data.user.displayName,
         avatarUrl: user?.avatarUrl ?? null,
@@ -210,6 +302,7 @@ export class GameGateway
       this.connections.set(client.id, {
         userId,
         roomCode: data.code,
+        role: 'spectator',
       });
 
       this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
@@ -251,6 +344,7 @@ export class GameGateway
     @MessageBody() data: { code: string; ready: boolean },
   ) {
     try {
+      if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
       }
@@ -275,6 +369,7 @@ export class GameGateway
     @MessageBody() data: { code: string; level: number },
   ) {
     try {
+      if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
       }
@@ -299,6 +394,7 @@ export class GameGateway
     @MessageBody() data: { code: string; maxPlayers: number },
   ) {
     try {
+      if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
       }
@@ -323,6 +419,7 @@ export class GameGateway
     @MessageBody() data: { code: string; timeLimit: number },
   ) {
     try {
+      if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
       }
@@ -347,6 +444,7 @@ export class GameGateway
     @MessageBody() data: { code: string },
   ) {
     try {
+      if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
       }
@@ -421,6 +519,7 @@ export class GameGateway
     @MessageBody() data: { position: number; timestamp: number },
   ) {
     try {
+      if (this.isSpectator(client.id)) return;
       if (!Number.isInteger(data?.position) || !Number.isInteger(data?.timestamp) || data.timestamp <= 0) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Payload de caret inválido' });
       }
@@ -474,6 +573,7 @@ export class GameGateway
     @MessageBody() data: PlayerFinishClientPayload,
   ) {
     try {
+      if (this.isSpectator(client.id)) return;
       const conn = this.connections.get(client.id);
       if (!conn) return;
 
@@ -539,6 +639,34 @@ export class GameGateway
       const userId = client.data.user.sub;
       const roomCode = data.roomCode;
 
+      // Check if user is a spectator
+      const isSpectator = await this.roomsService.isSpectatorInRoom(roomCode, userId);
+
+      if (isSpectator) {
+        // Cancel spectator grace timer if one was running
+        const spectatorTimerKey = `spectator:${roomCode}:${userId}`;
+        this.clearGraceTimer(spectatorTimerKey);
+
+        const roomState = await this.roomsService.getRoomState(roomCode);
+        if (!roomState) {
+          return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Sala no encontrada' });
+        }
+
+        this.connections.set(client.id, { userId, roomCode, role: 'spectator' });
+        client.join(roomCode);
+
+        // Build matchState for spectator rejoin (same as player rejoin, without local position)
+        const spectatorMatchState = await this.buildSpectatorMatchState(roomCode, roomState);
+
+        const rejoinPayload: RejoinStatePayload = {
+          roomCode,
+          roomState,
+          matchState: spectatorMatchState,
+        };
+        client.emit(WS_EVENTS.REJOIN_STATE, rejoinPayload);
+        return;
+      }
+
       // Cancel grace period timer immediately — before any async operations — to
       // close the TOCTOU window between isPlayerInRoom check and timer expiry
       const timerKey = `${roomCode}:${userId}`;
@@ -559,7 +687,7 @@ export class GameGateway
       await this.roomsService.markPlayerConnected(roomCode, userId);
 
       // Register new socket connection
-      this.connections.set(client.id, { userId, roomCode });
+      this.connections.set(client.id, { userId, roomCode, role: 'player' });
       client.join(roomCode);
 
       // Build rejoin state payload before broadcasting, so state is consistent
@@ -617,6 +745,66 @@ export class GameGateway
       client.emit(WS_EVENTS.REJOIN_STATE, rejoinPayload);
     } catch (err: any) {
       this.logger.error(`Error in rejoin: ${err.message}`);
+      client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.LOBBY_SWITCH_TO_SPECTATOR)
+  async handleSwitchToSpectator(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { code: string },
+  ) {
+    try {
+      if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+      }
+
+      const conn = this.connections.get(client.id);
+      if (!conn || conn.role !== 'player') return;
+
+      const userId = client.data.user.sub;
+      const user = await this.usersService.findById(userId);
+
+      const state = await this.roomsService.switchToSpectator(data.code, userId, {
+        id: userId,
+        displayName: user?.displayName ?? client.data.user.displayName,
+        avatarUrl: user?.avatarUrl ?? null,
+        countryCode: user?.countryCode ?? null,
+      });
+
+      this.connections.set(client.id, { userId, roomCode: data.code, role: 'spectator' });
+      this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
+    } catch (err: any) {
+      client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
+    }
+  }
+
+  @SubscribeMessage(WS_EVENTS.LOBBY_SWITCH_TO_PLAYER)
+  async handleSwitchToPlayer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { code: string },
+  ) {
+    try {
+      if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+      }
+
+      const conn = this.connections.get(client.id);
+      if (!conn || conn.role !== 'spectator') return;
+
+      const userId = client.data.user.sub;
+      const user = await this.usersService.findById(userId);
+
+      const state = await this.roomsService.switchToPlayer(data.code, userId, {
+        id: userId,
+        displayName: user?.displayName ?? client.data.user.displayName,
+        avatarUrl: user?.avatarUrl ?? null,
+        countryCode: user?.countryCode ?? null,
+      });
+
+      this.connections.set(client.id, { userId, roomCode: data.code, role: 'player' });
+      this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
+    } catch (err: any) {
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
     }
   }
@@ -765,7 +953,9 @@ export class GameGateway
 
   private clearAllGraceTimersForRoom(roomCode: string): void {
     for (const [key, timer] of this.graceTimers.entries()) {
-      if (key.startsWith(`${roomCode}:`)) {
+      // Player keys: `${roomCode}:${userId}`
+      // Spectator keys: `spectator:${roomCode}:${userId}`
+      if (key.startsWith(`${roomCode}:`) || key.startsWith(`spectator:${roomCode}:`)) {
         clearTimeout(timer);
         this.graceTimers.delete(key);
       }
@@ -796,12 +986,63 @@ export class GameGateway
     }
   }
 
+  private isSpectator(socketId: string): boolean {
+    const conn = this.connections.get(socketId);
+    return conn?.role === 'spectator';
+  }
+
   private countUserConnections(userId: string): number {
     let count = 0;
     for (const conn of this.connections.values()) {
       if (conn.userId === userId) count++;
     }
     return count;
+  }
+
+  private countUserConnectionsInRoom(userId: string, roomCode: string): number {
+    let count = 0;
+    for (const conn of this.connections.values()) {
+      if (conn.userId === userId && conn.roomCode === roomCode) count++;
+    }
+    return count;
+  }
+
+  // Builds match state for a spectator rejoin — all player positions, no local input state.
+  private async buildSpectatorMatchState(
+    roomCode: string,
+    roomState: import('@ultimatype-monorepo/shared').RoomState,
+  ): Promise<RejoinMatchState | null> {
+    if (roomState.status !== 'playing') return null;
+
+    const matchMeta = await this.matchStateService.getMatchMetadata(roomCode);
+    const allPositions = await this.matchStateService.getAllPlayerPositions(roomCode);
+
+    if (!matchMeta) return null;
+
+    const players: RejoinPlayerState[] = allPositions.map((pp) => {
+      const roomPlayer = roomState.players.find((rp) => rp.id === pp.playerId);
+      return {
+        playerId: pp.playerId,
+        displayName: roomPlayer?.displayName ?? 'Unknown',
+        colorIndex: roomPlayer?.colorIndex ?? 0,
+        position: pp.position,
+        finished: pp.finished,
+        disconnected: roomPlayer?.disconnected ?? false,
+      };
+    });
+
+    return {
+      textContent: matchMeta.textContent,
+      textId: matchMeta.textId,
+      startedAt: matchMeta.startedAt,
+      localPosition: 0,
+      localErrors: 0,
+      localTotalKeystrokes: 0,
+      localErrorKeystrokes: 0,
+      localFinished: false,
+      localFinishedAt: null,
+      players,
+    };
   }
 
   private async resetAllPlayersReady(

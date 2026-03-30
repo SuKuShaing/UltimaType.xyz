@@ -52,14 +52,18 @@ describe('RoomsService', () => {
       await service.createRoom('user-1', hostInfo);
 
       expect(mockRedis.hset).toHaveBeenCalledTimes(2);
-      // refreshTTL expires both roomKey and playersKey
-      expect(mockRedis.expire).toHaveBeenCalledTimes(2);
+      // refreshTTL expires roomKey, playersKey, and spectatorsKey
+      expect(mockRedis.expire).toHaveBeenCalledTimes(3);
       expect(mockRedis.expire).toHaveBeenCalledWith(
         expect.stringMatching(/^room:[A-Z0-9]{6}$/),
         86400,
       );
       expect(mockRedis.expire).toHaveBeenCalledWith(
         expect.stringMatching(/^room:[A-Z0-9]{6}:players$/),
+        86400,
+      );
+      expect(mockRedis.expire).toHaveBeenCalledWith(
+        expect.stringMatching(/^room:[A-Z0-9]{6}:spectators$/),
         86400,
       );
     });
@@ -100,7 +104,7 @@ describe('RoomsService', () => {
     it('agrega un jugador al room', async () => {
       // eval returns 'OK' for successful join
       mockRedis.eval.mockResolvedValue('OK');
-      // getRoomState calls hgetall for room data, then getPlayers calls hgetall for players
+      // getRoomState calls hgetall for room data, players, and spectators
       mockRedis.hgetall
         .mockResolvedValueOnce({
           code: 'ABC123',
@@ -126,7 +130,8 @@ describe('RoomsService', () => {
             isReady: false,
             joinedAt: '2026-03-27T00:01:00.000Z',
           }),
-        });
+        })
+        .mockResolvedValueOnce({}); // spectators
 
       const result = await service.joinRoom('ABC123', 'user-2', joinerInfo);
 
@@ -164,7 +169,7 @@ describe('RoomsService', () => {
 
     it('retorna estado existente si el usuario ya esta en la sala', async () => {
       mockRedis.eval.mockResolvedValue('ALREADY_IN_ROOM');
-      // getRoomState calls
+      // getRoomState calls (room, players, spectators)
       mockRedis.hgetall
         .mockResolvedValueOnce({
           code: 'ABC123',
@@ -182,7 +187,8 @@ describe('RoomsService', () => {
             isReady: false,
             joinedAt: '2026-03-27T00:00:00.000Z',
           }),
-        });
+        })
+        .mockResolvedValueOnce({}); // spectators
 
       const result = await service.joinRoom('ABC123', 'user-1', hostInfo);
       expect(result.code).toBe('ABC123');
@@ -191,8 +197,10 @@ describe('RoomsService', () => {
 
   describe('leaveRoom', () => {
     it('remueve player y retorna estado actualizado', async () => {
+      // isSpectatorInRoom check
+      mockRedis.hexists.mockResolvedValueOnce(0);
       mockRedis.eval.mockResolvedValue('OK');
-      // getRoomState calls
+      // getRoomState calls (room, players, spectators)
       mockRedis.hgetall
         .mockResolvedValueOnce({
           code: 'ABC123',
@@ -210,7 +218,8 @@ describe('RoomsService', () => {
             isReady: false,
             joinedAt: '2026-03-27T00:00:00.000Z',
           }),
-        });
+        })
+        .mockResolvedValueOnce({}); // spectators
 
       const result = await service.leaveRoom('ABC123', 'user-2');
       expect(result).not.toBeNull();
@@ -218,6 +227,8 @@ describe('RoomsService', () => {
     });
 
     it('elimina el room si no quedan jugadores', async () => {
+      // isSpectatorInRoom check
+      mockRedis.hexists.mockResolvedValueOnce(0);
       mockRedis.eval.mockResolvedValue('EMPTY');
 
       const result = await service.leaveRoom('ABC123', 'user-1');
@@ -227,9 +238,10 @@ describe('RoomsService', () => {
     });
 
     it('promueve nuevo host via Lua script si el host sale', async () => {
-      // The Lua script handles host promotion internally,
-      // so we just verify eval is called and the result is returned
+      // isSpectatorInRoom check
+      mockRedis.hexists.mockResolvedValueOnce(0);
       mockRedis.eval.mockResolvedValue('OK');
+      // getRoomState calls (room, players, spectators)
       mockRedis.hgetall
         .mockResolvedValueOnce({
           code: 'ABC123',
@@ -247,7 +259,8 @@ describe('RoomsService', () => {
             isReady: true,
             joinedAt: '2026-03-27T00:01:00.000Z',
           }),
-        });
+        })
+        .mockResolvedValueOnce({}); // spectators
 
       const result = await service.leaveRoom('ABC123', 'user-1');
 
@@ -289,7 +302,8 @@ describe('RoomsService', () => {
             isReady: false,
             joinedAt: '2026-03-27T00:00:00.000Z',
           }),
-        });
+        })
+        .mockResolvedValueOnce({}); // spectators
 
       const result = await service.getRoomState('ABC123');
 
@@ -308,6 +322,7 @@ describe('RoomsService', () => {
             joinedAt: '2026-03-27T00:00:00.000Z',
           },
         ],
+        spectators: [],
         maxPlayers: 20,
         timeLimit: 0,
       });
@@ -341,10 +356,8 @@ describe('RoomsService', () => {
       await service.setLevel('ABC123', 'user-1', 3);
 
       expect(mockRedis.expire).toHaveBeenCalledWith('room:ABC123', 86400);
-      expect(mockRedis.expire).toHaveBeenCalledWith(
-        'room:ABC123:players',
-        86400,
-      );
+      expect(mockRedis.expire).toHaveBeenCalledWith('room:ABC123:players', 86400);
+      expect(mockRedis.expire).toHaveBeenCalledWith('room:ABC123:spectators', 86400);
     });
 
     it('rechaza si no es el host', async () => {
@@ -413,10 +426,8 @@ describe('RoomsService', () => {
       await service.setReady('ABC123', 'user-1', true);
 
       expect(mockRedis.expire).toHaveBeenCalledWith('room:ABC123', 86400);
-      expect(mockRedis.expire).toHaveBeenCalledWith(
-        'room:ABC123:players',
-        86400,
-      );
+      expect(mockRedis.expire).toHaveBeenCalledWith('room:ABC123:players', 86400);
+      expect(mockRedis.expire).toHaveBeenCalledWith('room:ABC123:spectators', 86400);
     });
 
     it('rechaza si el jugador no esta en la sala', async () => {
@@ -533,6 +544,128 @@ describe('RoomsService', () => {
       mockRedis.eval.mockResolvedValue(null);
 
       const result = await service.setRoomStatusAtomically('ABC123', 'finished');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('joinAsSpectator', () => {
+    const spectatorInfo = {
+      id: 'spec-1',
+      displayName: 'Spectator',
+      avatarUrl: null,
+      countryCode: null,
+    };
+
+    it('agrega un espectador al room', async () => {
+      mockRedis.eval.mockResolvedValue('OK');
+      // getRoomState calls (room, players, spectators)
+      mockRedis.hgetall
+        .mockResolvedValueOnce({
+          code: 'ABC123',
+          hostId: 'user-1',
+          level: '1',
+          status: 'waiting',
+          maxPlayers: '20',
+        })
+        .mockResolvedValueOnce({
+          'user-1': JSON.stringify({
+            id: 'user-1',
+            displayName: 'Host',
+            avatarUrl: null,
+            colorIndex: 0,
+            isReady: false,
+            joinedAt: '2026-03-27T00:00:00.000Z',
+          }),
+        })
+        .mockResolvedValueOnce({
+          'spec-1': JSON.stringify({
+            id: 'spec-1',
+            displayName: 'Spectator',
+            avatarUrl: null,
+            joinedAt: '2026-03-27T00:02:00.000Z',
+          }),
+        });
+
+      const result = await service.joinAsSpectator('ABC123', 'spec-1', spectatorInfo);
+
+      expect(result.spectators).toHaveLength(1);
+      expect(result.spectators[0].id).toBe('spec-1');
+      expect(mockRedis.eval).toHaveBeenCalled();
+    });
+
+    it('rechaza si la sala no existe', async () => {
+      mockRedis.eval.mockRejectedValue(new Error('Sala no encontrada'));
+
+      await expect(
+        service.joinAsSpectator('NOROOM', 'spec-1', spectatorInfo),
+      ).rejects.toThrow('Sala no encontrada');
+    });
+
+    it('rechaza si ya es jugador', async () => {
+      mockRedis.eval.mockRejectedValue(new Error('Ya eres jugador en esta sala'));
+
+      await expect(
+        service.joinAsSpectator('ABC123', 'user-1', spectatorInfo),
+      ).rejects.toThrow('Ya eres jugador en esta sala');
+    });
+
+    it('rechaza si esta lleno de espectadores', async () => {
+      mockRedis.eval.mockRejectedValue(new Error('Sala llena de espectadores'));
+
+      await expect(
+        service.joinAsSpectator('ABC123', 'spec-1', spectatorInfo),
+      ).rejects.toThrow('Sala llena de espectadores');
+    });
+  });
+
+  describe('leaveSpectator', () => {
+    it('remueve espectador y retorna estado actualizado', async () => {
+      mockRedis.eval.mockResolvedValue('OK');
+      // getRoomState calls (room, players, spectators)
+      mockRedis.hgetall
+        .mockResolvedValueOnce({
+          code: 'ABC123',
+          hostId: 'user-1',
+          level: '1',
+          status: 'waiting',
+          maxPlayers: '20',
+        })
+        .mockResolvedValueOnce({
+          'user-1': JSON.stringify({
+            id: 'user-1',
+            displayName: 'Host',
+            avatarUrl: null,
+            colorIndex: 0,
+            isReady: false,
+            joinedAt: '2026-03-27T00:00:00.000Z',
+          }),
+        })
+        .mockResolvedValueOnce({}); // spectators empty after leave
+
+      const result = await service.leaveSpectator('ABC123', 'spec-1');
+      expect(result).not.toBeNull();
+      expect(result!.spectators).toHaveLength(0);
+    });
+  });
+
+  describe('isSpectatorInRoom', () => {
+    it('retorna true si el espectador existe en el hash', async () => {
+      mockRedis.hexists.mockResolvedValue(1);
+
+      const result = await service.isSpectatorInRoom('ABC123', 'spec-1');
+
+      expect(result).toBe(true);
+      expect(mockRedis.hexists).toHaveBeenCalledWith(
+        'room:ABC123:spectators',
+        'spec-1',
+      );
+    });
+
+    it('retorna false si el espectador no existe', async () => {
+      mockRedis.hexists.mockResolvedValue(0);
+
+      const result = await service.isSpectatorInRoom('ABC123', 'spec-99');
 
       expect(result).toBe(false);
     });

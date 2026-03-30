@@ -5,9 +5,20 @@ import { arenaStore } from './use-arena-store';
 import {
   RoomState,
   WS_EVENTS,
+  ROOM_ERROR_CODES,
+  MAX_SPECTATORS,
   MatchStartPayload,
   RejoinStatePayload,
 } from '@ultimatype-monorepo/shared';
+
+export interface LobbyErrorPayload {
+  message?: string;
+  code?: string;
+  playerCount?: number;
+  maxPlayers?: number;
+  spectatorCount?: number;
+  maxSpectators?: number;
+}
 
 interface UseLobbyReturn {
   roomState: RoomState | null;
@@ -15,6 +26,9 @@ interface UseLobbyReturn {
   isConnected: boolean;
   matchStarted: boolean;
   matchData: MatchStartPayload | null;
+  isSpectator: boolean;
+  isSwitchingRole: boolean;
+  autoSpectateMessage: string | null;
   toggleReady: (ready: boolean) => void;
   selectLevel: (level: number) => void;
   setTimeLimit: (timeLimit: number) => void;
@@ -22,14 +36,28 @@ interface UseLobbyReturn {
   startMatch: () => void;
   leaveRoom: () => void;
   resetMatch: () => void;
+  joinAsSpectator: () => void;
+  switchToSpectator: () => void;
+  switchToPlayer: () => void;
+  clearAutoSpectateMessage: () => void;
 }
 
-export function useLobby(code: string): UseLobbyReturn {
+function buildErrorMessage(data: LobbyErrorPayload): string {
+  if (data.code === ROOM_ERROR_CODES.SPECTATORS_FULL) {
+    return `Sala llena · Jugadores ${data.playerCount}/${data.maxPlayers} · Espectadores ${data.spectatorCount}/${data.maxSpectators ?? MAX_SPECTATORS}`;
+  }
+  return data.message ?? 'Error desconocido';
+}
+
+export function useLobby(code: string, userId?: string, spectateMode = false): UseLobbyReturn {
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [matchStarted, setMatchStarted] = useState(false);
   const [matchData, setMatchData] = useState<MatchStartPayload | null>(null);
+  const [isSpectator, setIsSpectator] = useState(spectateMode);
+  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
+  const [autoSpectateMessage, setAutoSpectateMessage] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const matchStartedRef = useRef(false);
   const pendingRejoinRef = useRef<string | null>(null);
@@ -49,7 +77,6 @@ export function useLobby(code: string): UseLobbyReturn {
       setIsConnected(true);
 
       if (pendingRejoinRef.current) {
-        // Reconnection — emit LOBBY_REJOIN instead of LOBBY_JOIN
         rejoinHandler = (payload: RejoinStatePayload) => {
           rejoinHandler = null;
           setRoomState(payload.roomState);
@@ -69,8 +96,11 @@ export function useLobby(code: string): UseLobbyReturn {
         s.once(WS_EVENTS.REJOIN_STATE, rejoinHandler);
         s.emit(WS_EVENTS.LOBBY_REJOIN, { roomCode: pendingRejoinRef.current });
       } else if (!hasJoinedRef.current) {
-        // First connection — emit LOBBY_JOIN
-        s.emit(WS_EVENTS.LOBBY_JOIN, { code });
+        if (spectateMode) {
+          s.emit(WS_EVENTS.LOBBY_SPECTATE, { code });
+        } else {
+          s.emit(WS_EVENTS.LOBBY_JOIN, { code });
+        }
         hasJoinedRef.current = true;
       }
     };
@@ -97,15 +127,20 @@ export function useLobby(code: string): UseLobbyReturn {
     s.on(WS_EVENTS.LOBBY_STATE, (state: RoomState) => {
       setRoomState(state);
       setError(null);
-      // Reset match state when room returns to waiting (rematch)
+      setIsSwitchingRole(false);
+      // Derive spectator status from server state — single source of truth
+      if (userId) {
+        setIsSpectator(state.spectators.some((sp) => sp.id === userId));
+      }
       if (state.status === 'waiting' && matchStartedRef.current) {
         setMatchStarted(false);
         setMatchData(null);
       }
     });
 
-    s.on(WS_EVENTS.LOBBY_ERROR, (data: { message: string }) => {
-      setError(data.message);
+    s.on(WS_EVENTS.LOBBY_ERROR, (data: LobbyErrorPayload) => {
+      setError(buildErrorMessage(data));
+      setIsSwitchingRole(false);
     });
 
     s.on(WS_EVENTS.MATCH_START, (data: MatchStartPayload) => {
@@ -113,11 +148,18 @@ export function useLobby(code: string): UseLobbyReturn {
       setMatchStarted(true);
     });
 
-    // If already connected, join immediately
+    s.on(WS_EVENTS.LOBBY_AUTO_SPECTATE, (data: { message: string }) => {
+      setAutoSpectateMessage(data.message);
+    });
+
     if (s.connected) {
       setIsConnected(true);
       if (!hasJoinedRef.current) {
-        s.emit(WS_EVENTS.LOBBY_JOIN, { code });
+        if (spectateMode) {
+          s.emit(WS_EVENTS.LOBBY_SPECTATE, { code });
+        } else {
+          s.emit(WS_EVENTS.LOBBY_JOIN, { code });
+        }
         hasJoinedRef.current = true;
       }
     }
@@ -130,6 +172,7 @@ export function useLobby(code: string): UseLobbyReturn {
       s.off(WS_EVENTS.LOBBY_STATE);
       s.off(WS_EVENTS.LOBBY_ERROR);
       s.off(WS_EVENTS.MATCH_START);
+      s.off(WS_EVENTS.LOBBY_AUTO_SPECTATE);
       if (rejoinHandler) s.off(WS_EVENTS.REJOIN_STATE, rejoinHandler);
       hasJoinedRef.current = false;
       pendingRejoinRef.current = null;
@@ -179,12 +222,36 @@ export function useLobby(code: string): UseLobbyReturn {
     setMatchData(null);
   }, []);
 
+  // Joins as spectator on first connection (before being assigned a role).
+  // Does NOT set isSpectator optimistically — waits for LOBBY_STATE confirmation.
+  const joinAsSpectator = useCallback(() => {
+    socket?.emit(WS_EVENTS.LOBBY_SPECTATE, { code });
+    setIsSwitchingRole(true);
+  }, [socket, code]);
+
+  const switchToSpectator = useCallback(() => {
+    socket?.emit(WS_EVENTS.LOBBY_SWITCH_TO_SPECTATOR, { code });
+    setIsSwitchingRole(true);
+  }, [socket, code]);
+
+  const switchToPlayer = useCallback(() => {
+    socket?.emit(WS_EVENTS.LOBBY_SWITCH_TO_PLAYER, { code });
+    setIsSwitchingRole(true);
+  }, [socket, code]);
+
+  const clearAutoSpectateMessage = useCallback(() => {
+    setAutoSpectateMessage(null);
+  }, []);
+
   return {
     roomState,
     error,
     isConnected,
     matchStarted,
     matchData,
+    isSpectator,
+    isSwitchingRole,
+    autoSpectateMessage,
     toggleReady,
     selectLevel,
     setTimeLimit,
@@ -192,5 +259,9 @@ export function useLobby(code: string): UseLobbyReturn {
     startMatch,
     leaveRoom,
     resetMatch,
+    joinAsSpectator,
+    switchToSpectator,
+    switchToPlayer,
+    clearAutoSpectateMessage,
   };
 }

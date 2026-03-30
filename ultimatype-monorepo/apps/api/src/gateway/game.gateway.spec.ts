@@ -21,6 +21,9 @@ describe('GameGateway', () => {
     markPlayerDisconnected: ReturnType<typeof vi.fn>;
     markPlayerConnected: ReturnType<typeof vi.fn>;
     isPlayerInRoom: ReturnType<typeof vi.fn>;
+    isSpectatorInRoom: ReturnType<typeof vi.fn>;
+    joinAsSpectator: ReturnType<typeof vi.fn>;
+    leaveSpectator: ReturnType<typeof vi.fn>;
   };
   let usersService: {
     findById: ReturnType<typeof vi.fn>;
@@ -93,6 +96,9 @@ describe('GameGateway', () => {
       markPlayerDisconnected: vi.fn().mockResolvedValue(undefined),
       markPlayerConnected: vi.fn().mockResolvedValue(undefined),
       isPlayerInRoom: vi.fn().mockResolvedValue(true),
+      isSpectatorInRoom: vi.fn().mockResolvedValue(false),
+      joinAsSpectator: vi.fn(),
+      leaveSpectator: vi.fn(),
     };
     usersService = {
       findById: vi.fn().mockResolvedValue({

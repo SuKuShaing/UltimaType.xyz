@@ -10,4 +10,5 @@ export * from './constants/countries';
 export * from './constants/difficulty-levels';
 export * from './constants/player-colors';
 export * from './constants/match-config';
+export * from './constants/error-codes';
 export * from './websocket/events';

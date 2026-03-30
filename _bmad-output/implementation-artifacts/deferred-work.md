@@ -1,5 +1,10 @@
 # Deferred Work
 
+## Deferred from: code review of 3-1-spectator-mode-room-capacity-management (2026-03-30)
+
+- **AC2: Mensaje de error cuando ambos slots llenos es 'Sala llena de espectadores' en lugar de 'Sala llena' per spec** — `game.gateway.ts / rooms.service.ts`. Cuando la sala está llena de jugadores Y espectadores, el error que recibe el cliente es 'Sala llena de espectadores' pero AC2 especifica solo 'Sala llena'. Mensaje más informativo, bajo impacto; ajustar si se quiere conformidad estricta con el spec.
+- **Comparación frágil por string 'Sala llena' para routing auto-spectate en handleJoin** — `game.gateway.ts`. El auto-spectate se activa comparando `joinErr.message === 'Sala llena'`. Si el mensaje del Lua script cambia (i18n, refactor), el auto-spectate se rompe silenciosamente. Pre-existing pattern en el codebase; resolver cuando se estandaricen los error codes.
+
 ## Deferred from: code review of 2-8-functional-validation-fixes (2026-03-29)
 
 - **Race condition no-atómica entre `hset` y `hgetall` en setMaxPlayers/setTimeLimit** — `rooms.service.ts` / `game.gateway.ts`. El `hset` y el posterior `hgetall`+broadcast son dos llamadas Redis separadas. Otro evento WS entre ambas podría causar un broadcast con snapshot parcialmente stale. Bajo riesgo en práctica; mismo patrón que otros handlers existentes.

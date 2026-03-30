@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLobby } from '../../hooks/use-lobby';
 import { useAuth } from '../../hooks/use-auth';
 import { PlayerAvatarPill } from './player-avatar-pill';
 import { ArenaPage } from '../arena/arena-page';
-import { DIFFICULTY_LEVELS, TIME_LIMIT_OPTIONS } from '@ultimatype-monorepo/shared';
+import { DIFFICULTY_LEVELS, TIME_LIMIT_OPTIONS, MAX_SPECTATORS } from '@ultimatype-monorepo/shared';
 
 const TIME_LIMIT_LABELS: Record<number, string> = {
   0: 'Finalizar texto',
@@ -16,6 +16,14 @@ const TIME_LIMIT_LABELS: Record<number, string> = {
   300_000: '5 min',
 };
 
+interface Toast {
+  id: string;
+  message: string;
+  type: 'info' | 'error' | 'success';
+}
+
+let toastIdCounter = 0;
+
 export function LobbyPage() {
   const { code = '' } = useParams<{ code: string }>();
   const navigate = useNavigate();
@@ -26,22 +34,71 @@ export function LobbyPage() {
     isConnected,
     matchStarted,
     matchData,
+    isSpectator,
+    isSwitchingRole,
+    autoSpectateMessage,
     toggleReady,
     selectLevel,
     setTimeLimit,
     setMaxPlayers,
     startMatch,
     leaveRoom,
-  } = useLobby(code);
+    switchToSpectator,
+    switchToPlayer,
+    clearAutoSpectateMessage,
+  } = useLobby(code, user?.id);
 
   const [copied, setCopied] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
+  const hasConnectedRef = useRef(false);
+
+  const addToast = useCallback((message: string, type: Toast['type'] = 'info') => {
+    const id = String(++toastIdCounter);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // Connection status toasts — skip initial connecting state
+  useEffect(() => {
+    if (isConnected) {
+      if (hasConnectedRef.current) {
+        addToast('Conexión restaurada', 'success');
+      }
+      hasConnectedRef.current = true;
+    } else if (hasConnectedRef.current) {
+      addToast('Sin conexión · Reconectando...', 'error');
+    }
+  }, [isConnected, addToast]);
+
+  // Auto-spectate toast
+  useEffect(() => {
+    if (autoSpectateMessage) {
+      addToast(autoSpectateMessage, 'info');
+      clearAutoSpectateMessage();
+    }
+  }, [autoSpectateMessage, addToast, clearAutoSpectateMessage]);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!openMenuFor) return;
+    const handleClick = () => setOpenMenuFor(null);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [openMenuFor]);
 
   const isHost = roomState?.hostId === user?.id;
   const currentPlayer = roomState?.players.find((p) => p.id === user?.id);
   const otherPlayers = roomState?.players.filter((p) => p.id !== user?.id) ?? [];
-  const allOthersReady =
-    roomState && otherPlayers.every((p) => p.isReady);
+  const allOthersReady = roomState && otherPlayers.every((p) => p.isReady);
   const roomLink = `${window.location.origin}/room/${code}`;
+  const isPlayerRoomFull = (roomState?.players.length ?? 0) >= (roomState?.maxPlayers ?? 20);
 
   const handleCopyLink = async () => {
     try {
@@ -58,6 +115,16 @@ export function LobbyPage() {
     navigate('/');
   };
 
+  const handleSwitchToSpectator = () => {
+    setOpenMenuFor(null);
+    switchToSpectator();
+  };
+
+  const handleSwitchToPlayer = () => {
+    setOpenMenuFor(null);
+    switchToPlayer();
+  };
+
   if (!code) return null;
 
   // Transition to arena when match starts
@@ -66,12 +133,39 @@ export function LobbyPage() {
       <ArenaPage
         matchData={matchData}
         localUserId={user.id}
+        isSpectator={isSpectator}
       />
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-surface-base px-4 py-8 font-sans text-text-main">
+      {/* Toast container */}
+      {toasts.length > 0 && (
+        <div className="fixed right-4 top-4 z-50 flex flex-col gap-2">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium shadow-lg ${
+                toast.type === 'error'
+                  ? 'bg-error text-white'
+                  : toast.type === 'success'
+                    ? 'bg-success text-white'
+                    : 'bg-surface-raised text-text-main'
+              }`}
+            >
+              <span>{toast.message}</span>
+              <button
+                onClick={() => dismissToast(toast.id)}
+                className="ml-2 opacity-70 hover:opacity-100"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="mb-2 text-3xl font-bold">Sala de Espera</h1>
@@ -92,21 +186,139 @@ export function LobbyPage() {
         {error && <p className="mt-2 text-sm text-error">{error}</p>}
       </div>
 
+      {/* Spectator badge */}
+      {isSpectator && (
+        <div className="mb-4 rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted">
+          Estás como espectador
+        </div>
+      )}
+
       {/* Players list */}
       <div className="mb-8 w-full max-w-md">
         <h2 className="mb-3 text-sm font-semibold text-text-muted">
           Jugadores ({roomState?.players.length ?? 0}/{roomState?.maxPlayers ?? 20})
+          {(roomState?.spectators?.length ?? 0) > 0 && (
+            <span className="ml-2">| {roomState?.spectators?.length} espectadores</span>
+          )}
         </h2>
         <div className="flex flex-col gap-2">
-          {roomState?.players.map((player) => (
-            <PlayerAvatarPill
-              key={player.id}
-              player={player}
-              isHost={player.id === roomState.hostId}
-              isLocal={player.id === user?.id}
-            />
-          ))}
+          {roomState?.players.map((player) => {
+            const isOwnCard = player.id === user?.id;
+            const menuOpen = openMenuFor === `player-${player.id}`;
+            return (
+              <div key={player.id} className="relative flex items-center gap-2">
+                <div className="flex-1">
+                  <PlayerAvatarPill
+                    player={player}
+                    isHost={player.id === roomState.hostId}
+                    isLocal={isOwnCard}
+                  />
+                </div>
+                {isOwnCard && roomState.status === 'waiting' && (
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuFor(menuOpen ? null : `player-${player.id}`);
+                      }}
+                      disabled={isSwitchingRole}
+                      className="rounded p-1 text-text-muted hover:bg-surface-raised hover:text-text-main disabled:opacity-40"
+                      title="Opciones"
+                    >
+                      {isSwitchingRole ? (
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : (
+                        '···'
+                      )}
+                    </button>
+                    {menuOpen && (
+                      <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-surface-raised py-1 shadow-lg">
+                        <button
+                          onClick={handleSwitchToSpectator}
+                          className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-surface-base"
+                        >
+                          Cambiar a espectador
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
+
+        {/* Spectators list */}
+        {(roomState?.spectators?.length ?? 0) > 0 && (
+          <div className="mt-4">
+            <h3 className="mb-2 text-xs font-semibold text-text-muted">
+              Espectadores ({roomState?.spectators?.length}/{MAX_SPECTATORS})
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {roomState?.spectators.map((spec) => {
+                const isOwnPill = spec.id === user?.id;
+                const menuOpen = openMenuFor === `spectator-${spec.id}`;
+                if (!isOwnPill) {
+                  return (
+                    <span
+                      key={spec.id}
+                      className="rounded bg-surface-raised px-2 py-1 text-xs text-text-muted"
+                    >
+                      {spec.displayName}
+                    </span>
+                  );
+                }
+                return (
+                  <div key={spec.id} className="relative flex items-center gap-1">
+                    <span className="rounded bg-surface-raised px-2 py-1 text-xs text-text-muted">
+                      {spec.displayName}
+                    </span>
+                    {roomState.status === 'waiting' && (
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuFor(menuOpen ? null : `spectator-${spec.id}`);
+                          }}
+                          disabled={isSwitchingRole}
+                          className="rounded px-1 py-0.5 text-xs text-text-muted hover:bg-surface-raised hover:text-text-main disabled:opacity-40"
+                          title="Opciones"
+                        >
+                          {isSwitchingRole ? (
+                            <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          ) : (
+                            '···'
+                          )}
+                        </button>
+                        {menuOpen && (
+                          <div className="absolute left-0 top-full z-10 mt-1 w-48 rounded-lg bg-surface-raised py-1 shadow-lg">
+                            {isPlayerRoomFull ? (
+                              <div className="cursor-not-allowed px-4 py-2 text-sm">
+                                <span className="block text-text-muted opacity-60">
+                                  Cambiar a jugador
+                                </span>
+                                <span className="mt-0.5 block text-xs text-error">
+                                  Sala llena · {roomState.players.length}/{roomState.maxPlayers}
+                                </span>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={handleSwitchToPlayer}
+                                className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-surface-base"
+                              >
+                                Cambiar a jugador
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Difficulty selector (host only) */}
@@ -208,7 +420,7 @@ export function LobbyPage() {
           Salir
         </button>
 
-        {!isHost && currentPlayer && (
+        {!isSpectator && !isHost && currentPlayer && (
           <button
             onClick={() => toggleReady(!currentPlayer.isReady)}
             className={`flex-1 rounded-lg px-4 py-3 text-sm font-bold transition-colors ${
@@ -221,7 +433,7 @@ export function LobbyPage() {
           </button>
         )}
 
-        {isHost && (
+        {!isSpectator && isHost && (
           <button
             onClick={startMatch}
             disabled={!allOthersReady}

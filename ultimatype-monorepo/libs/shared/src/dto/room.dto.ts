@@ -9,12 +9,20 @@ export interface PlayerInfo {
   disconnected: boolean;
 }
 
+export interface SpectatorInfo {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  joinedAt: string;
+}
+
 export interface RoomState {
   code: string;
   hostId: string;
   level: number;
   status: 'waiting' | 'playing' | 'finished';
   players: PlayerInfo[];
+  spectators: SpectatorInfo[];
   maxPlayers: number;
   timeLimit: number;
 }

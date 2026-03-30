@@ -4,8 +4,10 @@ import { customAlphabet } from 'nanoid';
 import { REDIS_CLIENT } from '../../redis/redis.module';
 import {
   PlayerInfo,
+  SpectatorInfo,
   RoomState,
   MAX_PLAYERS,
+  MAX_SPECTATORS,
   isValidLevel,
   isValidTimeLimit,
 } from '@ultimatype-monorepo/shared';
@@ -138,6 +140,204 @@ end
 return nil
 `;
 
+// Lua script: atomic spectator join with capacity check
+const JOIN_SPECTATOR_LUA = `
+local roomKey = KEYS[1]
+local playersKey = KEYS[2]
+local spectatorsKey = KEYS[3]
+local userId = ARGV[1]
+local displayName = ARGV[2]
+local avatarUrl = ARGV[3]
+local maxSpectators = tonumber(ARGV[4])
+local ttl = tonumber(ARGV[5])
+local joinedAt = ARGV[6]
+
+local roomCode = redis.call('HGET', roomKey, 'code')
+if not roomCode then
+  return redis.error_reply('Sala no encontrada')
+end
+
+local existingPlayer = redis.call('HGET', playersKey, userId)
+if existingPlayer then
+  return redis.error_reply('Ya eres jugador en esta sala')
+end
+
+local existingSpec = redis.call('HGET', spectatorsKey, userId)
+if existingSpec then
+  return 'ALREADY_SPECTATING'
+end
+
+local count = redis.call('HLEN', spectatorsKey)
+if count >= maxSpectators then
+  return redis.error_reply('Sala llena de espectadores')
+end
+
+local spectator = cjson.encode({
+  id = userId,
+  displayName = displayName,
+  avatarUrl = avatarUrl ~= '' and avatarUrl or cjson.null,
+  joinedAt = joinedAt
+})
+
+redis.call('HSET', spectatorsKey, userId, spectator)
+redis.call('EXPIRE', roomKey, ttl)
+redis.call('EXPIRE', playersKey, ttl)
+redis.call('EXPIRE', spectatorsKey, ttl)
+
+return 'OK'
+`;
+
+// Lua script: atomic player→spectator role switch with host promotion
+const SWITCH_TO_SPECTATOR_LUA = `
+local roomKey = KEYS[1]
+local playersKey = KEYS[2]
+local spectatorsKey = KEYS[3]
+local userId = ARGV[1]
+local displayName = ARGV[2]
+local avatarUrl = ARGV[3]
+local maxSpectators = tonumber(ARGV[4])
+local ttl = tonumber(ARGV[5])
+local joinedAt = ARGV[6]
+
+local roomCode = redis.call('HGET', roomKey, 'code')
+if not roomCode then
+  return redis.error_reply('Sala no encontrada')
+end
+
+local status = redis.call('HGET', roomKey, 'status')
+if status ~= 'waiting' then
+  return redis.error_reply('No puedes cambiar de rol durante una partida')
+end
+
+local existingPlayer = redis.call('HGET', playersKey, userId)
+if not existingPlayer then
+  return redis.error_reply('No eres jugador en esta sala')
+end
+
+local specCount = redis.call('HLEN', spectatorsKey)
+if specCount >= maxSpectators then
+  return redis.error_reply('Sala llena de espectadores')
+end
+
+redis.call('HDEL', playersKey, userId)
+
+local hostId = redis.call('HGET', roomKey, 'hostId')
+if hostId == userId then
+  local allData = redis.call('HGETALL', playersKey)
+  if #allData > 0 then
+    local oldestId = nil
+    local oldestTime = nil
+    for i = 1, #allData, 2 do
+      local p = cjson.decode(allData[i + 1])
+      if not oldestTime or p.joinedAt < oldestTime then
+        oldestId = allData[i]
+        oldestTime = p.joinedAt
+      end
+    end
+    if oldestId then
+      redis.call('HSET', roomKey, 'hostId', oldestId)
+    end
+  end
+end
+
+local spectator = cjson.encode({
+  id = userId,
+  displayName = displayName,
+  avatarUrl = avatarUrl ~= '' and avatarUrl or cjson.null,
+  joinedAt = joinedAt
+})
+
+redis.call('HSET', spectatorsKey, userId, spectator)
+redis.call('EXPIRE', roomKey, ttl)
+redis.call('EXPIRE', playersKey, ttl)
+redis.call('EXPIRE', spectatorsKey, ttl)
+
+return 'OK'
+`;
+
+// Lua script: atomic spectator→player role switch with color assignment
+const SWITCH_TO_PLAYER_LUA = `
+local roomKey = KEYS[1]
+local playersKey = KEYS[2]
+local spectatorsKey = KEYS[3]
+local userId = ARGV[1]
+local displayName = ARGV[2]
+local avatarUrl = ARGV[3]
+local maxPlayers = tonumber(ARGV[4])
+local ttl = tonumber(ARGV[5])
+local joinedAt = ARGV[6]
+local countryCode = ARGV[7]
+
+local roomCode = redis.call('HGET', roomKey, 'code')
+if not roomCode then
+  return redis.error_reply('Sala no encontrada')
+end
+
+local status = redis.call('HGET', roomKey, 'status')
+if status ~= 'waiting' then
+  return redis.error_reply('No puedes cambiar de rol durante una partida')
+end
+
+local existingSpec = redis.call('HGET', spectatorsKey, userId)
+if not existingSpec then
+  return redis.error_reply('No eres espectador en esta sala')
+end
+
+local roomMaxPlayers = tonumber(redis.call('HGET', roomKey, 'maxPlayers')) or maxPlayers
+local count = redis.call('HLEN', playersKey)
+if count >= roomMaxPlayers then
+  return redis.error_reply('Sala llena')
+end
+
+redis.call('HDEL', spectatorsKey, userId)
+
+local allPlayers = redis.call('HVALS', playersKey)
+local usedColors = {}
+for _, pJson in ipairs(allPlayers) do
+  local p = cjson.decode(pJson)
+  usedColors[p.colorIndex] = true
+end
+local colorIndex = 0
+for i = 0, maxPlayers - 1 do
+  if not usedColors[i] then
+    colorIndex = i
+    break
+  end
+end
+
+local player = cjson.encode({
+  id = userId,
+  displayName = displayName,
+  avatarUrl = avatarUrl ~= '' and avatarUrl or cjson.null,
+  countryCode = countryCode ~= '' and countryCode or cjson.null,
+  colorIndex = colorIndex,
+  isReady = false,
+  joinedAt = joinedAt,
+  disconnected = false
+})
+
+redis.call('HSET', playersKey, userId, player)
+redis.call('EXPIRE', roomKey, ttl)
+redis.call('EXPIRE', playersKey, ttl)
+redis.call('EXPIRE', spectatorsKey, ttl)
+
+return 'OK'
+`;
+
+// Lua script: atomic spectator leave
+const LEAVE_SPECTATOR_LUA = `
+local roomKey = KEYS[1]
+local spectatorsKey = KEYS[2]
+local userId = ARGV[1]
+local ttl = tonumber(ARGV[2])
+
+redis.call('HDEL', spectatorsKey, userId)
+redis.call('EXPIRE', roomKey, ttl)
+redis.call('EXPIRE', spectatorsKey, ttl)
+
+return 'OK'
+`;
+
 @Injectable()
 export class RoomsService {
   private readonly logger = new Logger(RoomsService.name);
@@ -195,6 +395,7 @@ export class RoomsService {
       level: 1,
       status: 'waiting',
       players: [player],
+      spectators: [],
       maxPlayers: MAX_PLAYERS,
       timeLimit: 0,
     };
@@ -234,6 +435,12 @@ export class RoomsService {
     code: string,
     userId: string,
   ): Promise<RoomState | null> {
+    // Check if user is a spectator first
+    const isSpectator = await this.isSpectatorInRoom(code, userId);
+    if (isSpectator) {
+      return this.leaveSpectator(code, userId);
+    }
+
     const roomKey = `room:${code}`;
     const playersKey = `room:${code}:players`;
 
@@ -256,6 +463,7 @@ export class RoomsService {
   async getRoomState(code: string): Promise<RoomState | null> {
     const roomKey = `room:${code}`;
     const playersKey = `room:${code}:players`;
+    const spectatorsKey = `room:${code}:spectators`;
 
     const roomData = await this.redis.hgetall(roomKey);
     if (!roomData.code) {
@@ -263,6 +471,7 @@ export class RoomsService {
     }
 
     const players = await this.getPlayers(playersKey);
+    const spectators = await this.getSpectators(spectatorsKey);
 
     return {
       code: roomData.code,
@@ -270,6 +479,7 @@ export class RoomsService {
       level: Number(roomData.level),
       status: roomData.status as RoomState['status'],
       players,
+      spectators,
       maxPlayers: Number(roomData.maxPlayers),
       timeLimit: Number(roomData.timeLimit ?? 0),
     };
@@ -412,9 +622,11 @@ export class RoomsService {
   private async refreshTTL(code: string): Promise<void> {
     const roomKey = `room:${code}`;
     const playersKey = `room:${code}:players`;
+    const spectatorsKey = `room:${code}:spectators`;
     await Promise.all([
       this.redis.expire(roomKey, ROOM_TTL),
       this.redis.expire(playersKey, ROOM_TTL),
+      this.redis.expire(spectatorsKey, ROOM_TTL),
     ]);
   }
 
@@ -441,6 +653,116 @@ export class RoomsService {
     return (await this.redis.hexists(playersKey, userId)) === 1;
   }
 
+  async isSpectatorInRoom(code: string, userId: string): Promise<boolean> {
+    const spectatorsKey = `room:${code}:spectators`;
+    return (await this.redis.hexists(spectatorsKey, userId)) === 1;
+  }
+
+  async joinAsSpectator(
+    code: string,
+    userId: string,
+    userInfo: UserInfo,
+  ): Promise<RoomState> {
+    const roomKey = `room:${code}`;
+    const playersKey = `room:${code}:players`;
+    const spectatorsKey = `room:${code}:spectators`;
+    const now = new Date().toISOString();
+
+    const result = await this.redis.eval(
+      JOIN_SPECTATOR_LUA,
+      3,
+      roomKey,
+      playersKey,
+      spectatorsKey,
+      userId,
+      userInfo.displayName,
+      userInfo.avatarUrl ?? '',
+      String(MAX_SPECTATORS),
+      String(ROOM_TTL),
+      now,
+    ) as string;
+
+    if (result === 'ALREADY_SPECTATING') {
+      return this.getRoomState(code) as Promise<RoomState>;
+    }
+
+    return this.getRoomState(code) as Promise<RoomState>;
+  }
+
+  async switchToSpectator(
+    code: string,
+    userId: string,
+    userInfo: UserInfo,
+  ): Promise<RoomState> {
+    const roomKey = `room:${code}`;
+    const playersKey = `room:${code}:players`;
+    const spectatorsKey = `room:${code}:spectators`;
+    const now = new Date().toISOString();
+
+    await this.redis.eval(
+      SWITCH_TO_SPECTATOR_LUA,
+      3,
+      roomKey,
+      playersKey,
+      spectatorsKey,
+      userId,
+      userInfo.displayName,
+      userInfo.avatarUrl ?? '',
+      String(MAX_SPECTATORS),
+      String(ROOM_TTL),
+      now,
+    );
+
+    return this.getRoomState(code) as Promise<RoomState>;
+  }
+
+  async switchToPlayer(
+    code: string,
+    userId: string,
+    userInfo: UserInfo,
+  ): Promise<RoomState> {
+    const roomKey = `room:${code}`;
+    const playersKey = `room:${code}:players`;
+    const spectatorsKey = `room:${code}:spectators`;
+    const now = new Date().toISOString();
+
+    await this.redis.eval(
+      SWITCH_TO_PLAYER_LUA,
+      3,
+      roomKey,
+      playersKey,
+      spectatorsKey,
+      userId,
+      userInfo.displayName,
+      userInfo.avatarUrl ?? '',
+      String(MAX_PLAYERS),
+      String(ROOM_TTL),
+      now,
+      userInfo.countryCode ?? '',
+    );
+
+    return this.getRoomState(code) as Promise<RoomState>;
+  }
+
+  async leaveSpectator(
+    code: string,
+    userId: string,
+  ): Promise<RoomState | null> {
+    const roomKey = `room:${code}`;
+    const spectatorsKey = `room:${code}:spectators`;
+
+    await this.redis.eval(
+      LEAVE_SPECTATOR_LUA,
+      2,
+      roomKey,
+      spectatorsKey,
+      userId,
+      String(ROOM_TTL),
+    );
+
+    return this.getRoomState(code);
+  }
+
   private async getPlayers(playersKey: string): Promise<PlayerInfo[]> {
     const playersHash = await this.redis.hgetall(playersKey);
     return Object.values(playersHash).flatMap((json) => {
@@ -448,6 +770,18 @@ export class RoomsService {
         return [JSON.parse(json) as PlayerInfo];
       } catch {
         this.logger.error(`JSON corrupto en Redis para clave ${playersKey}`);
+        return [];
+      }
+    });
+  }
+
+  private async getSpectators(spectatorsKey: string): Promise<SpectatorInfo[]> {
+    const spectatorsHash = await this.redis.hgetall(spectatorsKey);
+    return Object.values(spectatorsHash).flatMap((json) => {
+      try {
+        return [JSON.parse(json) as SpectatorInfo];
+      } catch {
+        this.logger.error(`JSON corrupto en Redis para clave ${spectatorsKey}`);
         return [];
       }
     });

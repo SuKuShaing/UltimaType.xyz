@@ -35,7 +35,9 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-03-29T22:30:00-03:00
+last_updated: 2026-03-30T14:00:00-03:00
+# 2026-03-30: Story 3-1 code review completed, set to done.
+# 2026-03-30: Story 3-1 created, set to ready-for-dev. Epic 3 set to in-progress.
 # 2026-03-29: Story 2-8 code review completed, set to done
 # 2026-03-27: Story 2-3 created and set to ready-for-dev
 # 2026-03-28: Story 2-4 created and set to ready-for-dev
@@ -67,8 +69,8 @@ development_status:
   2-7-epic-2-prep-sprint: done
   2-8-functional-validation-fixes: done
   epic-2-retrospective: done
-  epic-3: backlog
-  3-1-spectator-mode-room-capacity-management: backlog
+  epic-3: in-progress
+  3-1-spectator-mode-room-capacity-management: done
   3-2-live-spectator-view: backlog
   3-3-spectator-to-player-transition: backlog
   epic-3-retrospective: optional

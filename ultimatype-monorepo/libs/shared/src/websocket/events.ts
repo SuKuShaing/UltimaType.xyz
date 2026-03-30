@@ -7,8 +7,13 @@ export const WS_EVENTS = {
   LOBBY_START: 'lobby:start',
   LOBBY_SET_TIME_LIMIT: 'lobby:set-time-limit',
   LOBBY_SET_MAX_PLAYERS: 'lobby:set-max-players',
+  // Spectator: Client → Server
+  LOBBY_SPECTATE: 'lobby:spectate',
+  LOBBY_SWITCH_TO_SPECTATOR: 'lobby:switch-to-spectator',
+  LOBBY_SWITCH_TO_PLAYER: 'lobby:switch-to-player',
   // Server → Client
   LOBBY_STATE: 'lobby:state',
+  LOBBY_AUTO_SPECTATE: 'lobby:auto-spectate',
   LOBBY_ERROR: 'lobby:error',
   MATCH_START: 'match:start',
   // Caret sync: Client → Server

@@ -21,11 +21,13 @@ import {
 interface ArenaPageProps {
   matchData: MatchStartPayload;
   localUserId: string;
+  isSpectator?: boolean;
 }
 
 export function ArenaPage({
   matchData,
   localUserId,
+  isSpectator = false,
 }: ArenaPageProps) {
   const textContainerRef = useRef<HTMLDivElement>(null);
   const otherPlayerIdsRef = useRef<string[]>([]);
@@ -45,14 +47,15 @@ export function ArenaPage({
   useEffect(() => {
     const data = matchDataRef.current;
     arenaStore.getState().initArena(data.textContent, data.players);
-    otherPlayerIdsRef.current = localUserId
-      ? data.players.map((p) => p.id).filter((id) => id !== localUserId)
-      : [];
+    // Spectators see ALL carets; players see all except their own
+    otherPlayerIdsRef.current = isSpectator
+      ? data.players.map((p) => p.id)
+      : data.players.map((p) => p.id).filter((id) => id !== localUserId);
 
     return () => {
       arenaStore.getState().reset();
     };
-  }, [localUserId]);
+  }, [localUserId, isSpectator]);
 
   // Listen for PLAYER_FINISH events
   useEffect(() => {
@@ -120,10 +123,11 @@ export function ArenaPage({
 
   const handlePositionChange = useCallback(
     (position: number) => {
+      if (isSpectator) return;
       arenaStore.getState().setLocalPosition(position);
       emitCaretUpdate(position);
     },
-    [emitCaretUpdate],
+    [emitCaretUpdate, isSpectator],
   );
 
   const handleCountdownEnd = useCallback(() => {
@@ -165,8 +169,8 @@ export function ArenaPage({
         <LiveTextCanvas
           text={textContent}
           onPositionChange={handlePositionChange}
-          isActive={isPlaying}
-          disabled={connectionStatus !== 'connected'}
+          isActive={isPlaying && !isSpectator}
+          disabled={isSpectator || connectionStatus !== 'connected'}
         />
 
         {/* Multiplayer carets for other players */}
@@ -178,8 +182,8 @@ export function ArenaPage({
           />
         ))}
 
-        {/* Waiting overlay — shown when local player finished but match still ongoing */}
-        {localFinished && matchStatus !== 'finished' && localFinishStats && (
+        {/* Waiting overlay — shown when local player finished but match still ongoing (not for spectators) */}
+        {!isSpectator && localFinished && matchStatus !== 'finished' && localFinishStats && (
           <WaitingForOthersOverlay
             wpm={localFinishStats.wpm}
             precision={localFinishStats.precision}
