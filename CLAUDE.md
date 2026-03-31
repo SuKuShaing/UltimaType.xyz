@@ -106,3 +106,7 @@ Copy `.env.example` to `.env` and fill in OAuth credentials and secrets. Require
 ## Skill bmad
 
 - Every time the user asks for a skill that starts with BMAD-\*, look for that skill in the .agent folder
+
+## Party Mode
+
+- When the user requests a party mode, you have to find out how to activate it; that's in the @.agent skills.
