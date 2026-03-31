@@ -10,6 +10,7 @@
 ![Socket.IO](https://img.shields.io/badge/Socket.IO-black?style=flat-square)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)
+![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat&logo=gnu&logoColor=white)
 
 ---
 
@@ -100,3 +101,16 @@ ultimatype-monorepo/
 2. Crea una rama para tu feature: `git checkout -b feature/mi-feature`
 3. Asegúrate de que todos los tests pasen: `npx nx test web && npx nx test api`
 4. Abre un Pull Request describiendo el cambio
+
+---
+
+## Licencia
+
+Este proyecto está licenciado bajo la **GNU Affero General Public License v3.0** (AGPL-3.0).
+
+Esto significa que cualquier uso, modificación o distribución de este software —incluyendo su despliegue como servicio de red— debe:
+
+- Mantener la atribución al autor original y al repositorio fuente
+- Publicar el código fuente de cualquier versión modificada bajo la misma licencia
+
+Ver el archivo [LICENSE](./LICENSE) para el texto completo de la licencia.
