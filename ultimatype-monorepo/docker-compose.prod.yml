@@ -22,6 +22,7 @@ services:
 
   api:
     image: ghcr.io/sukushaing/ultimatype-api:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       - postgres
@@ -48,6 +49,7 @@ services:
 
   web:
     image: ghcr.io/sukushaing/ultimatype-web:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       - api
