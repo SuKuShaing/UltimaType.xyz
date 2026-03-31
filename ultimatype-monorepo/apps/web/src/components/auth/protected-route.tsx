@@ -12,10 +12,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!isFetchingProfile && !isAuthenticated) {
-      sessionStorage.setItem(
-        'redirectAfterLogin',
-        window.location.pathname + window.location.search,
-      );
+      // Read the path BEFORE calling navigate, which synchronously changes
+      // window.location via pushState. In StrictMode the effect runs twice:
+      // the second run would read '/' instead of the original path.
+      // Guard: only write when the current path is an actual protected route,
+      // not '/' (which means navigate already fired in a prior mount cycle).
+      const currentPath = window.location.pathname + window.location.search;
+      if (currentPath !== '/') {
+        sessionStorage.setItem('redirectAfterLogin', currentPath);
+      }
       navigate('/');
     }
   }, [isFetchingProfile, isAuthenticated, navigate]);

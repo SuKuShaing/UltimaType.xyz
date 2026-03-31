@@ -191,22 +191,22 @@ export function ArenaPage({
   const isPlaying = matchStatus === 'playing';
 
   // Toggle body class for NavBar Focus Fade (single CSS variable controls all fade opacity)
-  // Spectators never get Focus Fade — they see full UI + leaderboard
+  // Spectators (original or switched mid-match) never get Focus Fade
   useEffect(() => {
-    if (isPlaying && !isSpectator) {
+    if (isPlaying && !isSpectator && !viewingAsSpectator) {
       document.body.classList.add('arena-active');
     } else {
       document.body.classList.remove('arena-active');
     }
     return () => document.body.classList.remove('arena-active');
-  }, [isPlaying, isSpectator]);
+  }, [isPlaying, isSpectator, viewingAsSpectator]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base px-4 py-8 font-sans text-text-main">
       {!isSpectator && <FocusWPMCounter matchStatus={matchStatus} />}
 
       {/* Perimeter UI — fades via --focus-fade-opacity during race (players only, not spectators) */}
-      <div className={`w-full max-w-3xl ${isPlaying && !isSpectator ? 'focus-faded' : ''}`}>
+      <div className={`w-full max-w-3xl ${isPlaying && !isSpectator && !viewingAsSpectator ? 'focus-faded' : ''}`}>
         {/* Live leaderboard for spectators during race (or finished player watching live) */}
         {(isSpectator || viewingAsSpectator) && matchStatus === 'playing' && <SpectatorLeaderboard />}
         {/* Room header / player list area — populated by future stories */}
@@ -236,14 +236,12 @@ export function ArenaPage({
           />
         ))}
 
-        {/* Abandon button — visible but discrete, participates in Focus Fade */}
+        {/* Abandon button — visible but subtle, does NOT participate in Focus Fade */}
         {!isSpectator && isPlaying && !localFinished && !abandonedStats && (
           <button
             onClick={() => setShowAbandonModal(true)}
-            className={`absolute right-0 top-0 -translate-y-7 text-xs text-text-muted/70 transition-opacity hover:opacity-100 ${
-              isPlaying ? 'focus-faded' : ''
-            }`}
-            style={{ pointerEvents: 'auto' }}
+            className="absolute right-0 top-0 -translate-y-7 text-sm font-semibold text-text-muted transition-opacity hover:opacity-100"
+            style={{ pointerEvents: 'auto', opacity: 0.5 }}
           >
             Salir
           </button>
@@ -282,14 +280,30 @@ export function ArenaPage({
               <p className="mt-2 text-2xl font-bold text-text-main">
                 {abandonedStats.precision}% precisión
               </p>
-              <button
-                type="button"
-                onClick={handleGoHome}
-                autoFocus
-                className="mt-6 rounded-lg bg-primary px-8 py-3 text-lg font-bold text-surface-base transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                Ir al inicio
-              </button>
+              {matchStatus === 'playing' && (
+                <p className="mt-4 text-sm text-text-muted">
+                  Si esperas a los demás, verás la pantalla de resultados.
+                </p>
+              )}
+              <div className="mt-6 flex flex-col gap-3">
+                {matchStatus === 'playing' && (
+                  <button
+                    type="button"
+                    onClick={() => { setAbandonedStats(null); handleWatchLive(); }}
+                    className="rounded-lg bg-surface-raised px-8 py-3 text-sm font-semibold text-text-main transition-opacity hover:opacity-80"
+                  >
+                    Ver como espectador
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleGoHome}
+                  autoFocus
+                  className="rounded-lg bg-primary px-8 py-3 text-lg font-bold text-surface-base transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  Ir al inicio
+                </button>
+              </div>
             </div>
           </div>
         )}

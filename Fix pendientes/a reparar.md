@@ -1,8 +1,5 @@
 ## Fix a reparar
 
-- [ ] **Me comparten un link http://localhost:4200/room/7K3T32, me pide login y me logeo y me envía al home. Cuando debiese después de logearme enviarme a la sala, en este caso a la sala 7K3T32; actualmente es linkRoom > login > home y debería ser linkRoom > login > room**
-- [x] Cuando escribe muy rápido un usuario y el caret avanza rápido, en los demás usuarios no actualiza, cuando va lento si se sincroniza todo bien, pero empieza a andar rápido y se pierde la sincronización, cuando va lento si se sincroniza y avanza, todo bien; pero con los usuarios que escriben rápido, no se actualiza y se traba, no se sincroniza más, necesito que hagas un ishikawa en profundidad en md en la raíz del proyecto de esto puesto que la solución pasada no funcionó y sigue fallando exactamente igual; lo peor es que estoy ejecutando el servidor en mi pc y probandolo en distintos navegadores en ese mismo pc, osea latencia de la red no es el problema
-      ![imagen del error](/Fix%20pendientes/Cuando%20escribe%20muy%20rapido%20un%20usuario%20y%20el%20caret%20avanza%20rapido,%20en%20los%20demás%20usuarios%20no%20actualiza,%20cuando%20va%20lento%20si%20se%20sincroniza%20todo%20bien.png)
-- [x] Cuando alguien que presionó salir, y elige ser espectador, pasa a espectador y funciona bien, pero el tablero de posiciones sigue opaco, no se quita la atenuación del resto de la UI, ¿el espectador ve todo normal, sin atenuación? el tablero debiese verlo sin atenuación,
-- [x] El botón "salir" sigue estando muy tenue, tal vez poner la letra en negritas o levemente más grande
-      ![imagen del error](/Fix%20pendientes/botón%20de%20salir%20muy%20tenue%20en%20comparación%20a%20wpm.png)
+- [x] Me comparten un link http://localhost:4200/room/7K3T32, me pide login y me logeo y me envía al home. Cuando debiese después de logearme enviarme a la sala, en este caso a la sala 7K3T32; actualmente es flujo es linkRoom > login > home y debería ser linkRoom > login > room
+- [x] El nombre de la persona sobre el caret, estorba para ver bien el texto, mira la imagen siguiente, creo que la solución es dar más espacio entre linea y linea al texto que uno escribe
+      ![imagen con el error](/Fix%20pendientes/el%20nombre%20de%20la%20persona,%20sobre%20el%20caret,%20estorba%20para%20ver%20bien%20el%20texto.png)

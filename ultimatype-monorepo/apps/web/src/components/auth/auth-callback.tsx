@@ -1,6 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/use-auth';
+import { getAccessToken } from '../../lib/api-client';
+
+// Module-level guard: prevents StrictMode double-mount from calling
+// handleCallback twice with the same single-use auth code.
+let callbackInFlight = false;
 
 export function AuthCallback() {
   const [searchParams] = useSearchParams();
@@ -8,14 +13,23 @@ export function AuthCallback() {
   const { handleCallback } = useAuth();
 
   useEffect(() => {
+    if (callbackInFlight) return;
+    callbackInFlight = true;
+
     handleCallback(searchParams).then((success) => {
-      if (success) {
+      // If the code exchange failed but tokens were already set
+      // (e.g. by a prior StrictMode mount cycle), treat as success.
+      const effectiveSuccess = success || !!getAccessToken();
+
+      if (effectiveSuccess) {
         const redirect = sessionStorage.getItem('redirectAfterLogin') || '/';
         sessionStorage.removeItem('redirectAfterLogin');
         navigate(redirect, { replace: true });
       } else {
-        navigate('/login', { replace: true });
+        navigate('/', { replace: true });
       }
+    }).finally(() => {
+      callbackInFlight = false;
     });
   }, [searchParams, handleCallback, navigate]);
 

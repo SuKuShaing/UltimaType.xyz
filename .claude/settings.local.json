@@ -34,7 +34,18 @@
       "Bash(python3 .agent/skills/bmad-init/scripts/bmad_init.py load --project-root . --all)",
       "Bash(xargs grep:*)",
       "WebFetch(domain:www.gnu.org)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(node:*)",
+      "Bash(find D:/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo -path */shared* -name *.ts)",
+      "Bash(find D:/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo -name seed*.ts -o -name seed*.js)",
+      "Bash(find D:/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo/prisma/seed-data -name *.json)",
+      "Bash(python3 -c \":*)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "WebSearch",
+      "WebFetch(domain:cubepath.com)",
+      "WebFetch(domain:lowendtalk.com)",
+      "WebFetch(domain:www.trustpilot.com)",
+      "WebFetch(domain:builtbybit.com)"
     ]
   }
 }

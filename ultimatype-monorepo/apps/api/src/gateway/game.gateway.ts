@@ -579,8 +579,10 @@ export class GameGateway
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Jugador no encontrado en la partida' });
       }
 
-      // Broadcast to all in room except sender (volatile for performance)
-      client.volatile.to(conn.roomCode).emit(WS_EVENTS.CARET_SYNC, {
+      // Broadcast to all in room except sender
+      // Note: not using .volatile — the server-side throttle (40ms) already limits rate,
+      // and volatile was silently dropping packets when fast-typing, breaking caret sync.
+      client.to(conn.roomCode).emit(WS_EVENTS.CARET_SYNC, {
         playerId: conn.userId,
         position: data.position,
         timestamp: data.timestamp,

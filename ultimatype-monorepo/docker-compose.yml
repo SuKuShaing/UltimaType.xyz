@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     container_name: ultimatype-postgres
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     environment:
       POSTGRES_USER: ultimatype
       POSTGRES_PASSWORD: ultimatype_dev
@@ -16,7 +16,7 @@ services:
     image: redis:7-alpine
     container_name: ultimatype-redis
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     volumes:
       - redis_data:/data
     restart: unless-stopped

@@ -99,13 +99,20 @@ export function LobbyPage() {
   }, [autoSpectateMessage, addToast, clearAutoSpectateMessage]);
 
   // Kicked toast + navigate home
+  // Timer stored in a ref so the cleanup on re-render (caused by clearKickedMessage)
+  // doesn't cancel it before the navigation fires.
+  const kickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!kickedMessage) return;
     addToast(kickedMessage, 'error');
     clearKickedMessage();
-    const tid = setTimeout(() => navigate('/'), 2000);
-    return () => clearTimeout(tid);
+    kickTimerRef.current = setTimeout(() => navigate('/'), 2000);
   }, [kickedMessage, addToast, clearKickedMessage, navigate]);
+  useEffect(() => {
+    return () => {
+      if (kickTimerRef.current) clearTimeout(kickTimerRef.current);
+    };
+  }, []);
 
   // Moved to spectator toast
   useEffect(() => {
@@ -496,7 +503,7 @@ export function LobbyPage() {
       <div className="flex w-full max-w-md gap-3">
         <button
           onClick={handleLeave}
-          className="flex-1 rounded-lg bg-surface-raised px-4 py-3 text-sm font-medium text-text-muted transition-colors hover:text-text-main"
+          className="relative z-[1] flex-1 rounded-lg bg-surface-raised px-4 py-3 text-sm font-semibold text-text-main transition-colors hover:text-text-main hover:bg-surface-raised/80"
         >
           Salir
         </button>
@@ -507,7 +514,7 @@ export function LobbyPage() {
             className={`flex-1 rounded-lg px-4 py-3 text-sm font-bold transition-colors ${
               currentPlayer.isReady
                 ? 'bg-success/20 text-success'
-                : 'animate-pulse bg-primary text-surface-base'
+                : 'btn-glow-pulse bg-primary text-surface-base'
             }`}
           >
             {currentPlayer.isReady ? 'Listo ✓' : 'Listo'}

@@ -38,3 +38,33 @@ body.arena-active .nav-bar-global {
   pointer-events: none;
   transition: opacity 0.5s ease;
 }
+
+/* Pulsing glow rings for the Listo button */
+@keyframes btn-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.btn-glow-pulse {
+  position: relative;
+  isolation: isolate;
+}
+.btn-glow-pulse::before,
+.btn-glow-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: var(--color-primary);
+  z-index: -1;
+  animation: btn-pulse 4s ease-out infinite;
+}
+.btn-glow-pulse::after {
+  animation-delay: 2s;
+}

@@ -196,7 +196,7 @@ export function LiveTextCanvas({
 
       {/* Visual character spans — blur when not active */}
       <div
-        className="relative font-sans text-lg leading-relaxed tracking-wide text-text-main"
+        className="relative font-sans text-lg leading-[2.5] tracking-wide text-text-main"
         aria-hidden="true"
         style={{
           filter: isActive ? '' : 'blur(8px)',

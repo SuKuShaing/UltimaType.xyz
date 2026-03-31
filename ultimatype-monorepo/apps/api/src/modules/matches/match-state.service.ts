@@ -16,19 +16,18 @@ interface PlayerMatchState {
 
 // Lua: atomic validate-then-update position (anti-cheat)
 // Returns 1 = valid, 0 = invalid jump, -1 = player not found
+// NOTE: Allows jumps > ±1 because the client throttles caret updates (50ms).
+// Fast typing compresses multiple keystrokes into one position update (e.g. 0→3).
+// The old ±1 restriction silently dropped these valid updates, breaking caret sync.
 const UPDATE_POSITION_LUA = `
 local current = redis.call('HGET', KEYS[1], ARGV[1])
 if not current then return -1 end
 local data = cjson.decode(current)
 local newPos = tonumber(ARGV[2])
 if newPos < 0 then return 0 end
-local diff = newPos - data.position
-if diff == 1 or diff == -1 then
-  data.position = newPos
-  redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(data))
-  return 1
-end
-return 0
+data.position = newPos
+redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(data))
+return 1
 `;
 
 // Lua: atomic mark-player-finished

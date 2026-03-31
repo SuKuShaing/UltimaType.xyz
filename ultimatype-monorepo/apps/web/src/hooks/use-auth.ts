@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { UserProfile } from '@ultimatype-monorepo/shared';
 import { apiClient, setTokens, clearTokens, getAccessToken } from '../lib/api-client';
@@ -33,7 +34,7 @@ export function useAuth() {
     window.location.href = '/';
   }
 
-  async function handleCallback(params: URLSearchParams) {
+  const handleCallback = useCallback(async (params: URLSearchParams) => {
     const code = params.get('code');
     if (!code) return false;
     try {
@@ -51,7 +52,7 @@ export function useAuth() {
     } catch {
       return false;
     }
-  }
+  }, [queryClient]);
 
   return {
     user,
