@@ -1,5 +1,8 @@
 # Deferred Work
 
+## Deferred from: code review de 3-5-bug-fixes-and-ux-polish (2026-03-30)
+
+
 ## Deferred from: code review de 3-4-spectator-to-player-transition (2026-03-30)
 
 - **Socket reference `s` podría estar stale en LOBBY_STATE handler** — `use-lobby.ts:149`. Si el socket se cierra/reconecta mientras el handler registrado en el `useEffect([code])` aún apunta al socket anterior, el `emit(LOBBY_SWITCH_TO_PLAYER)` iría a un socket muerto. Patrón pre-existente desde story 2-2, presente en todos los handlers del mismo `useEffect`. Impacto bajo (Socket.io maneja sockets desconectados gracefully).

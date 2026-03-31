@@ -223,7 +223,7 @@ export function ArenaPage({
           text={textContent}
           onPositionChange={handlePositionChange}
           isActive={isPlaying}
-          disabled={isSpectator || connectionStatus !== 'connected'}
+          disabled={isSpectator || viewingAsSpectator || connectionStatus !== 'connected'}
           caretColor={localCaretColor}
         />
 

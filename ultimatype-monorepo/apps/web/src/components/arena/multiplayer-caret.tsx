@@ -40,16 +40,22 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
       caretRef.current.style.transform = transform;
     }
     if (labelRef.current) {
-      // Reposition label to left of caret if it would overflow the viewport
+      // Reposition label to left of caret if it would overflow the viewport (P6)
       const labelWidth = labelRef.current.offsetWidth || 60;
       const containerLeft = containerRef.current?.getBoundingClientRect().left ?? 0;
       const labelScreenX = containerLeft + xPos;
       const overflows = labelScreenX + labelWidth + 8 > window.innerWidth;
-      const labelX = overflows ? xPos - labelWidth - 4 : xPos;
+      const labelX = overflows ? Math.max(xPos - labelWidth - 4, 0) : xPos;
       labelRef.current.style.transform = `translate(${labelX}px, ${yPos - 18}px)`;
     }
     if (disconnectedLabelRef.current && disconnectedRef.current) {
-      disconnectedLabelRef.current.style.transform = `translate(${xPos + 60}px, ${yPos - 18}px)`;
+      // Reposition disconnected label away from right edge (P6)
+      const discWidth = 120; // estimated width of "(desconectado)"
+      const containerLeft = containerRef.current?.getBoundingClientRect().left ?? 0;
+      const discScreenX = containerLeft + xPos + 60;
+      const discOverflows = discScreenX + discWidth > window.innerWidth;
+      const discX = discOverflows ? xPos - discWidth - 4 : xPos + 60;
+      disconnectedLabelRef.current.style.transform = `translate(${discX}px, ${yPos - 18}px)`;
     }
   };
 
@@ -94,8 +100,8 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
       s.initialized = true;
     }
 
-    const resultX = springInterpolate(s.currentX, target.x, s.velocityX, 500, 30, dt);
-    const resultY = springInterpolate(s.currentY, target.y, s.velocityY, 500, 30, dt);
+    const resultX = springInterpolate(s.currentX, target.x, s.velocityX, 250, 28, dt);
+    const resultY = springInterpolate(s.currentY, target.y, s.velocityY, 250, 28, dt);
 
     s.currentX = resultX.position;
     s.velocityX = resultX.velocity;

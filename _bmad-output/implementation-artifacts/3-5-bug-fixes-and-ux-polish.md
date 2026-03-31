@@ -1,6 +1,6 @@
 # Story 3.5: Bug Fixes & UX Polish
 
-Status: review
+Status: done
 
 ## Story
 
@@ -349,6 +349,24 @@ Se implementaron los 18 ACs en orden de prioridad: focus fixes → revancha host
 
 ---
 
+### Review Findings
+
+- [x] [Review][Patch] Bloqueo permanente de Space/Enter para no-hosts — `handleKeyDown` se monta incondicionalmente; `rematchReady` jamás llega a `true` para no-hosts porque el countdown nunca arranca, bloqueando navegación por teclado en el overlay de resultados para siempre. Fix: mover el `addEventListener` dentro del branch `isHost`. [`match-results-overlay.tsx`]
+- [x] [Review][Patch] Jugador en `viewingAsSpectator` puede seguir tipeando — `disabled={isSpectator || connectionStatus !== 'connected'}` no incluye `viewingAsSpectator`, el input oculto sigue activo y puede avanzar posición. Fix: `disabled={isSpectator || viewingAsSpectator || connectionStatus !== 'connected'}`. [`arena-page.tsx:225`]
+- [x] [Review][Patch] `document.addEventListener('click', refocus)` roba foco de controles UI — el listener global captura clics en botones de Revancha/Salir/Overlay. Fix: guard con `closest('button, a, input, ...')`. [`live-text-canvas.tsx:refocus-click`]
+- [x] [Review][Patch] `markPlayerConnected` se llama antes de `client.join(room)` — si `markPlayerConnected` dispara un broadcast interno, el cliente aún no está en la sala y pierde el evento. Fix: mover el bloque `if (!autoSpectate)` a después de `client.join(data.code)`. [`game.gateway.ts:272-278`]
+- [x] [Review][Patch] WPM estimado sin cap ni guard null — `elapsedMinutes=0.01` hace que un jugador con 1 caracter vea ~1200 WPM; `player.position` puede ser undefined. Fix: `Math.min(Math.round(((player.position ?? 0) / 5) / elapsedMinutes), 500)`. [`spectator-leaderboard.tsx:estimatedWpm`]
+- [x] [Review][Patch] Label overflow solo guarda borde derecho, no el izquierdo; `disconnectedLabelRef` sin protección — si el caret está cerca del borde izquierdo y el label se reposiciona a la izquierda, `labelX` puede ser negativo. `disconnectedLabelRef` usa `xPos + 60` hardcodeado sin overflow check. [`multiplayer-caret.tsx:40-50`]
+- [x] [Review][Patch] `autoFocus` en botón deshabilitado — botón invisible con `autoFocus` durante countdown; `useEffect` + ref enfoca el real al habilitarse. [`match-results-overlay.tsx`]
+- [x] [Review][Patch] `markPlayerConnected` sin try/catch — si el call falla, `clearGraceTimer` no se ejecuta y el grace timer expulsa al jugador igualmente. Fix: try/catch con log + finally para `clearGraceTimer`. [`game.gateway.ts:272-278`]
+- [x] [Review][Patch] Spring + throttle: revertir throttle a 50ms (protección servidor) y suavizar spring a stiffness=250/damping=28 — críticamente amortiguado, settling ~250ms, adecuado para latencia promedio 150ms. [`use-caret-sync.ts:6`, `multiplayer-caret.tsx:97-98`]
+- [x] [Review][Dismiss] AC13: host solo ve "Iniciar Partida" habilitado — comportamiento intencional. Jugar solo es una feature (práctica privada). `every()` vacío = true es correcto en este contexto.
+- [x] [Review][Dismiss] `containerRef.current` null en overflow check — `?? 0` es guard suficiente; ref siempre resuelto en este contexto. Escenario virtualmente imposible en runtime.
+- [x] [Review][Dismiss] `offsetWidth=0` en primer render — fallback `60` es suficiente; el texto se asigna antes del primer CARET_SYNC (requiere round-trip de red). Impacto: un frame de 16ms en un escenario virtualmente imposible.
+
+---
+
 ## Change Log
 
+- 2026-03-31: Story 3-5 code review complete. 9 patches aplicados (keydown guard, viewingAsSpectator disabled, refocus guard, gateway ordering + try/finally, WPM cap 500, label overflow borde izq + disconnected, autoFocus placeholder, spring 250/28 + throttle 50ms). 290 tests passing.
 - 2026-03-30: Story 3-5 implementation complete. 18 ACs addressed (9 functional bugs, 2 content fixes, 1 new feature, 6 UX/visual). 290 tests passing (189 API + 101 Web).

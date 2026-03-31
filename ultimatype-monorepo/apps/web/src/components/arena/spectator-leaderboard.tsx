@@ -28,7 +28,7 @@ export function SpectatorLeaderboard() {
       <div className="flex flex-col gap-1.5">
         {sorted.map(([id, player], index) => {
           const progress = textLength > 0 ? Math.min(Math.round((player.position / textLength) * 100), 100) : 0;
-          const estimatedWpm = elapsedMinutes > 0 ? Math.round((player.position / 5) / elapsedMinutes) : 0;
+          const estimatedWpm = elapsedMinutes > 0 ? Math.min(Math.round(((player.position ?? 0) / 5) / elapsedMinutes), 500) : 0;
           const color = PLAYER_COLORS[player.colorIndex] ?? PLAYER_COLORS[0];
           return (
             <div key={id} className="flex items-center gap-2">

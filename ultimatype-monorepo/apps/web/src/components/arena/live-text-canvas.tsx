@@ -74,7 +74,11 @@ export function LiveTextCanvas({
   useEffect(() => {
     if (!canType) return;
 
-    const refocus = () => inputRef.current?.focus();
+    const refocus = (e?: Event) => {
+      const target = e?.target as HTMLElement | null;
+      if (target?.closest('button, a, input, select, textarea, [role="button"]')) return;
+      inputRef.current?.focus();
+    };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {

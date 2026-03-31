@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { PlayerResult, PLAYER_COLORS } from '@ultimatype-monorepo/shared';
 import { CountryFlag } from '../ui/country-flag';
 
@@ -27,6 +27,7 @@ export function MatchResultsOverlay({
   const [joined, setJoined] = useState(false);
   const [rematchCountdown, setRematchCountdown] = useState(REMATCH_DELAY_SECONDS);
   const rematchReady = rematchCountdown <= 0;
+  const rematchBtnRef = useRef<HTMLButtonElement>(null);
 
   // 5-second countdown before rematch is enabled
   useEffect(() => {
@@ -38,7 +39,12 @@ export function MatchResultsOverlay({
     return () => clearInterval(timer);
   }, [isHost, onJoinAsPlayer, rematchCountdown]);
 
-  // Block spacebar/enter during countdown
+  // Focus rematch button as soon as countdown ends (P7)
+  useEffect(() => {
+    if (rematchReady) rematchBtnRef.current?.focus();
+  }, [rematchReady]);
+
+  // Block spacebar/enter during countdown — only needed for host (P1)
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!rematchReady && (e.key === ' ' || e.key === 'Enter')) {
@@ -49,9 +55,10 @@ export function MatchResultsOverlay({
   );
 
   useEffect(() => {
+    if (!isHost || onJoinAsPlayer) return;
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  }, [handleKeyDown, isHost, onJoinAsPlayer]);
 
   const handleJoin = () => {
     onJoinAsPlayer?.();
@@ -167,19 +174,31 @@ export function MatchResultsOverlay({
               Inscrito para la siguiente ✓
             </span>
           ) : isHost ? (
-            <button
-              type="button"
-              onClick={onRematch}
-              disabled={!rematchReady}
-              autoFocus
-              className={`rounded-lg px-8 py-3 text-xl font-bold transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                rematchReady
-                  ? 'bg-primary text-surface-base hover:opacity-90'
-                  : 'cursor-not-allowed bg-primary/40 text-surface-base/60'
-              }`}
-            >
-              {rematchReady ? 'Revancha' : `Revancha (${rematchCountdown}s)`}
-            </button>
+            <div className="relative">
+              {/* Invisible focusable placeholder during countdown — receives autoFocus,
+                  Tab navigation works, Enter/Space do nothing (P7) */}
+              {!rematchReady && (
+                <button
+                  type="button"
+                  autoFocus
+                  className="absolute inset-0 opacity-0"
+                  aria-label="Esperando para activar revancha"
+                />
+              )}
+              <button
+                ref={rematchBtnRef}
+                type="button"
+                onClick={onRematch}
+                disabled={!rematchReady}
+                className={`rounded-lg px-8 py-3 text-xl font-bold transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                  rematchReady
+                    ? 'bg-primary text-surface-base hover:opacity-90'
+                    : 'cursor-not-allowed bg-primary/40 text-surface-base/60'
+                }`}
+              >
+                {rematchReady ? 'Revancha' : `Revancha (${rematchCountdown}s)`}
+              </button>
+            </div>
           ) : (
             <span className="px-8 py-3 text-lg font-medium text-text-muted">
               Esperando revancha del host...

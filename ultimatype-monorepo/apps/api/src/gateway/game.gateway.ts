@@ -272,19 +272,24 @@ export class GameGateway
         }
       }
 
-      // Reset disconnected flag if player was marked as disconnected (rejoin after disconnect)
-      if (!autoSpectate) {
-        await this.roomsService.markPlayerConnected(data.code, userId);
-        this.clearGraceTimer(`${data.code}:${userId}`);
-        state = await this.roomsService.getRoomState(data.code) as typeof state;
-      }
-
       client.join(data.code);
       this.connections.set(client.id, {
         userId,
         roomCode: data.code,
         role: autoSpectate ? 'spectator' : 'player',
       });
+
+      // Reset disconnected flag after joining the socket room (P4 + P8)
+      if (!autoSpectate) {
+        try {
+          await this.roomsService.markPlayerConnected(data.code, userId);
+        } catch (reconnectErr) {
+          this.logger.warn(`markPlayerConnected failed for ${userId} in ${data.code}`, reconnectErr);
+        } finally {
+          this.clearGraceTimer(`${data.code}:${userId}`);
+        }
+        state = await this.roomsService.getRoomState(data.code) as typeof state;
+      }
 
       this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
 

@@ -1,0 +1,4 @@
+- [ ] Revisar sí los fix fueron solucionados
+- [ ] Desplegar el proyecto en un servidor
+- [ ] Hacer al retrospectiva
+- [ ] Crear un Epic completo para el tema visual
