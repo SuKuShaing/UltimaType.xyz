@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review de 3-4-spectator-to-player-transition (2026-03-30)
+
+- **Socket reference `s` podría estar stale en LOBBY_STATE handler** — `use-lobby.ts:149`. Si el socket se cierra/reconecta mientras el handler registrado en el `useEffect([code])` aún apunta al socket anterior, el `emit(LOBBY_SWITCH_TO_PLAYER)` iría a un socket muerto. Patrón pre-existente desde story 2-2, presente en todos los handlers del mismo `useEffect`. Impacto bajo (Socket.io maneja sockets desconectados gracefully).
+
 ## Deferred from: code review de 3-3-live-spectator-view (2026-03-30)
 
 - **`textLength === 0` muestra 0% para todos antes de que llegue el texto** — `spectator-leaderboard.tsx`. La guard `textLength > 0` suprime la división por cero pero no indica que los datos están cargando. Bajo impacto visual (ventana brevísima entre join y MATCH_START).

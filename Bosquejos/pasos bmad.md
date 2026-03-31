@@ -35,9 +35,13 @@ Code Review (**bmad-code-review**): Revisión asertiva del código para cazar bu
 
 💡 Recordatorio importante del método: Por favor, asegúrate de ejecutar cada uno de estos comandos en una nueva ventana de chat de contexto limpio. ¡Abre un nuevo chat y envía bmad-bmm-sprint-planning para darle vida a ese código!
 
-### promp de create-story y dev-story juntos
+### Promp de create-story y dev-story juntos
 
 > usa la skill bmad-create-story para avanzar el punto 3-3 de @\_bmad-output/implementation-artifacts/sprint-status.yaml y cuando hayas terminado, solo en ese punto usa la siguinte skill bmad-dev-story para avanzar ese mismo punto
+
+### Para la review
+
+> me los vas a mostrar de uno por uno para analizarlos individualmente cada uno de los [tareas_a_analizar], dame todo el contexto necesario para tomar una buena decisión, cómo afecta al usuario o al sistema, los pro y contras de cada opción y tu sugerencia a elegir y porque eliges esa opción
 
 Para activar la retrospectiva del epic-1-retrospective, el comando que debes usar es (**bmad-retrospective**)
 

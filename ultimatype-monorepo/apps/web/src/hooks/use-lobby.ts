@@ -35,6 +35,7 @@ interface UseLobbyReturn {
   autoSpectateMessage: string | null;
   kickedMessage: string | null;
   movedToSpectatorMessage: string | null;
+  pendingJoinAsPlayer: boolean;
   toggleReady: (ready: boolean) => void;
   selectLevel: (level: number) => void;
   setTimeLimit: (timeLimit: number) => void;
@@ -45,6 +46,7 @@ interface UseLobbyReturn {
   joinAsSpectator: () => void;
   switchToSpectator: () => void;
   switchToPlayer: () => void;
+  requestJoinAsPlayer: () => void;
   clearAutoSpectateMessage: () => void;
   kickPlayer: (targetUserId: string) => void;
   moveToSpectator: (targetUserId: string) => void;
@@ -70,10 +72,12 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
   const [autoSpectateMessage, setAutoSpectateMessage] = useState<string | null>(null);
   const [kickedMessage, setKickedMessage] = useState<string | null>(null);
   const [movedToSpectatorMessage, setMovedToSpectatorMessage] = useState<string | null>(null);
+  const [pendingJoinAsPlayer, setPendingJoinAsPlayer] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const matchStartedRef = useRef(false);
   const pendingRejoinRef = useRef<string | null>(null);
   const hasJoinedRef = useRef(false);
+  const pendingJoinAsPlayerRef = useRef(false);
 
   useEffect(() => {
     matchStartedRef.current = matchStarted;
@@ -145,6 +149,13 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
         setIsSpectator(state.spectators.some((sp) => sp.id === userId));
       }
       if (state.status === 'waiting' && matchStartedRef.current) {
+        // Deferred spectator-to-player transition: emit switch if intent was registered
+        if (pendingJoinAsPlayerRef.current) {
+          pendingJoinAsPlayerRef.current = false;
+          setPendingJoinAsPlayer(false);
+          s.emit(WS_EVENTS.LOBBY_SWITCH_TO_PLAYER, { code });
+          setIsSwitchingRole(true); // overrides the false set above (React batches last call)
+        }
         setMatchStarted(false);
         setMatchData(null);
       }
@@ -287,6 +298,11 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
     setMovedToSpectatorMessage(null);
   }, []);
 
+  const requestJoinAsPlayer = useCallback(() => {
+    pendingJoinAsPlayerRef.current = true;
+    setPendingJoinAsPlayer(true);
+  }, []);
+
   return {
     roomState,
     error,
@@ -298,6 +314,7 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
     autoSpectateMessage,
     kickedMessage,
     movedToSpectatorMessage,
+    pendingJoinAsPlayer,
     toggleReady,
     selectLevel,
     setTimeLimit,
@@ -308,6 +325,7 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
     joinAsSpectator,
     switchToSpectator,
     switchToPlayer,
+    requestJoinAsPlayer,
     clearAutoSpectateMessage,
     kickPlayer,
     moveToSpectator,

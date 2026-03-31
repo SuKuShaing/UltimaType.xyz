@@ -39,6 +39,7 @@ export function LobbyPage() {
     autoSpectateMessage,
     kickedMessage,
     movedToSpectatorMessage,
+    pendingJoinAsPlayer,
     toggleReady,
     selectLevel,
     setTimeLimit,
@@ -47,6 +48,7 @@ export function LobbyPage() {
     leaveRoom,
     switchToSpectator,
     switchToPlayer,
+    requestJoinAsPlayer,
     clearAutoSpectateMessage,
     kickPlayer,
     moveToSpectator,
@@ -162,6 +164,7 @@ export function LobbyPage() {
         matchData={matchData}
         localUserId={user.id}
         isSpectator={isSpectator}
+        onJoinAsPlayer={isSpectator ? requestJoinAsPlayer : undefined}
       />
     );
   }

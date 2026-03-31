@@ -190,4 +190,71 @@ describe('MatchResultsOverlay', () => {
       'Resultados de la partida',
     );
   });
+
+  it('muestra botón "Unirse a la partida" cuando onJoinAsPlayer está definido (espectador)', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="spectator-1"
+        reason="all_finished"
+        onRematch={vi.fn()}
+        onJoinAsPlayer={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Unirse a la partida')).toBeDefined();
+  });
+
+  it('NO muestra botón "Unirse a la partida" cuando onJoinAsPlayer no está definido (jugador)', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p1"
+        reason="all_finished"
+        onRematch={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText('Unirse a la partida')).toBeNull();
+  });
+
+  it('NO muestra Revancha para espectadores (onJoinAsPlayer definido)', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="spectator-1"
+        reason="all_finished"
+        onRematch={vi.fn()}
+        onJoinAsPlayer={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText('Revancha')).toBeNull();
+  });
+
+  it('al hacer click en "Unirse", llama onJoinAsPlayer y muestra confirmación "Inscrito"', () => {
+    const onJoinAsPlayer = vi.fn();
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="spectator-1"
+        reason="all_finished"
+        onRematch={vi.fn()}
+        onJoinAsPlayer={onJoinAsPlayer}
+      />,
+    );
+    fireEvent.click(screen.getByText('Unirse a la partida'));
+    expect(onJoinAsPlayer).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Unirse a la partida')).toBeNull();
+    expect(screen.getByText(/Inscrito para la siguiente/)).toBeDefined();
+  });
+
+  it('muestra Revancha para jugadores (onJoinAsPlayer no definido)', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p1"
+        reason="all_finished"
+        onRematch={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Revancha')).toBeDefined();
+  });
 });

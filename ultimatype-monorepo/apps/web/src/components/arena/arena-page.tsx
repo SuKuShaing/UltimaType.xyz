@@ -24,6 +24,7 @@ interface ArenaPageProps {
   matchData: MatchStartPayload;
   localUserId: string;
   isSpectator?: boolean;
+  onJoinAsPlayer?: () => void;
 }
 
 interface AbandonedStats {
@@ -35,6 +36,7 @@ export function ArenaPage({
   matchData,
   localUserId,
   isSpectator = false,
+  onJoinAsPlayer,
 }: ArenaPageProps) {
   const textContainerRef = useRef<HTMLDivElement>(null);
   const otherPlayerIdsRef = useRef<string[]>([]);
@@ -257,6 +259,7 @@ export function ArenaPage({
             reason={matchEndReason}
             onRematch={handleRematch}
             onExit={handleGoHome}
+            onJoinAsPlayer={onJoinAsPlayer}
           />
         )}
 

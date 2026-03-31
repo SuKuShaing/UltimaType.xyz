@@ -1,6 +1,6 @@
 # UltimaType
 
-**Plataforma de competencia de escritura en tiempo real.** Únete a una sala, compite contra otros jugadores escribiendo textos con mayor velocidad y precisión, y sube en el ranking en vivo.
+**Plataforma de competencia de mecanografía en tiempo real.** Únete a una sala, compite contra otros jugadores escribiendo textos con mayor velocidad y precisión, y sube en el ranking en vivo.
 
 🌐 **[ultimatype.xyz](https://ultimatype.xyz)**
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { PlayerResult, PLAYER_COLORS } from '@ultimatype-monorepo/shared';
 import { CountryFlag } from '../ui/country-flag';
 
@@ -7,6 +8,7 @@ interface MatchResultsOverlayProps {
   reason: 'all_finished' | 'timeout';
   onRematch: () => void;
   onExit: () => void;
+  onJoinAsPlayer?: () => void;
 }
 
 export function MatchResultsOverlay({
@@ -15,8 +17,15 @@ export function MatchResultsOverlay({
   reason,
   onRematch,
   onExit,
+  onJoinAsPlayer,
 }: MatchResultsOverlayProps) {
   const localResult = results.find((r) => r.playerId === localUserId);
+  const [joined, setJoined] = useState(false);
+
+  const handleJoin = () => {
+    onJoinAsPlayer?.();
+    setJoined(true);
+  };
 
   return (
     <div
@@ -113,14 +122,29 @@ export function MatchResultsOverlay({
           >
             Salir
           </button>
-          <button
-            type="button"
-            onClick={onRematch}
-            autoFocus
-            className="rounded-lg bg-primary px-8 py-3 text-xl font-bold text-surface-base transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/50"
-          >
-            Revancha
-          </button>
+          {onJoinAsPlayer && !joined ? (
+            <button
+              type="button"
+              onClick={handleJoin}
+              autoFocus
+              className="rounded-lg bg-surface-raised px-8 py-3 text-lg font-medium text-text-main transition-colors hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              Unirse a la partida
+            </button>
+          ) : onJoinAsPlayer && joined ? (
+            <span className="px-8 py-3 text-lg font-medium text-success">
+              Inscrito para la siguiente ✓
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={onRematch}
+              autoFocus
+              className="rounded-lg bg-primary px-8 py-3 text-xl font-bold text-surface-base transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              Revancha
+            </button>
+          )}
         </div>
       </div>
     </div>
