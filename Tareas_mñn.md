@@ -6,8 +6,8 @@
 - [x] Reparar los fix que no fueron reparados
 - [ ] Desplegar el proyecto en un servidor, ver el tema de las claves de postgres y redis, y tema de puertos expuestos
 - [ ] Verificar que funcione el login con github
-- [ ] Hacer al retrospectiva
 - [ ] Sacar el login, que alguien como invitado pueda jugar, sin tener que registrarse, que pueda crear sala y unirse, que al momento de los resultados le ofrezca registrarse, para ir guardando su progreso
+- [ ] Hacer al retrospectiva
 - [ ] Qué se pueda filtrar por país, añadir antes de ejecutar la epic 4
 - [ ] Crear un Epic completo para el tema visual
 - [ ] Añadir un registro manual de sesión de nombre, usuario y contraseña
