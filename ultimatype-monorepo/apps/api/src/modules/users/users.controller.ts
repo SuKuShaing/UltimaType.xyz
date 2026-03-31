@@ -9,10 +9,7 @@ import {
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { isValidCountryCode } from '@ultimatype-monorepo/shared';
-
-interface UpdateProfileBody {
-  countryCode: string;
-}
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('users')
 export class UsersController {
@@ -20,7 +17,7 @@ export class UsersController {
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
-  async updateProfile(@Req() req: any, @Body() body: UpdateProfileBody) {
+  async updateProfile(@Req() req: any, @Body() body: UpdateProfileDto) {
     const { countryCode } = body;
 
     if (typeof countryCode !== 'string' || countryCode.trim() === '') {

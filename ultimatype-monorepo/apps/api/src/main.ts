@@ -1,12 +1,16 @@
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import helmet from 'helmet';
 import { AppModule } from './app/app.module';
 import { RedisIoAdapter } from './gateway/redis-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+
+  // Security headers
+  app.use(helmet());
 
   // Trust proxy only when explicitly enabled
   if (configService.get('TRUST_PROXY') === 'true') {
@@ -19,6 +23,15 @@ async function bootstrap() {
     origin: frontendUrl,
     credentials: true,
   });
+
+  // Global validation pipe — strips unknown fields and transforms types
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);

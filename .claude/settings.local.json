@@ -45,7 +45,14 @@
       "WebFetch(domain:cubepath.com)",
       "WebFetch(domain:lowendtalk.com)",
       "WebFetch(domain:www.trustpilot.com)",
-      "WebFetch(domain:builtbybit.com)"
+      "WebFetch(domain:builtbybit.com)",
+      "WebFetch(domain:api.cubepath.com)",
+      "WebFetch(domain:docs.dokploy.com)",
+      "Bash(grep -r \"$queryRaw\\\\|$queryRawUnsafe\" /d/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo/apps/api/src)",
+      "Bash(grep -E \"\\\\.\\(ts|js\\)$\")",
+      "Bash(grep -r \"__html\\\\|innerHTML\\\\|dangerouslySetInnerHTML\" /d/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo/apps/web/src --include=*.tsx --include=*.ts)",
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
+      "Bash(grep -r \"POST\\\\|Get\\\\|Patch\\\\|Delete\" /d/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo/apps/api/src/modules/*/*.controller.ts)"
     ]
   }
 }

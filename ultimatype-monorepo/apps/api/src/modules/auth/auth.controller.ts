@@ -16,6 +16,7 @@ import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { GithubAuthGuard } from './guards/github-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+import { ExchangeCodeDto } from './dto/exchange-code.dto';
 
 /** Shape Passport attaches to req.user after OAuth strategies succeed */
 interface OAuthPassportUser {
@@ -117,7 +118,7 @@ export class AuthController {
    */
   @Post('code')
   @Throttle({ default: { ttl: 60_000, limit: 10 } })
-  async exchangeCode(@Body('code') code: string) {
-    return this.authService.exchangeAuthCode(code);
+  async exchangeCode(@Body() body: ExchangeCodeDto) {
+    return this.authService.exchangeAuthCode(body.code);
   }
 }
