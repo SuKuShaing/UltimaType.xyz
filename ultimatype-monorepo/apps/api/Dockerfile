@@ -22,7 +22,6 @@ LABEL org.opencontainers.image.source=https://github.com/SuKuShaing/UltimaType.x
 
 COPY --from=builder /app/apps/api/dist ./dist/
 COPY --from=builder /app/node_modules ./node_modules/
-COPY --from=builder /app/generated ./generated/
 COPY --from=builder /app/prisma ./prisma/
 COPY apps/api/entrypoint.sh ./entrypoint.sh
 RUN chmod +x entrypoint.sh
