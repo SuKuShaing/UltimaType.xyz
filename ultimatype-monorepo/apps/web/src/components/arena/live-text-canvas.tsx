@@ -60,11 +60,35 @@ export function LiveTextCanvas({
     return () => cancelAnimationFrame(raf);
   }, [text, updateLocalCaret]);
 
-  // Focus the hidden input on mount and when isActive changes
+  // Focus the hidden input when race starts (AC1)
   useEffect(() => {
     if (canType) {
-      inputRef.current?.focus();
+      // RAF ensures DOM is ready after countdown overlay removal
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
     }
+  }, [canType]);
+
+  // Re-focus on tab return or any page click during active race (AC2)
+  useEffect(() => {
+    if (!canType) return;
+
+    const refocus = () => inputRef.current?.focus();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setTimeout(refocus, 50);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('click', refocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('click', refocus);
+    };
   }, [canType]);
 
   const handleContainerClick = useCallback(() => {

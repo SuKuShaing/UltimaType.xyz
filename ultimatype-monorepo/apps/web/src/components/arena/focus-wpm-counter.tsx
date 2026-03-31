@@ -35,7 +35,7 @@ export function FocusWPMCounter({ matchStatus }: FocusWPMCounterProps) {
     return () => clearInterval(id);
   }, [matchStatus]);
 
-  const opacity = matchStatus === 'playing' ? 0.3 : 1;
+  const opacity = matchStatus === 'playing' ? 0.5 : 1;
 
   return (
     <div

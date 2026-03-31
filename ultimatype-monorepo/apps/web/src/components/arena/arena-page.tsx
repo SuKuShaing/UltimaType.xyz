@@ -24,6 +24,7 @@ interface ArenaPageProps {
   matchData: MatchStartPayload;
   localUserId: string;
   isSpectator?: boolean;
+  isHost?: boolean;
   onJoinAsPlayer?: () => void;
 }
 
@@ -36,6 +37,7 @@ export function ArenaPage({
   matchData,
   localUserId,
   isSpectator = false,
+  isHost = false,
   onJoinAsPlayer,
 }: ArenaPageProps) {
   const textContainerRef = useRef<HTMLDivElement>(null);
@@ -51,6 +53,7 @@ export function ArenaPage({
   const matchEndReason = useArenaStore((s) => s.matchEndReason);
   const connectionStatus = useArenaStore((s) => s.connectionStatus);
   const reconnectAttempt = useArenaStore((s) => s.reconnectAttempt);
+  const viewingAsSpectator = useArenaStore((s) => s.viewingAsSpectator);
 
   const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [abandonedStats, setAbandonedStats] = useState<AbandonedStats | null>(null);
@@ -156,6 +159,10 @@ export function ArenaPage({
     socket.emit(WS_EVENTS.MATCH_REMATCH);
   }, [socket]);
 
+  const handleWatchLive = useCallback(() => {
+    arenaStore.getState().switchToSpectatorView();
+  }, []);
+
   const handleConfirmAbandon = useCallback(() => {
     setShowAbandonModal(false);
     const state = arenaStore.getState();
@@ -200,8 +207,8 @@ export function ArenaPage({
 
       {/* Perimeter UI — fades via --focus-fade-opacity during race (players only, not spectators) */}
       <div className={`w-full max-w-3xl ${isPlaying && !isSpectator ? 'focus-faded' : ''}`}>
-        {/* Live leaderboard for spectators during race */}
-        {isSpectator && matchStatus === 'playing' && <SpectatorLeaderboard />}
+        {/* Live leaderboard for spectators during race (or finished player watching live) */}
+        {(isSpectator || viewingAsSpectator) && matchStatus === 'playing' && <SpectatorLeaderboard />}
         {/* Room header / player list area — populated by future stories */}
       </div>
 
@@ -215,7 +222,7 @@ export function ArenaPage({
         <LiveTextCanvas
           text={textContent}
           onPositionChange={handlePositionChange}
-          isActive={isPlaying && !isSpectator}
+          isActive={isPlaying}
           disabled={isSpectator || connectionStatus !== 'connected'}
           caretColor={localCaretColor}
         />
@@ -233,7 +240,7 @@ export function ArenaPage({
         {!isSpectator && isPlaying && !localFinished && !abandonedStats && (
           <button
             onClick={() => setShowAbandonModal(true)}
-            className={`absolute right-0 top-0 -translate-y-7 text-xs text-text-muted transition-opacity hover:opacity-100 ${
+            className={`absolute right-0 top-0 -translate-y-7 text-xs text-text-muted/70 transition-opacity hover:opacity-100 ${
               isPlaying ? 'focus-faded' : ''
             }`}
             style={{ pointerEvents: 'auto' }}
@@ -243,11 +250,12 @@ export function ArenaPage({
         )}
 
         {/* Waiting overlay — shown when local player finished but match still ongoing (not for spectators) */}
-        {!isSpectator && localFinished && matchStatus !== 'finished' && localFinishStats && (
+        {!isSpectator && localFinished && matchStatus !== 'finished' && localFinishStats && !viewingAsSpectator && (
           <WaitingForOthersOverlay
             wpm={localFinishStats.wpm}
             precision={localFinishStats.precision}
             score={localFinishStats.score}
+            onWatchLive={handleWatchLive}
           />
         )}
 
@@ -257,6 +265,7 @@ export function ArenaPage({
             results={matchResults}
             localUserId={localUserId}
             reason={matchEndReason}
+            isHost={isHost}
             onRematch={handleRematch}
             onExit={handleGoHome}
             onJoinAsPlayer={onJoinAsPlayer}

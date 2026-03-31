@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MatchResultsOverlay } from './match-results-overlay';
 import { PlayerResult } from '@ultimatype-monorepo/shared';
 
@@ -131,21 +131,45 @@ describe('MatchResultsOverlay', () => {
     expect(screen.queryByText(/caracteres faltantes/)).toBeNull();
   });
 
-  it('botón Revancha visible y llama onRematch al hacer click', () => {
+  it('botón Revancha visible para host después del countdown y llama onRematch', () => {
+    vi.useFakeTimers();
     const onRematch = vi.fn();
     render(
       <MatchResultsOverlay
         results={mockResults}
         localUserId="p2"
         reason="all_finished"
+        isHost={true}
         onRematch={onRematch}
       />,
     );
+
+    // Initially shows countdown
+    expect(screen.getByText('Revancha (5s)')).toBeDefined();
+
+    // Advance past 5s delay
+    act(() => { vi.advanceTimersByTime(5000); });
 
     const button = screen.getByText('Revancha');
     expect(button).toBeDefined();
     fireEvent.click(button);
     expect(onRematch).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it('no-host ve "Esperando revancha del host..." en lugar de Revancha', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p2"
+        reason="all_finished"
+        isHost={false}
+        onRematch={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Revancha')).toBeNull();
+    expect(screen.getByText('Esperando revancha del host...')).toBeDefined();
   });
 
   it('muestra Tiempo agotado cuando reason es timeout', () => {
@@ -246,15 +270,19 @@ describe('MatchResultsOverlay', () => {
     expect(screen.getByText(/Inscrito para la siguiente/)).toBeDefined();
   });
 
-  it('muestra Revancha para jugadores (onJoinAsPlayer no definido)', () => {
+  it('muestra Revancha para host (onJoinAsPlayer no definido)', () => {
+    vi.useFakeTimers();
     render(
       <MatchResultsOverlay
         results={mockResults}
         localUserId="p1"
         reason="all_finished"
+        isHost={true}
         onRematch={vi.fn()}
       />,
     );
+    act(() => { vi.advanceTimersByTime(5000); });
     expect(screen.getByText('Revancha')).toBeDefined();
+    vi.useRealTimers();
   });
 });

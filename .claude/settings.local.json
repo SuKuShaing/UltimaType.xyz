@@ -32,7 +32,9 @@
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
       "Bash(python .agent/skills/bmad-init/scripts/bmad_init.py load --project-root . --all)",
       "Bash(python3 .agent/skills/bmad-init/scripts/bmad_init.py load --project-root . --all)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "WebFetch(domain:www.gnu.org)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

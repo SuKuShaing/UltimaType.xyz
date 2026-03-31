@@ -23,6 +23,7 @@ interface ArenaState {
   matchEndReason: 'all_finished' | 'timeout' | null;
   connectionStatus: 'connected' | 'reconnecting' | 'disconnected';
   reconnectAttempt: number;
+  viewingAsSpectator: boolean;
 }
 
 interface ArenaActions {
@@ -45,6 +46,7 @@ interface ArenaActions {
   setConnectionStatus: (status: ArenaState['connectionStatus'], attempt?: number) => void;
   markPlayerDisconnected: (playerId: string) => void;
   markPlayerReconnected: (playerId: string) => void;
+  switchToSpectatorView: () => void;
   restoreFromRejoin: (matchState: RejoinMatchState) => void;
   reset: () => void;
 }
@@ -63,6 +65,7 @@ const initialState: ArenaState = {
   matchEndReason: null,
   connectionStatus: 'connected',
   reconnectAttempt: 0,
+  viewingAsSpectator: false,
 };
 
 export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
@@ -94,6 +97,7 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
       matchEndReason: null,
       connectionStatus: 'connected',
       reconnectAttempt: 0,
+      viewingAsSpectator: false,
     });
   },
 
@@ -175,6 +179,8 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
         },
       };
     }),
+
+  switchToSpectatorView: () => set({ viewingAsSpectator: true }),
 
   restoreFromRejoin: (matchState) =>
     set(() => {

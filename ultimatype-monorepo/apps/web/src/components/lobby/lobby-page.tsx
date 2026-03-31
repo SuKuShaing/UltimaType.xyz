@@ -164,6 +164,7 @@ export function LobbyPage() {
         matchData={matchData}
         localUserId={user.id}
         isSpectator={isSpectator}
+        isHost={isHost}
         onJoinAsPlayer={isSpectator ? requestJoinAsPlayer : undefined}
       />
     );
@@ -523,7 +524,7 @@ export function LobbyPage() {
                 : 'cursor-not-allowed bg-surface-raised text-text-muted opacity-50'
             }`}
           >
-            Iniciar
+            {allOthersReady ? 'Iniciar Partida' : 'Esperando el listo de los Jugadores'}
           </button>
         )}
       </div>

@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PlayerResult, PLAYER_COLORS } from '@ultimatype-monorepo/shared';
 import { CountryFlag } from '../ui/country-flag';
+
+const REMATCH_DELAY_SECONDS = 5;
 
 interface MatchResultsOverlayProps {
   results: PlayerResult[];
   localUserId: string;
   reason: 'all_finished' | 'timeout';
+  isHost?: boolean;
   onRematch: () => void;
   onExit: () => void;
   onJoinAsPlayer?: () => void;
@@ -15,12 +18,40 @@ export function MatchResultsOverlay({
   results,
   localUserId,
   reason,
+  isHost = false,
   onRematch,
   onExit,
   onJoinAsPlayer,
 }: MatchResultsOverlayProps) {
   const localResult = results.find((r) => r.playerId === localUserId);
   const [joined, setJoined] = useState(false);
+  const [rematchCountdown, setRematchCountdown] = useState(REMATCH_DELAY_SECONDS);
+  const rematchReady = rematchCountdown <= 0;
+
+  // 5-second countdown before rematch is enabled
+  useEffect(() => {
+    if (!isHost || onJoinAsPlayer) return;
+    if (rematchCountdown <= 0) return;
+    const timer = setInterval(() => {
+      setRematchCountdown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isHost, onJoinAsPlayer, rematchCountdown]);
+
+  // Block spacebar/enter during countdown
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!rematchReady && (e.key === ' ' || e.key === 'Enter')) {
+        e.preventDefault();
+      }
+    },
+    [rematchReady],
+  );
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   const handleJoin = () => {
     onJoinAsPlayer?.();
@@ -33,7 +64,7 @@ export function MatchResultsOverlay({
       role="dialog"
       aria-label="Resultados de la partida"
     >
-      <div className="w-full max-w-xl rounded-2xl bg-surface-base/95 px-8 py-10 backdrop-blur-md">
+      <div className="w-full max-w-xl rounded-2xl bg-surface-base/95 px-8 py-10 shadow-2xl backdrop-blur-md">
         {/* Local player stats */}
         {localResult && (
           <div className="mb-8 text-center">
@@ -135,15 +166,24 @@ export function MatchResultsOverlay({
             <span className="px-8 py-3 text-lg font-medium text-success">
               Inscrito para la siguiente ✓
             </span>
-          ) : (
+          ) : isHost ? (
             <button
               type="button"
               onClick={onRematch}
+              disabled={!rematchReady}
               autoFocus
-              className="rounded-lg bg-primary px-8 py-3 text-xl font-bold text-surface-base transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className={`rounded-lg px-8 py-3 text-xl font-bold transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                rematchReady
+                  ? 'bg-primary text-surface-base hover:opacity-90'
+                  : 'cursor-not-allowed bg-primary/40 text-surface-base/60'
+              }`}
             >
-              Revancha
+              {rematchReady ? 'Revancha' : `Revancha (${rematchCountdown}s)`}
             </button>
+          ) : (
+            <span className="px-8 py-3 text-lg font-medium text-text-muted">
+              Esperando revancha del host...
+            </span>
           )}
         </div>
       </div>

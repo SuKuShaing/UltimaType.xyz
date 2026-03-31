@@ -3,7 +3,7 @@ import { Socket } from 'socket.io-client';
 import { WS_EVENTS, CaretSyncPayload } from '@ultimatype-monorepo/shared';
 import { arenaStore } from './use-arena-store';
 
-const THROTTLE_MS = 50; // 20Hz
+const THROTTLE_MS = 30; // ~33Hz — reduced for fast typers (>80 WPM)
 
 export function useCaretSync(socket: Socket | null) {
   const lastEmitTimeRef = useRef(0);

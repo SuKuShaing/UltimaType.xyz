@@ -1,6 +1,6 @@
 # Story 3.5: Bug Fixes & UX Polish
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -191,77 +191,77 @@ Created during Epic 3 wrap-up. Seba compiled 18 issues from real user testing se
 
 ### Task 1: Focus management — (AC: 1, 2)
 
-- [ ] 1.1 **`apps/web/src/components/arena/live-text-canvas.tsx`** — Asegurar que al iniciar la carrera (cuando `matchStatus` cambia a `playing`), se haga `focus()` automático en el input/textarea hidden.
+- [x] 1.1 **`apps/web/src/components/arena/live-text-canvas.tsx`** — Asegurar que al iniciar la carrera (cuando `matchStatus` cambia a `playing`), se haga `focus()` automático en el input/textarea hidden.
 
-- [ ] 1.2 **`apps/web/src/components/arena/arena-page.tsx`** — Agregar event listener de `visibilitychange` y/o `focus` en el window: cuando la página recupera el foco durante una carrera activa, forzar `focus()` en el input. También capturar clicks en el contenedor principal para refocus.
+- [x] 1.2 **`apps/web/src/components/arena/live-text-canvas.tsx`** — Agregado visibilitychange + document click listener que refocus el input cuando canType está activo. Implementado en live-text-canvas.tsx donde vive el inputRef.
 
 ### Task 2: Revancha — control de host y delay (AC: 3, 4)
 
-- [ ] 2.1 **`apps/web/src/components/arena/match-results-overlay.tsx`** — Condicionar el botón de revancha: solo visible/activo si `isHost === true`. Para no-hosts, ocultar o mostrar deshabilitado con texto "Esperando revancha del host".
+- [x] 2.1 **`apps/web/src/components/arena/match-results-overlay.tsx`** — Condicionar el botón de revancha: solo visible/activo si `isHost === true`. Para no-hosts, ocultar o mostrar deshabilitado con texto "Esperando revancha del host".
 
-- [ ] 2.2 **`apps/web/src/components/arena/match-results-overlay.tsx`** — Agregar timer de 5 segundos: el botón de revancha se muestra disabled durante 5s post-render, con un countdown visual. Después de 5s, se habilita. Ignorar teclas (spacebar, enter) durante el periodo de bloqueo.
+- [x] 2.2 **`apps/web/src/components/arena/match-results-overlay.tsx`** — Agregar timer de 5 segundos: el botón de revancha se muestra disabled durante 5s post-render, con un countdown visual. Después de 5s, se habilita. Ignorar teclas (spacebar, enter) durante el periodo de bloqueo.
 
 ### Task 3: Sincronización de caret a alta velocidad (AC: 5)
 
-- [ ] 3.1 **`apps/web/src/components/arena/multiplayer-caret.tsx`** — Investigar throttle del `CARET_SYNC` event. Si el throttle en el emisor (`live-text-canvas.tsx`) es >40ms, considerar reducirlo. Si el problema es en el receptor, verificar que `requestAnimationFrame` o el spring animation no esté dropeando updates cuando llegan muy rápido.
+- [x] 3.1 **`apps/web/src/hooks/use-caret-sync.ts` + `multiplayer-caret.tsx`** — Throttle reducido de 50ms→30ms (~33Hz). Spring animation mejorada: stiffness 300→500, damping 25→30 para tracking más responsive.
 
-- [ ] 3.2 **`apps/api/src/gateway/game.gateway.ts`** — Revisar si el broadcast de `CARET_SYNC` tiene un throttle server-side que podría estar dropeando posiciones intermedias. Si existe, relajar el throttle para usuarios rápidos o implementar "last-write-wins" garantizado.
+- [x] 3.2 **`apps/api/src/gateway/game.gateway.ts`** — Verificado: no hay throttle server-side. Usa volatile broadcast (fire-and-forget), apropiado para real-time. El trailing edge del cliente garantiza que la última posición siempre se envía.
 
 ### Task 4: Redirección post-login a sala (AC: 6)
 
-- [ ] 4.1 **`apps/web/src/components/auth/protected-route.tsx`** — Guardar `window.location.pathname + window.location.search` en `sessionStorage` key `redirectAfterLogin` antes de redirigir al login.
+- [x] 4.1 **`apps/web/src/components/auth/protected-route.tsx`** — Ya implementado en story 2-8 AC3. Guarda URL en sessionStorage antes de redirect.
 
-- [ ] 4.2 **`apps/web/src/components/auth/auth-callback.tsx`** — Después del token exchange exitoso, leer `redirectAfterLogin` de `sessionStorage`, borrarlo, y navegar a esa URL (fallback a `/`).
+- [x] 4.2 **`apps/web/src/components/auth/auth-callback.tsx`** — Ya implementado en story 2-8 AC3. Lee, borra y navega a la URL guardada.
 
 **Nota:** Verificar si esto ya fue implementado en story 2-8 AC3. Si ya existe y funciona, marcar como done. Si no funciona, investigar por qué y reparar.
 
 ### Task 5: Jugador que vuelve después de salir (AC: 7)
 
-- [ ] 5.1 **`apps/api/src/gateway/game.gateway.ts`** — Verificar que cuando un jugador rejoin a una sala de la que salió, su estado se resetee correctamente (no `disconnected`, no gris). El `LOBBY_JOIN` handler debe limpiar flags de desconexión.
+- [x] 5.1 **`apps/api/src/gateway/game.gateway.ts`** — Bug fix: LOBBY_JOIN con ALREADY_IN_ROOM no reseteaba disconnected flag. Agregado markPlayerConnected + clearGraceTimer + state refresh en handleJoin.
 
-- [ ] 5.2 **`apps/web/src/components/lobby/player-avatar-pill.tsx`** — Verificar que el componente reaccione al cambio de estado del jugador que volvió: si `disconnected` cambia de `true` a `false`, el estilo visual debe actualizarse inmediatamente.
+- [x] 5.2 **`apps/web/src/components/lobby/player-avatar-pill.tsx`** — Verificado: ya reacciona correctamente al cambio de disconnected (CSS: opacity-50 grayscale). No requiere cambios.
 
 ### Task 6: Espectador — blur y métricas (AC: 8)
 
-- [ ] 6.1 **`apps/web/src/components/arena/arena-page.tsx`** — Verificar que cuando `isSpectator === true` y `matchStatus === 'playing'`, el texto NO tenga la clase de blur. Revisar la condición que aplica el blur.
+- [x] 6.1 **`apps/web/src/components/arena/arena-page.tsx`** — Fix: isActive cambiado de `isPlaying && !isSpectator` a `isPlaying`. Espectadores ven texto sin blur (disabled=true sigue previniendo escritura).
 
-- [ ] 6.2 **`apps/web/src/components/arena/spectator-leaderboard.tsx`** — Verificar que WPM y precisión se actualicen con cada `CARET_SYNC` o `PLAYER_FINISH` event. Si el store no guarda WPM/precisión por jugador, agregar el tracking.
+- [x] 6.2 **`apps/web/src/components/arena/spectator-leaderboard.tsx`** — Agregado WPM estimado en tiempo real (calculado de posición/tiempo). Timer de 1s para actualizar. Columna "X wpm" por jugador.
 
 ### Task 7: Redirección al home al ser sacado por host (AC: 9)
 
-- [ ] 7.1 **`apps/web/src/hooks/use-arena.ts`** o **`use-lobby.ts`** — Verificar el handler del evento `PLAYER_KICKED`. Debe tener un `setTimeout(() => navigate('/'), 2000)` o similar. Si el navigate no está funcionando, investigar si el componente se desmontó antes del timeout o si el router no está disponible.
+- [x] 7.1 **`apps/web/src/components/lobby/lobby-page.tsx`** — Verificado: ya implementado (líneas 101-108). Toast + setTimeout → navigate('/') después de 2s. Funciona correctamente.
 
 ### Task 8: Contenido — ñ y acentos en textos (AC: 10, 11)
 
-- [ ] 8.1 **`prisma/seed.ts`** o archivos de textos/fixtures — Revisar los textos de tipeo en español. Agregar ñ a todas las palabras que la requieran (año, niño, español, señor, pequeño, etc.).
+- [x] 8.1 **`prisma/seed-data/texts.json`** — Corregidos textos: ñ agregada en todos los niveles (pequeñas, mañana, compañero, porteños, montaña, año, pequeños, etc.).
 
-- [ ] 8.2 **Mismos archivos de textos** — Para nivel 3+, agregar acentos (á, é, í, ó, ú) a las palabras que los requieran. Verificar que el input valide estos caracteres correctamente.
+- [x] 8.2 **`prisma/seed-data/texts.json`** — Para nivel 3+, acentos agregados (María, café, explicó, preguntó, respondió, teoría, Según, habitación, comparación, dirección, teléfono, expresión, etc.).
 
-- [ ] 8.3 **`apps/web/src/components/arena/live-text-canvas.tsx`** — Verificar que el matching de caracteres soporte ñ y vocales acentuadas. Si usa comparación simple (`===`), debería funcionar. Si normaliza strings, verificar que no elimine diacríticos.
+- [x] 8.3 **`apps/web/src/components/arena/live-text-canvas.tsx`** — Verificado: usa comparación simple `e.key === expected` (línea 118). Soporta ñ y acentos correctamente sin normalización.
 
 ### Task 9: Transición a espectador mid-race (AC: 12)
 
-- [ ] 9.1 **`apps/web/src/components/arena/waiting-for-others-overlay.tsx`** — Agregar texto "Si esperas a los demás verás la pantalla de resultados" y un botón "👁️ Ver carrera en vivo".
+- [x] 9.1 **`apps/web/src/components/arena/waiting-for-others-overlay.tsx`** — Agregado texto informativo y botón "Ver carrera en vivo" con prop onWatchLive.
 
-- [ ] 9.2 **`apps/web/src/stores/arena-store.ts`** — Agregar action `switchToSpectatorView()` que setee un flag `viewingAsSpectator: true` sin emitir socket events (el jugador ya terminó, solo cambia la vista local).
+- [x] 9.2 **`apps/web/src/hooks/use-arena-store.ts`** — Agregado flag `viewingAsSpectator` y action `switchToSpectatorView()` (cambio local, sin socket events).
 
-- [ ] 9.3 **`apps/web/src/components/arena/arena-page.tsx`** — Cuando `localFinished && viewingAsSpectator`, renderizar la vista de espectador (texto sin blur + `SpectatorLeaderboard`) en lugar del `WaitingForOthersOverlay`.
+- [x] 9.3 **`apps/web/src/components/arena/arena-page.tsx`** — Cuando `localFinished && viewingAsSpectator`, oculta WaitingOverlay y muestra SpectatorLeaderboard + texto sin blur.
 
 ### Task 10: Textos UX — botón iniciar (AC: 13)
 
-- [ ] 10.1 **`apps/web/src/components/lobby/lobby-page.tsx`** — Cambiar el texto del botón de iniciar: cuando no todos están listos, mostrar "Esperando el listo de los Jugadores" (disabled). Cuando todos están listos, mostrar "Iniciar Partida" (enabled, solo para host).
+- [x] 10.1 **`apps/web/src/components/lobby/lobby-page.tsx`** — Botón muestra "Esperando el listo de los Jugadores" (disabled) o "Iniciar Partida" (enabled) según allOthersReady.
 
 ### Task 11: Visual polish — halo, sombra, caret label, contraste (AC: 14, 15, 16, 17, 18)
 
-- [ ] 11.1 **Botón "Listo" halo pulsante** — Verificar si ya se implementó en story 3-2 (AC5). Si existe y funciona, skip. Si no, agregar `animate-pulse` + `ring` classes al botón cuando `!isReady`.
+- [x] 11.1 **Botón "Listo" halo pulsante** — Verificado: ya implementado en story 3-2 (animate-pulse en lobby-page.tsx línea 509).
 
-- [ ] 11.2 **`apps/web/src/components/arena/match-results-overlay.tsx`** — Agregar `shadow-2xl` o `shadow-lg` y/o un borde sutil al contenedor principal de resultados para separarlo del fondo.
+- [x] 11.2 **`apps/web/src/components/arena/match-results-overlay.tsx`** — Agregado `shadow-2xl` al contenedor de resultados.
 
-- [ ] 11.3 **`apps/web/src/components/arena/multiplayer-caret.tsx`** — Detectar si el label del nombre del jugador está cerca del borde derecho del viewport. Si el label se saldría del viewport, posicionarlo a la izquierda del caret en lugar de a la derecha. Usar `getBoundingClientRect()` + `window.innerWidth` para la detección.
+- [x] 11.3 **`apps/web/src/components/arena/multiplayer-caret.tsx`** — Label se reposiciona a la izquierda del caret cuando se acerca al borde derecho del viewport. Usa containerRef.getBoundingClientRect() + window.innerWidth.
 
-- [ ] 11.4 **`apps/web/src/components/arena/arena-page.tsx`** — Aumentar opacidad/contraste del botón "salir" durante la carrera. Cambiar de `text-text-muted/30` (o similar) a al menos `text-text-muted/60`.
+- [x] 11.4 **`apps/web/src/components/arena/arena-page.tsx`** — Botón "Salir" cambiado de text-text-muted a text-text-muted/70 para mejor contraste.
 
-- [ ] 11.5 **`apps/web/src/components/arena/arena-page.tsx`** o componente de métricas — Aumentar opacidad/contraste del WPM y precisión. Asegurar que usen al menos `text-text-muted` sin opacidad reducida adicional.
+- [x] 11.5 **`apps/web/src/components/arena/focus-wpm-counter.tsx`** — Opacidad durante carrera aumentada de 0.3 a 0.5 para mejor legibilidad.
 
 ---
 
@@ -300,3 +300,55 @@ Created during Epic 3 wrap-up. Seba compiled 18 issues from real user testing se
 - Story 3-2: Lobby, Race & Host Controls Fixes — AC5 ya abordó halo pulsante
 - Story 3-3: Live Spectator View — Lógica de blur/spectator
 - Story 3-4: Spectator to Player Transition — Lógica de role switching
+
+---
+
+## Dev Agent Record
+
+### Implementation Plan
+Se implementaron los 18 ACs en orden de prioridad: focus fixes → revancha host → caret sync → redirects → spectator view → contenido → nueva feature → visual polish.
+
+### Completion Notes
+- **AC1-2:** Focus automático al iniciar carrera + refocus al volver de otra pestaña o click en cualquier parte
+- **AC3-4:** Solo host ve botón Revancha, con countdown de 5s + bloqueo de spacebar/enter
+- **AC5:** Throttle de caret sync reducido 50ms→30ms, spring animation más responsive (stiffness 300→500)
+- **AC6:** Ya implementado en story 2-8 (sessionStorage redirect)
+- **AC7:** Bug fix: LOBBY_JOIN con ALREADY_IN_ROOM no reseteaba disconnected flag
+- **AC8:** Spectator blur removido (isActive=isPlaying), WPM estimado agregado al leaderboard
+- **AC9:** Ya implementado (toast + navigate('/') a 2s)
+- **AC10-11:** Textos corregidos: ñ en todos los niveles, acentos en nivel 3+
+- **AC12:** Nueva feature: botón "Ver carrera en vivo" en WaitingForOthersOverlay + viewingAsSpectator flag
+- **AC13:** Botón iniciar muestra "Esperando el listo de los Jugadores" cuando no todos listos
+- **AC14:** Ya implementado en story 3-2 (animate-pulse)
+- **AC15:** Shadow 2xl en panel de resultados
+- **AC16:** Label de caret se reposiciona al borde derecho del viewport
+- **AC17:** Botón salir con opacidad aumentada (text-text-muted/70)
+- **AC18:** WPM counter opacidad durante carrera 0.3→0.5
+
+### Debug Log
+- Tests: 189 API + 101 Web = 290 passing, 0 failures
+
+---
+
+## File List
+
+- `ultimatype-monorepo/apps/web/src/components/arena/live-text-canvas.tsx` — Focus management (AC1, AC2)
+- `ultimatype-monorepo/apps/web/src/components/arena/arena-page.tsx` — isHost prop, isActive fix, viewingAsSpectator, exit button contrast
+- `ultimatype-monorepo/apps/web/src/components/arena/match-results-overlay.tsx` — Host-only rematch + 5s delay + shadow
+- `ultimatype-monorepo/apps/web/src/components/arena/match-results-overlay.spec.tsx` — Updated tests for host/delay
+- `ultimatype-monorepo/apps/web/src/components/arena/multiplayer-caret.tsx` — Spring tuning + label reposition
+- `ultimatype-monorepo/apps/web/src/components/arena/spectator-leaderboard.tsx` — WPM estimado en vivo
+- `ultimatype-monorepo/apps/web/src/components/arena/waiting-for-others-overlay.tsx` — Texto info + botón ver en vivo
+- `ultimatype-monorepo/apps/web/src/components/arena/focus-wpm-counter.tsx` — Opacidad 0.3→0.5
+- `ultimatype-monorepo/apps/web/src/components/arena/focus-wpm-counter.spec.tsx` — Updated opacity test
+- `ultimatype-monorepo/apps/web/src/components/lobby/lobby-page.tsx` — isHost to ArenaPage + start button text
+- `ultimatype-monorepo/apps/web/src/hooks/use-arena-store.ts` — viewingAsSpectator flag + switchToSpectatorView action
+- `ultimatype-monorepo/apps/web/src/hooks/use-caret-sync.ts` — Throttle 50ms→30ms
+- `ultimatype-monorepo/apps/api/src/gateway/game.gateway.ts` — markPlayerConnected on rejoin
+- `ultimatype-monorepo/prisma/seed-data/texts.json` — ñ y acentos en textos
+
+---
+
+## Change Log
+
+- 2026-03-30: Story 3-5 implementation complete. 18 ACs addressed (9 functional bugs, 2 content fixes, 1 new feature, 6 UX/visual). 290 tests passing (189 API + 101 Web).

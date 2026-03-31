@@ -272,6 +272,13 @@ export class GameGateway
         }
       }
 
+      // Reset disconnected flag if player was marked as disconnected (rejoin after disconnect)
+      if (!autoSpectate) {
+        await this.roomsService.markPlayerConnected(data.code, userId);
+        this.clearGraceTimer(`${data.code}:${userId}`);
+        state = await this.roomsService.getRoomState(data.code) as typeof state;
+      }
+
       client.join(data.code);
       this.connections.set(client.id, {
         userId,

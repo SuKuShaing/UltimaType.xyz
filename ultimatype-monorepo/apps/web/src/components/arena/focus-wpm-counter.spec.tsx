@@ -27,10 +27,10 @@ describe('FocusWPMCounter', () => {
     expect(wrapper?.style.opacity).toBe('1');
   });
 
-  it('tiene opacidad 0.15 cuando matchStatus es playing', () => {
+  it('tiene opacidad reducida cuando matchStatus es playing', () => {
     const { container } = render(<FocusWPMCounter matchStatus="playing" />);
     const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper?.style.opacity).toBe('0.3');
+    expect(wrapper?.style.opacity).toBe('0.5');
   });
 
   it('tiene opacidad 1 cuando matchStatus es finished', () => {
