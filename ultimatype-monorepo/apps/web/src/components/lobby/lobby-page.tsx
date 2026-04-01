@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useLobby } from '../../hooks/use-lobby';
 import { useAuth } from '../../hooks/use-auth';
 import { PlayerAvatarPill } from './player-avatar-pill';
@@ -182,6 +183,9 @@ export function LobbyPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-surface-base px-4 pt-16 pb-8 font-sans text-text-main">
+      <Helmet>
+        <title>Sala {code} | UltimaType</title>
+      </Helmet>
       {/* Toast container */}
       {toasts.length > 0 && (
         <div className="fixed right-4 top-4 z-50 flex flex-col gap-2">

@@ -6,8 +6,10 @@
 - [x] Es muy brusco el cambio de numero en el tiempo, hay alguna transición suave
 - [x] Por qué el temporizador se acaba a los 4 segundo, entiendo que puede haber un desface de 500ms a 1000ms, pero 4 segundos me parece mucho
 - [ ] Ver el tema del SEO para el home, y para cuando se comparta el link de una partida
+- [ ] Ocupar el logo de la web como lo hizo para la ogg template
 - [ ] Que el pulse del botón "Listo" en el lobby se expanda el doble verticalmente que horizontalmente
 - [ ] Hacer al retrospectiva
+- [ ] Hacer el resto de Epics
 
 - [ ] que claudflare redirija www a apex
 - [ ] Añadir un registro manual de sesión de nombre, usuario y contraseña

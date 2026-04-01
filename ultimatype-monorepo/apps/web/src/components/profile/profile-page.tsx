@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { COUNTRIES } from '@ultimatype-monorepo/shared';
 import { useAuth } from '../../hooks/use-auth';
 import { apiClient } from '../../lib/api-client';
@@ -80,6 +81,9 @@ export function ProfilePage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base p-6 pt-16 font-sans text-text-main">
+      <Helmet>
+        <title>Perfil | UltimaType</title>
+      </Helmet>
       <div className="w-full max-w-md">
         <button
           className="mb-6 bg-transparent p-0 text-sm text-text-muted hover:text-text-main"

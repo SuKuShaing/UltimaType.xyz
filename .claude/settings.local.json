@@ -65,7 +65,20 @@
       "Bash(find /d/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo/libs -type f -name *.tsx -o -name *.ts)",
       "Bash(find:*)",
       "Bash(gh pr:*)",
-      "Bash(where gh:*)"
+      "Bash(where gh:*)",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_navigate",
+      "Bash(npx -y serve -l 3333 --no-clipboard)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3333/og-image-template.html)",
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(curl -sI http://localhost:3333/og-image-template.html)",
+      "Bash(npx -y kill-port 3333)",
+      "Bash(npx -y http-server -p 3334 --silent)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3334/og-image-template.html)",
+      "Bash(npx -y kill-port 3334)",
+      "Bash(npx -y http-server -p 3335 --silent)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3335/og-image-template.html)",
+      "Bash(npx -y kill-port 3335)"
     ]
   }
 }

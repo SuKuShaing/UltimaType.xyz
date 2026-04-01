@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Route, Routes, useNavigate, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../hooks/use-auth';
 import { AuthCallback } from '../components/auth/auth-callback';
 import { ProtectedRoute } from '../components/auth/protected-route';
@@ -74,6 +75,9 @@ export function App() {
           path="*"
           element={
             <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base font-sans text-text-main">
+              <Helmet>
+                <title>UltimaType — Competencias de mecanografía en tiempo real</title>
+              </Helmet>
               <h1 className="mb-4 text-5xl font-bold">
                 UltimaType
               </h1>

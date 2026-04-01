@@ -1,18 +1,62 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>UltimaType</title>
+    <title>UltimaType — Competencias de mecanografía en tiempo real</title>
     <base href="/" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Compite contra tus amigos en mecanografía en tiempo real. Crea o únete a una sala y demuestra quien escribe más rápido."
+    />
+    <meta name="theme-color" content="#0F1F29" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="canonical" href="https://ultimatype.xyz/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="UltimaType" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:title" content="Compite contra mi en mecanografía!" />
+    <meta
+      property="og:description"
+      content="Únete a la partida en UltimaType — competencias de mecanografía en tiempo real. Crea una sala y demuestra quien escribe más rápido."
+    />
+    <meta property="og:image" content="https://ultimatype.xyz/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="UltimaType — Competencias de mecanografía en tiempo real"
+    />
+    <meta property="og:url" content="https://ultimatype.xyz/" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Compite contra mi en mecanografía!" />
+    <meta
+      name="twitter:description"
+      content="Únete a la partida en UltimaType — competencias de mecanografía en tiempo real. Crea una sala y demuestra quien escribe más rápido."
+    />
+    <meta name="twitter:image" content="https://ultimatype.xyz/og-image.png" />
+    <meta
+      name="twitter:image:alt"
+      content="UltimaType — Competencias de mecanografía en tiempo real"
+    />
+
     <link rel="stylesheet" href="/src/styles.css" />
     <script>
       // Anti-FOUC: apply theme class before React loads
-      (function() {
+      (function () {
         var theme = localStorage.getItem('theme');
-        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches) || theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        if (
+          theme === 'dark' ||
+          (!theme &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches) ||
+          (theme === 'system' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ) {
           document.documentElement.classList.add('dark');
         }
       })();
