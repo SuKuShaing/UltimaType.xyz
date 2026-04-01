@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ThemeToggle } from './theme-toggle';
 import { useAuth } from '../../hooks/use-auth';
 import { LoginModal } from './login-modal';
+import { Logo } from './logo';
 
 export function NavBar() {
   const { user, isAuthenticated } = useAuth();
@@ -20,9 +21,7 @@ export function NavBar() {
   return (
     <>
       <nav className="nav-bar-global fixed left-0 right-0 top-0 z-40 flex items-center justify-between bg-surface-sunken px-4 py-2 transition-opacity duration-500">
-        <Link to="/" className="text-lg font-bold text-primary no-underline">
-          UltimaType
-        </Link>
+        <Logo />
         <div className="flex items-center gap-3">
           <ThemeToggle />
           {isAuthenticated && user ? (

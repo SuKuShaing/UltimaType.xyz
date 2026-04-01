@@ -8,10 +8,10 @@
 - [x] Ver el tema del SEO para el home, y para cuando se comparta el link de una partida
 - [x] El login solo permite google, debiese permitir github
 - [x] og al readme
-- [ ] Debe decir "crear partida" en vez de "crear sala"
-- [ ] Ocupar el logo de la web como lo hizo para la ogg template
-- [ ] Cuando alguien se une a la sala, que haga un sonido
+- [x] Debe decir "crear partida" en vez de "crear sala"
+- [x] Ocupar el logo de la web como lo hizo para la ogg template
 - [ ] Sí la partida ya comenzó cuando entré, que me tire a ser espectador; sí la sala ya no existe, que me diga que la partida ya no existe
+- [ ] Cuando alguien se une a la sala, que haga un sonido
 - [ ] Que el pulse del botón "Listo" en el lobby se expanda el doble verticalmente que horizontalmente
 - [ ] Hacer al retrospectiva
 - [ ] Hacer el resto de Epics
