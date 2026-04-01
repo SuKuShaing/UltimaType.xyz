@@ -10,7 +10,7 @@
 - [x] og al readme
 - [x] Debe decir "crear partida" en vez de "crear sala"
 - [x] Ocupar el logo de la web como lo hizo para la ogg template
-- [ ] Sí la partida ya comenzó cuando entré, que me tire a ser espectador; sí la sala ya no existe, que me diga que la partida ya no existe
+- [x] Sí la partida ya comenzó cuando entré, que me tire a ser espectador; sí la sala ya no existe, que me diga que la partida ya no existe
 - [ ] Cuando alguien se une a la sala, que haga un sonido
 - [ ] Que el pulse del botón "Listo" en el lobby se expanda el doble verticalmente que horizontalmente
 - [ ] Hacer al retrospectiva

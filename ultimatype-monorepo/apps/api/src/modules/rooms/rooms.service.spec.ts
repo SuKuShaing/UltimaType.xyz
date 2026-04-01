@@ -140,11 +140,11 @@ describe('RoomsService', () => {
     });
 
     it('rechaza si la sala no existe', async () => {
-      mockRedis.eval.mockRejectedValue(new Error('Sala no encontrada'));
+      mockRedis.eval.mockRejectedValue(new Error('Esta partida ya terminó'));
 
       await expect(
         service.joinRoom('NOROOM', 'user-2', joinerInfo),
-      ).rejects.toThrow('Sala no encontrada');
+      ).rejects.toThrow('Esta partida ya terminó');
     });
 
     it('rechaza si la partida ya comenzo', async () => {
@@ -595,11 +595,11 @@ describe('RoomsService', () => {
     });
 
     it('rechaza si la sala no existe', async () => {
-      mockRedis.eval.mockRejectedValue(new Error('Sala no encontrada'));
+      mockRedis.eval.mockRejectedValue(new Error('Esta partida ya terminó'));
 
       await expect(
         service.joinAsSpectator('NOROOM', 'spec-1', spectatorInfo),
-      ).rejects.toThrow('Sala no encontrada');
+      ).rejects.toThrow('Esta partida ya terminó');
     });
 
     it('rechaza si ya es jugador', async () => {

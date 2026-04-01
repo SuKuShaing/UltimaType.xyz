@@ -199,13 +199,13 @@ describe('GameGateway', () => {
 
     it('emite error si joinRoom falla', async () => {
       roomsService.joinRoom.mockRejectedValue(
-        new Error('Sala no encontrada'),
+        new Error('Esta partida ya terminó'),
       );
 
       await gateway.handleJoin(mockSocket as any, { code: 'XYZ789' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
-        message: 'Sala no encontrada',
+        message: 'Esta partida ya terminó',
       });
     });
 

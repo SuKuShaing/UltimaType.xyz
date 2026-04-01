@@ -3,7 +3,7 @@
 // When i18n is added: change Lua scripts to return these keys as codes and map
 // them to localised strings in the frontend.
 export const ROOM_ERROR_CODES = {
-  ROOM_NOT_FOUND: 'Sala no encontrada',
+  ROOM_NOT_FOUND: 'Esta partida ya terminó',
   ROOM_FULL: 'Sala llena',
   MATCH_STARTED: 'La partida ya ha comenzado',
   SPECTATORS_FULL: 'Sala llena de espectadores',

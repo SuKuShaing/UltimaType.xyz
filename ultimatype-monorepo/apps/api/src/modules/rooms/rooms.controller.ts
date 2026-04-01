@@ -37,7 +37,7 @@ export class RoomsController {
   @Get(':code')
   async getRoomInfo(@Param('code') code: string) {
     const room = await this.roomsService.getRoomState(code);
-    if (!room) throw new NotFoundException('Sala no encontrada');
+    if (!room) throw new NotFoundException('Esta partida ya terminó');
     return {
       code: room.code,
       playerCount: room.players.length,

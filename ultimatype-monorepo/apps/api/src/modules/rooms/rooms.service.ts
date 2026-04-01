@@ -38,7 +38,7 @@ local countryCode = ARGV[7]
 
 local roomCode = redis.call('HGET', roomKey, 'code')
 if not roomCode then
-  return redis.error_reply('Sala no encontrada')
+  return redis.error_reply('Esta partida ya terminó')
 end
 
 local status = redis.call('HGET', roomKey, 'status')
@@ -154,7 +154,7 @@ local joinedAt = ARGV[6]
 
 local roomCode = redis.call('HGET', roomKey, 'code')
 if not roomCode then
-  return redis.error_reply('Sala no encontrada')
+  return redis.error_reply('Esta partida ya terminó')
 end
 
 local existingPlayer = redis.call('HGET', playersKey, userId)
@@ -201,7 +201,7 @@ local joinedAt = ARGV[6]
 
 local roomCode = redis.call('HGET', roomKey, 'code')
 if not roomCode then
-  return redis.error_reply('Sala no encontrada')
+  return redis.error_reply('Esta partida ya terminó')
 end
 
 local status = redis.call('HGET', roomKey, 'status')
@@ -270,7 +270,7 @@ local countryCode = ARGV[7]
 
 local roomCode = redis.call('HGET', roomKey, 'code')
 if not roomCode then
-  return redis.error_reply('Sala no encontrada')
+  return redis.error_reply('Esta partida ya terminó')
 end
 
 local status = redis.call('HGET', roomKey, 'status')
@@ -494,7 +494,7 @@ export class RoomsService {
     const roomData = await this.redis.hgetall(roomKey);
 
     if (!roomData.code) {
-      throw new Error('Sala no encontrada');
+      throw new Error('Esta partida ya terminó');
     }
 
     if (roomData.hostId !== userId) {
@@ -518,7 +518,7 @@ export class RoomsService {
     const roomData = await this.redis.hgetall(roomKey);
 
     if (!roomData.code) {
-      throw new Error('Sala no encontrada');
+      throw new Error('Esta partida ya terminó');
     }
 
     if (roomData.hostId !== userId) {
@@ -546,7 +546,7 @@ export class RoomsService {
     const roomData = await this.redis.hgetall(roomKey);
 
     if (!roomData.code) {
-      throw new Error('Sala no encontrada');
+      throw new Error('Esta partida ya terminó');
     }
 
     if (roomData.hostId !== userId) {

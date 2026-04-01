@@ -161,7 +161,7 @@ describe('LobbyPage', () => {
   it('muestra mensaje de error cuando hay error', () => {
     mockUseLobby.mockReturnValue({
       roomState: null,
-      error: 'Sala no encontrada',
+      error: 'Esta partida ya terminó',
       isConnected: true,
       matchStarted: false,
       matchData: null,
@@ -188,7 +188,7 @@ describe('LobbyPage', () => {
     } as any);
 
     renderLobby();
-    expect(screen.getByText('Sala no encontrada')).toBeTruthy();
+    expect(screen.getByText('Esta partida ya terminó')).toBeTruthy();
   });
 
   it('muestra Conectando cuando no esta conectado', () => {

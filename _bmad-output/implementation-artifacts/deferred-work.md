@@ -1,5 +1,9 @@
 # Deferred Work
 
+## V2: Replay de partida terminada (2026-04-01)
+
+- **Replay cuando el usuario llega tarde a una partida** — Cuando un usuario recibe un link de sala y la partida ya terminó (sala expirada en Redis), permitir ver un replay de la partida. Requiere: (1) persistir eventos de match (keystrokes, posiciones, timestamps) en una tabla `match_events` en Postgres al finalizar cada partida, (2) endpoint REST para obtener los datos del replay, (3) reproductor en frontend que reconstruya la partida frame a frame mostrando el progreso de cada jugador. Feature de engagement alto, complejidad media-alta.
+
 ## Deferred from: code review de 3-5-bug-fixes-and-ux-polish (2026-03-30)
 
 

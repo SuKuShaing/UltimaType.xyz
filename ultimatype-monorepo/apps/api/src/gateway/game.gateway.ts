@@ -259,12 +259,14 @@ export class GameGateway
       };
 
       let autoSpectate = false;
+      let matchInProgress = false;
       let state;
       try {
         state = await this.roomsService.joinRoom(data.code, userId, userInfo);
       } catch (joinErr: any) {
-        if (joinErr.message === ROOM_ERROR_CODES.ROOM_FULL) {
-          // Player slots full — try auto-spectate
+        if (joinErr.message === ROOM_ERROR_CODES.ROOM_FULL || joinErr.message === ROOM_ERROR_CODES.MATCH_STARTED) {
+          matchInProgress = joinErr.message === ROOM_ERROR_CODES.MATCH_STARTED;
+          // Player slots full or match in progress — try auto-spectate
           try {
             state = await this.roomsService.joinAsSpectator(data.code, userId, userInfo);
             autoSpectate = true;
@@ -309,7 +311,23 @@ export class GameGateway
       this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
 
       if (autoSpectate) {
-        client.emit(WS_EVENTS.LOBBY_AUTO_SPECTATE, { message: 'Sala llena - te uniste como espectador' });
+        if (matchInProgress) {
+          // Send match data so the spectator enters the arena immediately
+          const matchMeta = await this.matchStateService.getMatchMetadata(data.code);
+          if (matchMeta) {
+            const timeLimit = await this.roomsService.getTimeLimit(data.code);
+            client.emit(WS_EVENTS.MATCH_START, {
+              code: data.code,
+              textId: Number(matchMeta.textId),
+              textContent: matchMeta.textContent,
+              players: state.players,
+              timeLimit,
+            });
+          }
+          client.emit(WS_EVENTS.LOBBY_AUTO_SPECTATE, { message: 'Partida en curso - te uniste como espectador' });
+        } else {
+          client.emit(WS_EVENTS.LOBBY_AUTO_SPECTATE, { message: 'Sala llena - te uniste como espectador' });
+        }
       }
     } catch (err: any) {
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
@@ -491,7 +509,7 @@ export class GameGateway
       const state = await this.roomsService.getRoomState(data.code);
 
       if (!state) {
-        throw new Error('Sala no encontrada');
+        throw new Error(ROOM_ERROR_CODES.ROOM_NOT_FOUND);
       }
 
       if (state.hostId !== userId) {
@@ -692,7 +710,7 @@ export class GameGateway
 
         const roomState = await this.roomsService.getRoomState(roomCode);
         if (!roomState) {
-          return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Sala no encontrada' });
+          return client.emit(WS_EVENTS.LOBBY_ERROR, { message: ROOM_ERROR_CODES.ROOM_NOT_FOUND });
         }
 
         this.connections.set(client.id, { userId, roomCode, role: 'spectator' });
@@ -723,7 +741,7 @@ export class GameGateway
 
       const roomState = await this.roomsService.getRoomState(roomCode);
       if (!roomState) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Sala no encontrada' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: ROOM_ERROR_CODES.ROOM_NOT_FOUND });
       }
 
       // Mark player as connected
