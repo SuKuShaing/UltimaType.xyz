@@ -539,7 +539,7 @@ export class GameGateway
   @SubscribeMessage(WS_EVENTS.CARET_UPDATE)
   async handleCaretUpdate(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { position: number; timestamp: number },
+    @MessageBody() data: { position: number; timestamp: number; totalKeystrokes?: number; errorKeystrokes?: number },
   ) {
     try {
       if (this.isSpectator(client.id)) return;
@@ -569,6 +569,8 @@ export class GameGateway
         conn.roomCode,
         conn.userId,
         data.position,
+        data.totalKeystrokes,
+        data.errorKeystrokes,
       );
 
       if (result === 'cheat') {
@@ -1011,7 +1013,7 @@ export class GameGateway
 
     const tks = playerState?.totalKeystrokes ?? totalKeystrokes;
     const eks = Math.min(playerState?.errorKeystrokes ?? errorKeystrokes, tks);
-    const precisionDecimal = tks > 0 ? trunc2((tks - eks) / tks) : 1.0;
+    const precisionDecimal = tks > 0 ? trunc2((tks - eks) / tks) : 0;
     const precision = Math.round(precisionDecimal * 100);
 
     // Broadcast PLAYER_FINISH (reliable, not volatile)

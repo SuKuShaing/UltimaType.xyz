@@ -76,6 +76,8 @@ describe('MatchStateService', () => {
         'match:ABC234:players',
         'user-1',
         '1',
+        '0',
+        '0',
       );
     });
 

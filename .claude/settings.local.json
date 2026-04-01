@@ -58,7 +58,10 @@
       "Bash(npm -v)",
       "Bash(docker run:*)",
       "Bash(find /d/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo/apps/web/src -type f \\\\\\(-name *.css -o -name *.scss -o -name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\))",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(for dir:*)",
+      "Bash(do echo:*)",
+      "Read(//d/Progra/Proyectos_personales/UltimaType/Bosquejos/**)"
     ]
   }
 }

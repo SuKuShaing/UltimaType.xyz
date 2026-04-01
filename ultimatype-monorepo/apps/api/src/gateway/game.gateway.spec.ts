@@ -389,8 +389,9 @@ describe('GameGateway', () => {
     });
 
     it('valida posicion y broadcast caret:sync a la sala', async () => {
-      const volatileTo = vi.fn().mockReturnValue({ emit: vi.fn() });
-      (mockSocket as any).volatile = { to: volatileTo };
+      const toEmit = vi.fn();
+      const toFn = vi.fn().mockReturnValue({ emit: toEmit });
+      (mockSocket as any).to = toFn;
 
       await gateway.handleCaretUpdate(mockSocket as any, {
         position: 1,
@@ -401,8 +402,10 @@ describe('GameGateway', () => {
         'ABC234',
         'user-1',
         1,
+        undefined,
+        undefined,
       );
-      expect(volatileTo).toHaveBeenCalledWith('ABC234');
+      expect(toFn).toHaveBeenCalledWith('ABC234');
     });
 
     it('rechaza payload invalido (position no es number)', async () => {

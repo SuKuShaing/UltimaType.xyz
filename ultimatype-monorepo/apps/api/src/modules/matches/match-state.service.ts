@@ -26,6 +26,12 @@ local data = cjson.decode(current)
 local newPos = tonumber(ARGV[2])
 if newPos < 0 then return 0 end
 data.position = newPos
+local tks = tonumber(ARGV[3])
+local eks = tonumber(ARGV[4])
+if tks and tks > 0 then
+  data.totalKeystrokes = tks
+  data.errorKeystrokes = eks or 0
+end
 redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(data))
 return 1
 `;
@@ -100,6 +106,8 @@ export class MatchStateService {
     roomCode: string,
     userId: string,
     newPosition: number,
+    totalKeystrokes?: number,
+    errorKeystrokes?: number,
   ): Promise<'valid' | 'cheat' | 'not_found'> {
     const playersKey = `match:${roomCode}:players`;
 
@@ -109,6 +117,8 @@ export class MatchStateService {
       playersKey,
       userId,
       String(newPosition),
+      String(totalKeystrokes ?? 0),
+      String(errorKeystrokes ?? 0),
     ) as number;
 
     if (result === 1) return 'valid';
@@ -250,7 +260,7 @@ export class MatchStateService {
       const totalKs = state.totalKeystrokes ?? 0;
       const errorKs = Math.min(state.errorKeystrokes ?? 0, totalKs);
       const precisionDecimal =
-        totalKs > 0 ? trunc2((totalKs - errorKs) / totalKs) : 1.0;
+        totalKs > 0 ? trunc2((totalKs - errorKs) / totalKs) : 0;
       const precision = Math.round(precisionDecimal * 100);
 
       const missingChars = finished ? 0 : Math.max(textLength - state.position, 0);

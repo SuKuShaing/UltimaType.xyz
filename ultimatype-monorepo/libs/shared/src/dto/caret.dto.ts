@@ -3,6 +3,8 @@ import { PlayerInfo } from './room.dto';
 export interface CaretUpdatePayload {
   position: number;
   timestamp: number;
+  totalKeystrokes?: number;
+  errorKeystrokes?: number;
 }
 
 export interface CaretSyncPayload {

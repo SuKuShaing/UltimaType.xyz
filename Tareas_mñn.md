@@ -8,7 +8,7 @@
 - [x] Verificar que funcione el login con github
 - [x] Verificar que funcione req.ip -> No está funcionando
 - [ ] Sacar el login, que alguien como invitado pueda jugar, sin tener que registrarse, que pueda crear sala y unirse, que al momento de los resultados le ofrezca registrarse, para ir guardando su progreso
-- [ ] Los carets deben ser semi transparentes, puesto que tapan el texto que debo ver para escribir
+- [x] Los carets deben ser semi transparentes, puesto que tapan el texto que debo ver para escribir
 - [ ] La precisión me marca 100% cuando la partida es con tiempo, cuándo es sin tiempo marca correcto la precisión
 - [ ] Sí la partida es con tiempo, se debe ser el tiempo
 - [ ] Hacer al retrospectiva

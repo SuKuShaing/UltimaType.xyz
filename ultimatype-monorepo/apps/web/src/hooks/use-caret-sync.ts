@@ -44,7 +44,8 @@ export function useCaretSync(socket: Socket | null) {
         clearTimeout(pendingEmitRef.current.timer);
         pendingEmitRef.current = null;
       }
-      socket.emit(WS_EVENTS.CARET_UPDATE, { position, timestamp: now });
+      const { totalKeystrokes, errorKeystrokes } = arenaStore.getState();
+      socket.emit(WS_EVENTS.CARET_UPDATE, { position, timestamp: now, totalKeystrokes, errorKeystrokes });
       lastEmitTimeRef.current = now;
     } else {
       // Schedule trailing emit so the last position is always sent
@@ -55,7 +56,8 @@ export function useCaretSync(socket: Socket | null) {
       const timer = setTimeout(() => {
         pendingEmitRef.current = null;
         const emitTime = Date.now();
-        socket.emit(WS_EVENTS.CARET_UPDATE, { position, timestamp: emitTime });
+        const { totalKeystrokes, errorKeystrokes } = arenaStore.getState();
+        socket.emit(WS_EVENTS.CARET_UPDATE, { position, timestamp: emitTime, totalKeystrokes, errorKeystrokes });
         lastEmitTimeRef.current = emitTime;
       }, remaining);
       pendingEmitRef.current = { position, timer };

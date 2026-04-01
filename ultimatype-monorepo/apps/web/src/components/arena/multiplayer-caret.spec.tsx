@@ -98,7 +98,7 @@ describe('MultiplayerCaret', () => {
     });
 
     const caret = container.querySelector('div[style*="width: 2px"]') as HTMLElement;
-    expect(caret.style.opacity).toBe('1');
+    expect(caret.style.opacity).toBe('0.65');
     expect(caret.className).not.toContain('animate-pulse');
 
     const label = getByTestId('disconnected-label-player-1') as HTMLElement;
