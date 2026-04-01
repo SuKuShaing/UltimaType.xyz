@@ -69,11 +69,11 @@ body.arena-active .nav-bar-global {
   animation-delay: 2s;
 }
 
-/* Match countdown timer — slide-down entrance */
-@keyframes timer-slide-in {
+/* Match countdown timer — enter (slide down from top) */
+@keyframes timer-enter {
   from {
     opacity: 0;
-    transform: translateY(-40%);
+    transform: translateY(-50%);
   }
   to {
     opacity: 1;
@@ -81,8 +81,24 @@ body.arena-active .nav-bar-global {
   }
 }
 
-.match-timer-digit {
-  animation: timer-slide-in 0.3s ease-out;
+/* Match countdown timer — exit (slide down and fade out) */
+@keyframes timer-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(50%);
+  }
+}
+
+.match-timer-enter {
+  animation: timer-enter 0.4s ease-out;
+}
+
+.match-timer-exit {
+  animation: timer-exit 0.4s ease-in forwards;
 }
 
 /* Warning phase (10s–6s): gentle pulse */
@@ -91,8 +107,8 @@ body.arena-active .nav-bar-global {
   50% { transform: scale(1.05); }
 }
 
-.match-timer-warning {
-  animation: timer-slide-in 0.3s ease-out, timer-pulse-warning 1s ease-in-out infinite;
+.match-timer-warning.match-timer-enter {
+  animation: timer-enter 0.4s ease-out, timer-pulse-warning 1s ease-in-out 0.4s infinite;
 }
 
 /* Critical phase (5s–0s): intense pulse */
@@ -101,6 +117,6 @@ body.arena-active .nav-bar-global {
   50% { transform: scale(1.15); }
 }
 
-.match-timer-critical {
-  animation: timer-slide-in 0.3s ease-out, timer-pulse-critical 1s ease-in-out infinite;
+.match-timer-critical.match-timer-enter {
+  animation: timer-enter 0.4s ease-out, timer-pulse-critical 1s ease-in-out 0.4s infinite;
 }

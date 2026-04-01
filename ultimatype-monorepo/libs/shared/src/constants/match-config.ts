@@ -2,6 +2,9 @@ export const MATCH_TIMEOUT_MS = 300_000; // 5 minutos
 export const DISCONNECT_GRACE_PERIOD_MS = 30_000; // 30 segundos
 export const MAX_SPECTATORS = 100;
 
+// Pre-race countdown: 3-2-1-¡YA! (3 ticks × 1 s + 400 ms for ¡YA! visibility)
+export const PRE_RACE_COUNTDOWN_MS = 3_400;
+
 // 0 = "Hasta terminar el texto" (usa MATCH_TIMEOUT_MS como safety net)
 export const TIME_LIMIT_OPTIONS = [0, 30_000, 60_000, 120_000, 180_000, 240_000, 300_000] as const;
 

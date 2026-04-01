@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Route, Routes, Link, useNavigate } from 'react-router-dom';
+import { Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
-import { AuthButtons } from '../components/ui/auth-buttons';
 import { AuthCallback } from '../components/auth/auth-callback';
 import { ProtectedRoute } from '../components/auth/protected-route';
 import { ProfilePage } from '../components/profile/profile-page';
@@ -53,11 +52,12 @@ function JoinRoomInput() {
 
 export function App() {
   const { user, isAuthenticated, isFetchingProfile, logout } = useAuth();
+  const location = useLocation();
+  const isCallbackRoute = location.pathname === '/auth/callback';
 
   return (
     <div className="font-sans">
-      {/* NavBar for authenticated users — hidden on callback */}
-      {isAuthenticated && <NavBar />}
+      {!isCallbackRoute && <NavBar />}
 
       <Routes>
         <Route path="/auth/callback" element={<AuthCallback />} />
@@ -69,14 +69,7 @@ export function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/room/:code"
-          element={
-            <ProtectedRoute>
-              <LobbyPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/room/:code" element={<LobbyPage />} />
         <Route
           path="*"
           element={
@@ -89,37 +82,46 @@ export function App() {
                 <span className="opacity-50">_</span>
               )}
 
-              {!isFetchingProfile && !isAuthenticated && (
+              {!isFetchingProfile && (
                 <div className="text-center">
-                  <p className="mb-6 text-text-muted">
-                    Inicia sesión para competir
-                  </p>
-                  <AuthButtons />
-                </div>
-              )}
+                  {isAuthenticated && user && (
+                    <p className="mb-6 text-lg">
+                      ¡Hola, {user.displayName}!
+                    </p>
+                  )}
 
-              {isAuthenticated && user && (
-                <div className="text-center">
-                  <p className="mb-2 text-lg">
-                    ¡Hola, {user.displayName}!
-                  </p>
-                  <p className="mb-6 text-text-muted">
-                    {user.email}
-                  </p>
                   <div className="mb-4 flex justify-center gap-3">
-                    <CreateRoomButton />
+                    {isAuthenticated ? (
+                      <CreateRoomButton />
+                    ) : (
+                      <div className="group relative">
+                        <button
+                          disabled
+                          className="cursor-not-allowed rounded-lg bg-primary/40 px-6 py-2 text-sm font-semibold text-surface-base/60 font-sans"
+                        >
+                          Crear Sala
+                        </button>
+                        <span className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-surface-raised px-3 py-1 text-xs text-text-muted opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                          Inicia sesión para crear partidas
+                        </span>
+                      </div>
+                    )}
                   </div>
+
                   <JoinRoomInput />
-                  <div className="flex justify-center gap-3">
-                    <button
-                      id="logout"
-                      onClick={logout}
-                      className="rounded-lg border border-surface-raised bg-transparent px-6 py-2 text-sm text-text-muted transition-colors hover:text-text-main"
-                      aria-label="Cerrar sesión"
-                    >
-                      Cerrar sesión
-                    </button>
-                  </div>
+
+                  {isAuthenticated && (
+                    <div className="flex justify-center gap-3">
+                      <button
+                        id="logout"
+                        onClick={logout}
+                        className="rounded-lg border border-surface-raised bg-transparent px-6 py-2 text-sm text-text-muted transition-colors hover:text-text-main"
+                        aria-label="Cerrar sesión"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

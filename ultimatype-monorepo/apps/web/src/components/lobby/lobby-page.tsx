@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/use-auth';
 import { PlayerAvatarPill } from './player-avatar-pill';
 import { ArenaPage } from '../arena/arena-page';
 import { DIFFICULTY_LEVELS, TIME_LIMIT_OPTIONS, MAX_SPECTATORS } from '@ultimatype-monorepo/shared';
+import { getGuestId } from '../../lib/guest';
 
 const TIME_LIMIT_LABELS: Record<number, string> = {
   0: 'Finalizar texto',
@@ -27,7 +28,8 @@ let toastIdCounter = 0;
 export function LobbyPage() {
   const { code = '' } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const localUserId = user?.id ?? getGuestId();
   const {
     roomState,
     error,
@@ -54,7 +56,7 @@ export function LobbyPage() {
     moveToSpectator,
     clearKickedMessage,
     clearMovedToSpectatorMessage,
-  } = useLobby(code, user?.id);
+  } = useLobby(code, localUserId);
 
   const [copied, setCopied] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -130,9 +132,9 @@ export function LobbyPage() {
     return () => document.removeEventListener('click', handleClick);
   }, [openMenuFor]);
 
-  const isHost = roomState?.hostId === user?.id;
-  const currentPlayer = roomState?.players.find((p) => p.id === user?.id);
-  const otherPlayers = roomState?.players.filter((p) => p.id !== user?.id) ?? [];
+  const isHost = roomState?.hostId === localUserId;
+  const currentPlayer = roomState?.players.find((p) => p.id === localUserId);
+  const otherPlayers = roomState?.players.filter((p) => p.id !== localUserId) ?? [];
   const allOthersReady = roomState && otherPlayers.every((p) => p.isReady);
   const roomLink = `${window.location.origin}/room/${code}`;
   const isPlayerRoomFull = (roomState?.players.length ?? 0) >= (roomState?.maxPlayers ?? 20);
@@ -165,13 +167,14 @@ export function LobbyPage() {
   if (!code) return null;
 
   // Transition to arena when match starts
-  if (matchStarted && matchData && user) {
+  if (matchStarted && matchData) {
     return (
       <ArenaPage
         matchData={matchData}
-        localUserId={user.id}
+        localUserId={localUserId}
         isSpectator={isSpectator}
         isHost={isHost}
+        isGuest={!isAuthenticated}
         onJoinAsPlayer={isSpectator ? requestJoinAsPlayer : undefined}
       />
     );
@@ -242,7 +245,7 @@ export function LobbyPage() {
         </h2>
         <div className="flex flex-col gap-2">
           {roomState?.players.map((player) => {
-            const isOwnCard = player.id === user?.id;
+            const isOwnCard = player.id === localUserId;
             const menuOpen = openMenuFor === `player-${player.id}`;
 
             const menuContent = (() => {
@@ -344,7 +347,7 @@ export function LobbyPage() {
             </h3>
             <div className="flex flex-wrap gap-2">
               {roomState?.spectators.map((spec) => {
-                const isOwnPill = spec.id === user?.id;
+                const isOwnPill = spec.id === localUserId;
                 const menuOpen = openMenuFor === `spectator-${spec.id}`;
                 if (!isOwnPill) {
                   return (

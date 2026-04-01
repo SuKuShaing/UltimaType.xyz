@@ -26,6 +26,7 @@ interface ArenaPageProps {
   localUserId: string;
   isSpectator?: boolean;
   isHost?: boolean;
+  isGuest?: boolean;
   onJoinAsPlayer?: () => void;
 }
 
@@ -39,6 +40,7 @@ export function ArenaPage({
   localUserId,
   isSpectator = false,
   isHost = false,
+  isGuest = false,
   onJoinAsPlayer,
 }: ArenaPageProps) {
   const textContainerRef = useRef<HTMLDivElement>(null);
@@ -274,6 +276,7 @@ export function ArenaPage({
             localUserId={localUserId}
             reason={matchEndReason}
             isHost={isHost}
+            isGuest={isGuest}
             onRematch={handleRematch}
             onExit={handleGoHome}
             onJoinAsPlayer={onJoinAsPlayer}

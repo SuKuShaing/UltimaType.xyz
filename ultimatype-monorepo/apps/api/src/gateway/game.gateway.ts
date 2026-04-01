@@ -22,6 +22,7 @@ import {
   isValidLevel,
   isValidTimeLimit,
   MATCH_TIMEOUT_MS,
+  PRE_RACE_COUNTDOWN_MS,
   DISCONNECT_GRACE_PERIOD_MS,
   MAX_SPECTATORS,
   ROOM_ERROR_CODES,
@@ -83,21 +84,35 @@ export class GameGateway
     const origin = this.configService.get('FRONTEND_URL', 'http://localhost:4200');
     server.opts.cors = { origin, credentials: true };
 
-    // JWT authentication middleware
+    // JWT authentication middleware (guests allowed)
     server.use((socket, next) => {
       const token = socket.handshake.auth?.token;
-      if (!token) return next(new Error('Authentication required'));
-      try {
-        const payload = verify(
-          token,
-          this.configService.getOrThrow<string>('JWT_SECRET'),
-          { algorithms: ['HS256'] },
-        ) as { sub: string; email: string; displayName: string };
-        socket.data.user = payload;
-        next();
-      } catch {
-        next(new Error('Invalid token'));
+      if (token) {
+        try {
+          const payload = verify(
+            token,
+            this.configService.getOrThrow<string>('JWT_SECRET'),
+            { algorithms: ['HS256'] },
+          ) as { sub: string; email: string; displayName: string };
+          socket.data.user = payload;
+          return next();
+        } catch {
+          return next(new Error('Invalid token'));
+        }
       }
+
+      // Guest connection — requires guestId
+      const { guestId, guestDisplayName } = socket.handshake.auth ?? {};
+      if (guestId && typeof guestId === 'string') {
+        socket.data.user = {
+          sub: guestId,
+          displayName: guestDisplayName || 'Invitado',
+          isGuest: true,
+        };
+        return next();
+      }
+
+      return next(new Error('Authentication required'));
     });
   }
 
@@ -531,7 +546,7 @@ export class GameGateway
         timeLimit: roomTimeLimit,
       });
       const effectiveTimeout = roomTimeLimit > 0 ? roomTimeLimit : MATCH_TIMEOUT_MS;
-      this.startMatchTimeout(data.code, effectiveTimeout);
+      this.startMatchTimeout(data.code, effectiveTimeout + PRE_RACE_COUNTDOWN_MS);
     } catch (err: any) {
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
     }

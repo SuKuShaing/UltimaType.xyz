@@ -22,7 +22,7 @@ describe('App', () => {
   });
 
   it('should display the UltimaType heading', () => {
-    const { getByText } = renderWithProviders(<App />);
-    expect(getByText('UltimaType')).toBeTruthy();
+    const { getAllByText } = renderWithProviders(<App />);
+    expect(getAllByText('UltimaType').length).toBeGreaterThanOrEqual(1);
   });
 });
