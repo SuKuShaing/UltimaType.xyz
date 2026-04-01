@@ -35,7 +35,8 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-03-31T00:00:00-03:00
+last_updated: 2026-04-01T00:00:00-03:00
+# 2026-04-01: Epic 5 "La Visual — Rediseño Pantalla Principal" created with 8 stories (5-1 through 5-8). Depends on Epic 4 for leaderboard/stats APIs.
 # 2026-03-31: Story 4-4 re-scoped: renamed to level-country-period, added time period filtering (histórico/año/mes/7d), dedicated tab. Custom date-range deferred to V2.
 # 2026-03-31: Story 3-5 code review complete, set to done (9 patches applied, 290 tests passing).
 # 2026-03-30: Story 3-5 implementation complete, set to review (189 API + 101 web tests passing).
@@ -97,3 +98,17 @@ development_status:
   4-4-leaderboard-filtering-level-country-period: backlog
   4-5-automated-leaderboard-updates: backlog
   epic-4-retrospective: optional
+  epic-5: backlog
+  5-1-design-system-migration: backlog
+  5-2-navbar-redesign: backlog
+  5-3-homepage-layout-extraction: backlog
+  5-4-game-mode-selector: backlog
+  5-5-partidas-en-vivo: backlog
+  5-6-global-leaderboard-preview: backlog
+  5-7-player-profile-ranking-card: backlog
+  5-8-responsive-and-polish: backlog
+  5-9-lobby-visual-restyling: backlog
+  5-10-arena-visual-restyling: backlog
+  5-11-match-results-overlay-redesign: backlog
+  5-12-leaderboard-page-visual-design: backlog
+  epic-5-retrospective: optional

@@ -469,3 +469,326 @@ So that the rankings are always fresh and accurate without manual intervention.
 **Given** a newly persisted match result
 **When** the player's new score is higher than their previous best for that level
 **Then** the system automatically updates their entry in the aggregated leaderboard view to ensure real-time accuracy.
+
+## Epic 5: La Visual — Rediseño Pantalla Principal
+
+Transformar la pantalla principal de un placeholder minimalista a un dashboard de competición rico y atractivo que funcione tanto para usuarios loggeados como no loggeados, alineado con el Design System "Kinetic Monospace". La pantalla debe transmitir energía competitiva, mostrar partidas en vivo, y ofrecer acceso rápido a las acciones principales del juego.
+
+### Dependencias
+
+- Epic 4 (Stories 4.2, 4.3) debe completarse antes o en paralelo para las APIs de leaderboard y stats personales.
+- Referencia visual: `Bosquejos/Pantalla Principal/screen Pantalla principal.png` y `Bosquejos/Pantalla Principal/DESIGN Pantalla principal.md`.
+
+### Story 5.1: Design System Migration
+
+As a developer,
+I want to migrate and extend the CSS tokens to align with the "Kinetic Monospace" Design System,
+So that all new and existing components share a consistent visual language across light and dark modes.
+
+**Acceptance Criteria:**
+
+**Given** the existing Tailwind theme in `styles.css`
+**When** the design system migration is applied
+**Then** color tokens are extended/mapped to include `surface-container-low`, `surface-container-lowest`, `on-surface-variant`, `outline` and their dark-mode counterparts
+**And** typography uses Space Grotesk for headlines/body and IBM Plex Mono for typing areas
+**And** border-radius uses `2rem`/`2.5rem` for cards and `full` (pill) for buttons
+**And** the "No-Line" rule is applied: no 1px borders to separate sections, use tonal shifts instead
+**And** the default theme is `system` (browser preference), persisted when user changes it.
+
+### Story 5.2: Rediseño del NavBar
+
+As a user,
+I want a redesigned navigation bar with clear navigation tabs,
+So that I can quickly access the main sections of the platform.
+
+**Acceptance Criteria:**
+
+**Given** any user visiting the site
+**When** the navbar renders
+**Then** the logo "UltimaType" is displayed on the left (clickable, navigates to home)
+**And** navigation tabs are shown: "Principal" (home), "Leaderboard" (links to Epic 4 leaderboard page)
+**And** for authenticated users: avatar + profile link appears on the right
+**And** for unauthenticated users: an "Iniciar sesión" button appears on the right
+**And** on mobile (< 768px) the tabs collapse into a hamburger menu
+**And** the existing "Focus Fade" behavior during arena matches is preserved.
+
+### Story 5.3: HomePage Layout & Extraction
+
+As a developer,
+I want to extract the home page from `app.tsx` into a dedicated `HomePage` component with a rich layout,
+So that the codebase is maintainable and the home page can host multiple sections.
+
+**Acceptance Criteria:**
+
+**Given** the current inline home page in `app.tsx`
+**When** the extraction is completed
+**Then** a new `HomePage` component exists with a 12-column grid layout
+**And** the layout has 3 main sections: game actions (top), live matches (middle), leaderboard + profile (bottom)
+**And** each section is a separate, independently importable component
+**And** the page works for both authenticated and unauthenticated users (same structure, conditional content)
+**And** the layout is responsive: vertical stack on mobile, grid on desktop.
+
+### Story 5.4: GameModeSelector (Main Actions)
+
+As a user,
+I want to see the available game actions prominently displayed,
+So that I can start playing quickly.
+
+**Acceptance Criteria:**
+
+**Given** the game mode section of the home page
+**When** it renders
+**Then** two action cards are displayed with Material Symbols icons:
+  - "Crear partida" → calls `POST /rooms` and redirects to lobby (existing behavior)
+  - "Unirse a una partida" → input field for room code + join button (existing behavior)
+**And** cards have hover animations (scale, shadow) and directional arrows
+**And** for authenticated users: buttons are fully functional
+**And** for unauthenticated users: clicking redirects to login with saved redirect location
+**And** the section has a "MODO DE JUEGO" label and descriptive subtitle.
+
+### Story 5.5: Partidas en Vivo (Backend + Frontend)
+
+As a user,
+I want to see matches currently being played on the home page,
+So that I can feel the competitive energy and optionally spectate live matches.
+
+**Acceptance Criteria:**
+
+**Given** the home page
+**When** the "Partidas en Vivo" section loads
+**Then** it displays a list of rooms with `status === 'playing'` or `status === 'waiting'`
+
+**Given** the backend
+**When** `GET /api/rooms/active` is called (public, no auth required)
+**Then** it returns a list of active rooms including for each room: code, status, difficulty level, elapsed seconds, and player data (displayName, avatar, position, colorIndex, totalChars)
+**And** results are limited to the latest N active rooms (e.g., 10)
+**And** the endpoint reads from in-memory room state (already maintained by RoomsService/Redis), no additional persistence needed.
+
+**Given** a live match card on the home page
+**When** a match has `status === 'playing'`
+**Then** a mini-leaderboard is shown inside the card with up to 4 players
+**And** each row shows: player color dot, name, estimated WPM, and a compact progress bar (% of text completed)
+**And** WPM and progress are calculated client-side from position/totalChars/elapsedSeconds (same logic as existing SpectatorLeaderboard)
+**And** the card header shows: difficulty level, elapsed time, and player count.
+
+**Given** the "Partidas en Vivo" section is visible
+**When** time passes
+**Then** the home polls `GET /api/rooms/active` every 3-5 seconds to refresh mini-leaderboard data
+**And** player positions, WPM, and progress bars update smoothly on each poll.
+
+**Given** a live match card on the home page
+**When** the user clicks "Observar"
+**Then** they are redirected to the room as a spectator (using existing spectator mode)
+**And** the "Observar" button may require login depending on spectator auth requirements.
+
+**Given** no active matches exist
+**When** the section renders
+**Then** an elegant empty state is shown with a subtle icon (e.g., Material Symbols `sports_esports`)
+**And** the text "No hay partidas en vivo ahora" with subtitle "¡Crea una partida y sé el primero!"
+**And** a CTA button "Crear partida" that triggers the same create-room flow from Story 5.4.
+
+**Given** the section is visible
+**When** matches start or end
+**Then** the list auto-refreshes via polling to reflect new/finished matches.
+
+### Story 5.6: Global Leaderboard Preview (Home)
+
+As a user,
+I want to see a summary of the global leaderboard on the home page,
+So that I'm motivated to compete and improve my ranking.
+
+**Acceptance Criteria:**
+
+**Given** the home page leaderboard section
+**When** it renders for an authenticated user
+**Then** it shows a compact table with the top 5-10 players (consuming Epic 4 `GET /api/leaderboard`)
+**And** a toggle for "Mundial" / "Local" filtering (if Epic 4 supports country filter)
+**And** a "Ver clasificación completa" link navigating to the full Leaderboard page from Epic 4.
+
+**Given** Epic 4 APIs are not yet available
+**When** the section renders
+**Then** it shows a graceful empty state: "Próximamente" or placeholder content.
+
+**Given** the home page leaderboard section
+**When** it renders for an unauthenticated user
+**Then** the table is visible with the same data
+**And** a CTA is shown: "Inicia sesión para competir".
+
+### Story 5.7: Player Profile & Ranking Card (Home)
+
+As an authenticated user,
+I want to see my position, score, and ranking on the home page,
+So that I can track my progress at a glance.
+
+**Acceptance Criteria:**
+
+**Given** an authenticated user on the home page
+**When** the profile card renders
+**Then** it displays: avatar, display name, total score / best WPM, global ranking position ("Top X Mundial"), and country flag
+**And** it consumes Epic 4 APIs (`GET /api/users/:id/matches` for stats, `/api/leaderboard` for position).
+
+**Given** Epic 4 APIs are not yet available
+**When** the card renders for an authenticated user
+**Then** it shows: "Juega tu primera partida para ver tus stats".
+
+**Given** an unauthenticated user on the home page
+**When** the profile card area renders
+**Then** it shows a CTA card: "Inicia sesión para ver tu ranking".
+
+### Story 5.8: Responsive & Polish
+
+As a user,
+I want the redesigned home page to look professional on any device,
+So that I have a consistent experience regardless of screen size.
+
+**Acceptance Criteria:**
+
+**Given** the home page on mobile (< 768px)
+**When** it renders
+**Then** the layout stacks vertically with full-width cards.
+
+**Given** the home page on tablet (768-1024px)
+**When** it renders
+**Then** the layout uses a 2-column grid.
+
+**Given** the home page on desktop (> 1024px)
+**When** it renders
+**Then** the layout uses the full 12-column grid.
+
+**Given** any interactive element
+**When** the user hovers or focuses
+**Then** smooth transitions and hover animations are applied (scale, shadow, color shifts)
+**And** loading skeletons are shown for each section while data loads
+**And** tonal surface shifts follow the "No-Line" rule from the Design System.
+
+### Story 5.9: Lobby Visual Restyling
+
+As a user in a room lobby,
+I want the lobby to follow the same visual aesthetic as the redesigned home page,
+So that the experience feels consistent across the platform.
+
+**Acceptance Criteria:**
+
+**Given** the existing lobby page (`lobby-page.tsx`)
+**When** the Design System tokens from Story 5.1 are applied
+**Then** the lobby uses the same surface hierarchy: `surface-container-low` for sections, `surface-container-lowest` for nested cards
+**And** border-radius uses `2rem`/`2.5rem` for cards, `full` for pills and buttons
+**And** the "No-Line" rule is applied: tonal shifts instead of 1px borders for section separation.
+
+**Given** the player pills in the lobby
+**When** they render
+**Then** `PlayerAvatarPill` uses compact pills with player color border, initials, and name aligned with the Design System typography and spacing
+**And** Material Symbols icons are used for action buttons (settings, timer, groups, bolt).
+
+**Given** the configuration panel (difficulty, time limit, max players)
+**When** it renders for the host
+**Then** selectors use rounded surfaces (`surface-container-lowest`) with the Design System's tonal layering
+**And** the active difficulty level is highlighted with `primary` color (pill style)
+**And** the "Iniciar" / "Start" button uses the primary pill style with `bolt` icon.
+
+**Given** the lobby's text preview area (pre-match)
+**When** the match has not started yet
+**Then** the text area follows the Design System's typing area styling (IBM Plex Mono, rounded container)
+**And** the visual treatment is consistent with the arena's text canvas.
+
+### Story 5.10: Arena Visual Restyling
+
+As a player in an active match,
+I want the arena to follow the same visual aesthetic as the redesigned home page,
+So that the experience feels consistent and polished across the platform.
+
+**Acceptance Criteria:**
+
+**Given** the arena page during an active match
+**When** the Design System tokens from Story 5.1 are applied
+**Then** the text canvas uses `surface-container-lowest` background with `2.5rem` border-radius
+**And** typography in the typing area uses IBM Plex Mono
+**And** surface hierarchy follows tonal layering (no 1px borders).
+
+**Given** the WPM and precision display (`FocusWPMCounter`)
+**When** it renders during a match
+**Then** PPM and Error are shown as separate pill-shaped badges (rounded-full, `surface-container-lowest` background)
+**And** PPM value uses `primary` color with headline-scale font weight
+**And** labels use `label-md` style (uppercase, small, muted).
+
+**Given** the "Salir" button during an active match
+**When** it renders
+**Then** it is styled as a prominent red pill button labeled "DETENER" with a `stop_circle` Material Symbols icon
+**And** it maintains the existing exit/abandon match behavior.
+
+**Given** the match timer
+**When** it renders during a timed match
+**Then** it shows only the remaining time as text (no progress bar)
+**And** it follows the Design System typography tokens.
+
+**Given** the countdown overlay, results overlay, and waiting-for-others overlay
+**When** they render
+**Then** they use the Design System's glassmorphism treatment (surface with 60% opacity, 20px backdrop-blur)
+**And** buttons and cards within overlays use the Design System's rounded surfaces and primary color accents
+**And** the Focus Fade effect is preserved exactly as-is (full-screen text focus, all other UI fades to 20% opacity).
+
+### Story 5.11: Match Results Overlay Redesign
+
+As a player who just finished a match,
+I want to see my results presented in a dramatic and celebratory way,
+So that I feel the impact of my performance and can share my achievement.
+
+**Acceptance Criteria:**
+
+**Given** a completed match
+**When** the results overlay renders
+**Then** a "¡Prueba Finalizada!" headline is displayed at the top in display-scale typography
+**And** three hero stat cards are shown prominently: WPM (display-lg scale, primary color), Precisión (display-lg scale), and Puntaje Total (display-lg scale, existing `score` field)
+**And** each hero stat has a `label-md` style label above it (e.g., "VELOCIDAD DE ESCRITURA", "PRECISIÓN", "PUNTAJE TOTAL").
+
+**Given** the results ranking table
+**When** it renders below the hero stats
+**Then** it shows "Posición respecto a los competidores" as section heading
+**And** each row displays: rank, player color bar, name with country flag, precision %, WPM, and score
+**And** the local player's row is highlighted with `primary/10` background
+**And** the table follows the Design System's "No-Line" rule (tonal shifts between rows, no divider lines)
+**And** cards and surfaces use `2rem` border-radius with tonal layering.
+
+**Given** the action area below the results
+**When** it renders
+**Then** a "Compartir" button is shown (tertiary style or icon button) that copies a text summary of results to clipboard (WPM, precision, score, rank) or uses Web Share API where available
+**And** the "Reintentar Prueba" / "Revancha" button (host only) uses the primary pill style
+**And** the "Salir" button uses the Design System styling
+**And** all existing rematch logic (5-second countdown, host-only, spectator join) is preserved.
+
+### Story 5.12: Leaderboard Page Visual Design
+
+As a user viewing the global leaderboard,
+I want the leaderboard page to follow the "Kinetic Monospace" Design System,
+So that it feels visually consistent with the rest of the platform.
+
+**Acceptance Criteria:**
+
+**Given** the Leaderboard page built by Epic 4 (Stories 4.3/4.4)
+**When** the Design System is applied
+**Then** the page header shows "GLOBAL RANKINGS" label (label-md style) + "Puntajes Históricos" headline (display-lg scale)
+**And** the leaderboard is a single filtrable table (not separate cards per level)
+**And** filter controls (level, country, period) use the Design System's pill-style selectors and dropdowns
+**And** the table follows the "No-Line" rule: tonal row alternation instead of divider lines
+**And** each row shows: rank, player avatar, name, country flag, WPM, and score
+**And** the local player's row is highlighted with `primary/10` background
+**And** cards use `2rem`/`2.5rem` border-radius with `surface-container-low` backgrounds.
+
+**Given** the leaderboard page
+**When** it renders
+**Then** a "Récord de la Semana" card is displayed prominently
+**And** it shows the #1 player from level 5 in the last 7 days (consuming Epic 4's `GET /api/leaderboard?level=5&period=7d&limit=1`)
+**And** the card displays: player name, WPM achieved, precision, and a brief highlight text
+**And** if no data is available, the card shows a graceful empty state.
+
+**Given** the leaderboard page
+**When** it renders for an authenticated user
+**Then** a "Tu Posición Global" card is shown (reuses the design pattern from Story 5.7's PlayerRankCard)
+**And** it displays the user's global rank, score, and a motivational message.
+
+**Given** the leaderboard page
+**When** it renders for an unauthenticated user
+**Then** the table and "Récord de la Semana" are fully visible
+**And** the "Tu Posición Global" card shows a CTA: "Inicia sesión para ver tu ranking".
+
+**Note:** "Ver Repetición" (match replays) is deferred to a future version.
