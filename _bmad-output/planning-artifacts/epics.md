@@ -131,7 +131,7 @@ FR24: Epic 2 - Carga textos JSON
 FR25: Epic 2 - Texto aleatorio
 FR26: Epic 2 - 5 niveles progresivos
 FR27: Epic 4 - Leaderboard global con país
-FR28: Epic 4 - Filtro leaderboard por nivel
+FR28: Epic 4 - Filtro leaderboard por nivel y periodo temporal
 FR29: Epic 4 - Actualización auto leaderboard
 FR30: Epic 4 - Historial personal
 FR31: Epic 4 - Promedio WPM y marcas
@@ -433,17 +433,30 @@ So that I can see how I rank against the global community.
 **Then** it displays a paginated/top-100 list of players sorted by highest WPM
 **And** each entry shows the player's name, avatar, WPM, and associated country.
 
-### Story 4.4: Leaderboard Filtering (Difficulty & Country)
+### Story 4.4: Leaderboard Filtering (Level, Country & Period)
 
 As a competitive player,
-I want to filter the leaderboard by specific difficulty levels or specific countries,
-So that I can find my ranking among peers in my region or skill bracket.
+I want to filter the leaderboard by difficulty level, country, and time period,
+So that I can find my ranking among peers in my region, skill bracket, or recent performance.
 
 **Acceptance Criteria:**
 
 **Given** the Leaderboard view
-**When** the user selects a difficulty level (1-5) OR a specific country from the filters
-**Then** the leaderboard dynamically updates to show only the top scores matching those precise filters.
+**When** the user selects a difficulty level (1-5 or "Todos"), a specific country (or "Todos"), and/or a time period
+**Then** the leaderboard dynamically updates to show only the top scores matching those combined filters.
+
+**Given** the time period filter
+**When** the user selects a period option
+**Then** the available options are: "Histórico" (all-time), "Último año", "Último mes", "Últimos 7 días"
+**And** the leaderboard recalculates the best WPM within the selected period.
+
+**Given** the Leaderboard view
+**When** the user navigates to it
+**Then** it is displayed in its own dedicated tab/view, separate from the personal history dashboard.
+
+## Deferred to V2
+
+- **Periodo personalizado (date-range picker):** Permite al usuario seleccionar un rango de fechas arbitrario para filtrar el leaderboard. Diferido por costo de cache (queries únicas no cacheables en Redis) y complejidad de UI (date picker component). El índice compuesto `(level, countryCode, createdAt)` ya soporta esta funcionalidad sin refactoring cuando se implemente.
 
 ### Story 4.5: Automated Leaderboard Updates
 

@@ -51,13 +51,9 @@ jobs:
 
       - name: Trigger Dokploy redeploy
         if: success()
+        continue-on-error: true
         run: |
           echo "Triggering Dokploy webhook..."
-          HTTP_STATUS=$(curl -s -o /dev/stderr -w "%{http_code}" \
-            -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" \
+          curl -v -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -k -L --max-time 30)
-          echo "HTTP status: $HTTP_STATUS"
-          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
-            echo "::warning::Dokploy webhook returned HTTP $HTTP_STATUS"
-          fi
+            -k --max-time 30 2>&1 || true
