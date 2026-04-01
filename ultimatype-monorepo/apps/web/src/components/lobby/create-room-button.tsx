@@ -37,7 +37,7 @@ export function CreateRoomButton() {
         opacity: isCreating ? 0.7 : 1,
       }}
     >
-      {isCreating ? 'Creando...' : 'Crear Sala'}
+      {isCreating ? 'Creando partida...' : 'Crear Partida'}
     </button>
   );
 }

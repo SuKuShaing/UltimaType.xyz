@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../hooks/use-auth';
@@ -8,6 +8,7 @@ import { ProfilePage } from '../components/profile/profile-page';
 import { LobbyPage } from '../components/lobby/lobby-page';
 import { CreateRoomButton } from '../components/lobby/create-room-button';
 import { NavBar } from '../components/ui/nav-bar';
+import { LoginModal } from '../components/ui/login-modal';
 
 const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
 
@@ -55,6 +56,7 @@ export function App() {
   const { user, isAuthenticated, isFetchingProfile, logout } = useAuth();
   const location = useLocation();
   const isCallbackRoute = location.pathname === '/auth/callback';
+  const [showLogin, setShowLogin] = useState(false);
 
   return (
     <div className="font-sans">
@@ -100,10 +102,10 @@ export function App() {
                     ) : (
                       <div className="group relative">
                         <button
-                          disabled
-                          className="cursor-not-allowed rounded-lg bg-primary/40 px-6 py-2 text-sm font-semibold text-surface-base/60 font-sans"
+                          onClick={() => setShowLogin(true)}
+                          className="rounded-lg bg-primary/40 px-6 py-2 text-sm font-semibold text-surface-base/60 font-sans transition-colors hover:bg-primary/60 hover:text-surface-base/80"
                         >
-                          Crear Sala
+                          Crear Partida
                         </button>
                         <span className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-surface-raised px-3 py-1 text-xs text-text-muted opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                           Inicia sesión para crear partidas
@@ -132,6 +134,8 @@ export function App() {
           }
         />
       </Routes>
+
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </div>
   );
 }
