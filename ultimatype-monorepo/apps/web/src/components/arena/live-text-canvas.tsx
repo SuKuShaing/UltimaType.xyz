@@ -76,7 +76,10 @@ export function LiveTextCanvas({
 
     const refocus = (e?: Event) => {
       const target = e?.target as HTMLElement | null;
-      if (target?.closest('button, a, input, select, textarea, [role="button"]')) return;
+      if (
+        target?.closest('button, a, input, select, textarea, [role="button"]')
+      )
+        return;
       inputRef.current?.focus();
     };
 
@@ -206,7 +209,9 @@ export function LiveTextCanvas({
         {text.split('').map((char, i) => (
           <span
             key={i}
-            ref={(el) => { spanRefs.current[i] = el; }}
+            ref={(el) => {
+              spanRefs.current[i] = el;
+            }}
             style={{ opacity: 0.6, transition: 'color 0.05s' }}
             data-index={i}
           >
@@ -227,6 +232,7 @@ export function LiveTextCanvas({
             transform: 'translate(0px, 0px)',
             boxShadow: `0 0 6px ${caretColor}99`,
             zIndex: 10,
+            opacity: 0.65,
           }}
         />
       </div>

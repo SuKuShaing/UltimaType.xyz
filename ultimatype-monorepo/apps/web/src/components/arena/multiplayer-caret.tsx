@@ -23,11 +23,21 @@ function springInterpolate(
   return { position: newPosition, velocity: newVelocity };
 }
 
-export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretProps) {
+export function MultiplayerCaret({
+  playerId,
+  containerRef,
+}: MultiplayerCaretProps) {
   const caretRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
   const disconnectedLabelRef = useRef<HTMLDivElement>(null);
-  const springState = useRef({ currentX: 0, currentY: 0, velocityX: 0, velocityY: 0, target: 0, initialized: false });
+  const springState = useRef({
+    currentX: 0,
+    currentY: 0,
+    velocityX: 0,
+    velocityY: 0,
+    target: 0,
+    initialized: false,
+  });
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef(0);
   const colorRef = useRef('#FF9B51');
@@ -42,7 +52,8 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
     if (labelRef.current) {
       // Reposition label to left of caret if it would overflow the viewport (P6)
       const labelWidth = labelRef.current.offsetWidth || 60;
-      const containerLeft = containerRef.current?.getBoundingClientRect().left ?? 0;
+      const containerLeft =
+        containerRef.current?.getBoundingClientRect().left ?? 0;
       const labelScreenX = containerLeft + xPos;
       const overflows = labelScreenX + labelWidth + 8 > window.innerWidth;
       const labelX = overflows ? Math.max(xPos - labelWidth - 4, 0) : xPos;
@@ -51,7 +62,8 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
     if (disconnectedLabelRef.current && disconnectedRef.current) {
       // Reposition disconnected label away from right edge (P6)
       const discWidth = 120; // estimated width of "(desconectado)"
-      const containerLeft = containerRef.current?.getBoundingClientRect().left ?? 0;
+      const containerLeft =
+        containerRef.current?.getBoundingClientRect().left ?? 0;
       const discScreenX = containerLeft + xPos + 60;
       const discOverflows = discScreenX + discWidth > window.innerWidth;
       const discX = discOverflows ? xPos - discWidth - 4 : xPos + 60;
@@ -61,7 +73,10 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
 
   const getCharPosition = (charIndex: number): { x: number; y: number } => {
     if (!containerRef.current) return { x: 0, y: 0 };
-    const spans = containerRef.current.querySelectorAll<HTMLSpanElement>('span[data-index]');
+    const spans =
+      containerRef.current.querySelectorAll<HTMLSpanElement>(
+        'span[data-index]',
+      );
     const containerRect = containerRef.current.getBoundingClientRect();
 
     let span: HTMLSpanElement | null = null;
@@ -100,8 +115,22 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
       s.initialized = true;
     }
 
-    const resultX = springInterpolate(s.currentX, target.x, s.velocityX, 250, 28, dt);
-    const resultY = springInterpolate(s.currentY, target.y, s.velocityY, 250, 28, dt);
+    const resultX = springInterpolate(
+      s.currentX,
+      target.x,
+      s.velocityX,
+      250,
+      28,
+      dt,
+    );
+    const resultY = springInterpolate(
+      s.currentY,
+      target.y,
+      s.velocityY,
+      250,
+      28,
+      dt,
+    );
 
     s.currentX = resultX.position;
     s.velocityX = resultX.velocity;
@@ -111,8 +140,12 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
     updateCaretPosition(s.currentX, s.currentY);
 
     // Continue animating if not settled
-    const xSettled = Math.abs(resultX.velocity) < 0.01 && Math.abs(s.currentX - target.x) < 0.5;
-    const ySettled = Math.abs(resultY.velocity) < 0.01 && Math.abs(s.currentY - target.y) < 0.5;
+    const xSettled =
+      Math.abs(resultX.velocity) < 0.01 &&
+      Math.abs(s.currentX - target.x) < 0.5;
+    const ySettled =
+      Math.abs(resultY.velocity) < 0.01 &&
+      Math.abs(s.currentY - target.y) < 0.5;
 
     if (!xSettled || !ySettled) {
       rafRef.current = requestAnimationFrame(animate);
@@ -135,7 +168,7 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
 
   const applyDisconnectedVisuals = (isDisconnected: boolean) => {
     disconnectedRef.current = isDisconnected;
-    const opacity = isDisconnected ? '0.4' : '1';
+    const opacity = isDisconnected ? '0.4' : '0.65';
     const labelOpacity = isDisconnected ? '0.4' : '0.7';
     const pulseClass = isDisconnected ? 'animate-pulse' : '';
 
@@ -158,7 +191,8 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
     if (playerInfo) {
       colorRef.current = PLAYER_COLORS[playerInfo.colorIndex] ?? '#FF9B51';
       displayNameRef.current = playerInfo.displayName;
-      if (caretRef.current) caretRef.current.style.backgroundColor = colorRef.current;
+      if (caretRef.current)
+        caretRef.current.style.backgroundColor = colorRef.current;
       if (labelRef.current) {
         labelRef.current.style.color = colorRef.current;
         labelRef.current.textContent = displayNameRef.current;
@@ -199,7 +233,11 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
       <div
         ref={disconnectedLabelRef}
         className="pointer-events-none absolute left-0 top-0 whitespace-nowrap text-xs text-muted animate-pulse"
-        style={{ display: 'none', opacity: 0.4, transform: 'translate(60px, -18px)' }}
+        style={{
+          display: 'none',
+          opacity: 0.4,
+          transform: 'translate(60px, -18px)',
+        }}
         data-testid={`disconnected-label-${playerId}`}
       >
         (desconectado)
@@ -213,6 +251,7 @@ export function MultiplayerCaret({ playerId, containerRef }: MultiplayerCaretPro
           height: '1.2em',
           transform: 'translate(0px, 0px)',
           transition: 'none',
+          opacity: 0.6,
         }}
       />
     </>
