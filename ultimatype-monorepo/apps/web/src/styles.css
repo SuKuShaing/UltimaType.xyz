@@ -68,3 +68,39 @@ body.arena-active .nav-bar-global {
 .btn-glow-pulse::after {
   animation-delay: 2s;
 }
+
+/* Match countdown timer — slide-down entrance */
+@keyframes timer-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-40%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.match-timer-digit {
+  animation: timer-slide-in 0.3s ease-out;
+}
+
+/* Warning phase (10s–6s): gentle pulse */
+@keyframes timer-pulse-warning {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.match-timer-warning {
+  animation: timer-slide-in 0.3s ease-out, timer-pulse-warning 1s ease-in-out infinite;
+}
+
+/* Critical phase (5s–0s): intense pulse */
+@keyframes timer-pulse-critical {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.match-timer-critical {
+  animation: timer-slide-in 0.3s ease-out, timer-pulse-critical 1s ease-in-out infinite;
+}

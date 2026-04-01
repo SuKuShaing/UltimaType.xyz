@@ -18,4 +18,5 @@ export interface MatchStartPayload {
   textId: number;
   textContent: string;
   players: PlayerInfo[];
+  timeLimit: number;
 }

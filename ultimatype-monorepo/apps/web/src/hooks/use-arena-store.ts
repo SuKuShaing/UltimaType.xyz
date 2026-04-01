@@ -13,6 +13,7 @@ interface ArenaState {
   players: Record<string, PlayerState>;
   localPosition: number;
   textContent: string;
+  timeLimit: number;
   matchStatus: 'countdown' | 'playing' | 'finished';
   matchStartTime: number | null;
   totalKeystrokes: number;
@@ -30,6 +31,7 @@ interface ArenaActions {
   initArena: (
     textContent: string,
     players: Array<{ id: string; displayName: string; colorIndex: number }>,
+    timeLimit?: number,
   ) => void;
   updatePlayerPosition: (playerId: string, position: number) => void;
   setLocalPosition: (position: number) => void;
@@ -55,6 +57,7 @@ const initialState: ArenaState = {
   players: {},
   localPosition: 0,
   textContent: '',
+  timeLimit: 0,
   matchStatus: 'countdown',
   matchStartTime: null,
   totalKeystrokes: 0,
@@ -71,7 +74,7 @@ const initialState: ArenaState = {
 export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
   ...initialState,
 
-  initArena: (textContent, players) => {
+  initArena: (textContent, players, timeLimit = 0) => {
     const playersMap: Record<string, PlayerState> = {};
     for (const p of players) {
       if (!playersMap[p.id]) {
@@ -85,6 +88,7 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
     }
     set({
       textContent,
+      timeLimit,
       players: playersMap,
       localPosition: 0,
       matchStatus: 'countdown',

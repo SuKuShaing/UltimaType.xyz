@@ -61,7 +61,8 @@
       "Bash(grep:*)",
       "Bash(for dir:*)",
       "Bash(do echo:*)",
-      "Read(//d/Progra/Proyectos_personales/UltimaType/Bosquejos/**)"
+      "Read(//d/Progra/Proyectos_personales/UltimaType/Bosquejos/**)",
+      "Bash(find /d/Progra/Proyectos_personales/UltimaType/ultimatype-monorepo/libs -type f -name *.tsx -o -name *.ts)"
     ]
   }
 }

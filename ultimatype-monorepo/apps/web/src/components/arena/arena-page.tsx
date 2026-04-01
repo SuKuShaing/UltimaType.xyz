@@ -6,6 +6,7 @@ import { LiveTextCanvas } from './live-text-canvas';
 import { MultiplayerCaret } from './multiplayer-caret';
 import { CountdownOverlay } from './countdown-overlay';
 import { FocusWPMCounter } from './focus-wpm-counter';
+import { MatchCountdownTimer } from './match-countdown-timer';
 import { MatchResultsOverlay } from './match-results-overlay';
 import { WaitingForOthersOverlay } from './waiting-for-others-overlay';
 import { ReconnectingOverlay } from './reconnecting-overlay';
@@ -66,7 +67,7 @@ export function ArenaPage({
   // Initialize arena store on mount
   useEffect(() => {
     const data = matchDataRef.current;
-    arenaStore.getState().initArena(data.textContent, data.players);
+    arenaStore.getState().initArena(data.textContent, data.players, data.timeLimit);
     // Spectators see ALL carets; players see all except their own
     otherPlayerIdsRef.current = isSpectator
       ? data.players.map((p) => p.id)
@@ -203,7 +204,16 @@ export function ArenaPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base px-4 py-8 font-sans text-text-main">
-      {!isSpectator && <FocusWPMCounter matchStatus={matchStatus} />}
+      {!isSpectator && (
+        <div className="relative w-full max-w-3xl">
+          <FocusWPMCounter matchStatus={matchStatus} />
+          {matchData.timeLimit > 0 && (
+            <div className="absolute right-0 top-0">
+              <MatchCountdownTimer matchStatus={matchStatus} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Perimeter UI — fades via --focus-fade-opacity during race (players only, not spectators) */}
       <div className={`w-full max-w-3xl ${isPlaying && !isSpectator && !viewingAsSpectator ? 'focus-faded' : ''}`}>

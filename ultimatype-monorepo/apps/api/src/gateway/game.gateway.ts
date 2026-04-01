@@ -520,15 +520,16 @@ export class GameGateway
         text.content,
       );
 
+      // Fetch room's timeLimit before emitting — included in payload for client countdown display
+      const roomTimeLimit = await this.roomsService.getTimeLimit(data.code);
+
       this.server.to(data.code).emit(WS_EVENTS.MATCH_START, {
         code: data.code,
         textId: text.id,
         textContent: text.content,
         players: updatedState.players,
+        timeLimit: roomTimeLimit,
       });
-
-      // Start match timeout — use room's timeLimit or default
-      const roomTimeLimit = await this.roomsService.getTimeLimit(data.code);
       const effectiveTimeout = roomTimeLimit > 0 ? roomTimeLimit : MATCH_TIMEOUT_MS;
       this.startMatchTimeout(data.code, effectiveTimeout);
     } catch (err: any) {

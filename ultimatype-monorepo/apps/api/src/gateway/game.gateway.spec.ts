@@ -26,6 +26,7 @@ describe('GameGateway', () => {
     leaveSpectator: ReturnType<typeof vi.fn>;
     switchToSpectator: ReturnType<typeof vi.fn>;
     resetAllPlayersReady: ReturnType<typeof vi.fn>;
+    getTimeLimit: ReturnType<typeof vi.fn>;
   };
   let usersService: {
     findById: ReturnType<typeof vi.fn>;
@@ -104,6 +105,7 @@ describe('GameGateway', () => {
       leaveSpectator: vi.fn(),
       switchToSpectator: vi.fn().mockResolvedValue(roomState),
       resetAllPlayersReady: vi.fn().mockResolvedValue(undefined),
+      getTimeLimit: vi.fn().mockResolvedValue(60000),
     };
     usersService = {
       findById: vi.fn().mockResolvedValue({
@@ -333,6 +335,7 @@ describe('GameGateway', () => {
         textId: 42,
         textContent: 'Hola mundo test',
         players: roomState.players,
+        timeLimit: 60000,
       });
     });
 
