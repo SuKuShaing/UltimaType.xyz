@@ -18,10 +18,12 @@ npx prisma migrate deploy
 echo "Syncing texts from seed data..."
 node -e "
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { PrismaPg } = require('@prisma/adapter-pg');
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 (async () => {
-  const texts = require('./prisma/seed-data/texts.json');
   await prisma.text.deleteMany();
+  const texts = require('./prisma/seed-data/texts.json');
   const result = await prisma.text.createMany({ data: texts });
   console.log('Synced ' + result.count + ' texts');
   await prisma.\$disconnect();
