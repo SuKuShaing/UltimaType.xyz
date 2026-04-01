@@ -54,6 +54,5 @@ jobs:
         continue-on-error: true
         run: |
           echo "Triggering Dokploy webhook..."
-          curl -v -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -k --max-time 30 2>&1 || true
+          curl -v --no-location -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" \
+            --max-time 30 2>&1 || true
