@@ -1,3 +1,5 @@
+![UltimaType](/ultimatype-monorepo/apps/web/public/og-image.png)
+
 # UltimaType
 
 **Plataforma de competencia de mecanografía en tiempo real.** Únete a una sala, compite contra otros jugadores escribiendo textos con mayor velocidad y precisión, y sube en el ranking en vivo.
