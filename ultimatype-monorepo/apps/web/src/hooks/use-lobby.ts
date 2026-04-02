@@ -56,7 +56,7 @@ interface UseLobbyReturn {
 
 function buildErrorMessage(data: LobbyErrorPayload): string {
   if (data.code === ROOM_ERROR_CODES.SPECTATORS_FULL) {
-    return `Sala llena · Jugadores ${data.playerCount}/${data.maxPlayers} · Espectadores ${data.spectatorCount}/${data.maxSpectators ?? MAX_SPECTATORS}`;
+    return `Partida llena · Jugadores ${data.playerCount}/${data.maxPlayers} · Espectadores ${data.spectatorCount}/${data.maxSpectators ?? MAX_SPECTATORS}`;
   }
   return data.message ?? 'Error desconocido';
 }

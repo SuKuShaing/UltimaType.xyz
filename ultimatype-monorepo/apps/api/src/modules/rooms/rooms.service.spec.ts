@@ -139,7 +139,7 @@ describe('RoomsService', () => {
       expect(mockRedis.eval).toHaveBeenCalled();
     });
 
-    it('rechaza si la sala no existe', async () => {
+    it('rechaza si la partida no existe', async () => {
       mockRedis.eval.mockRejectedValue(new Error('Esta partida ya terminó'));
 
       await expect(
@@ -157,17 +157,17 @@ describe('RoomsService', () => {
       ).rejects.toThrow('La partida ya ha comenzado');
     });
 
-    it('rechaza si la sala esta llena', async () => {
+    it('rechaza si la partida esta llena', async () => {
       mockRedis.eval.mockRejectedValue(
-        new Error('La sala esta llena (maximo 20 jugadores)'),
+        new Error('Partida llena'),
       );
 
       await expect(
         service.joinRoom('ABC123', 'user-2', joinerInfo),
-      ).rejects.toThrow('La sala esta llena');
+      ).rejects.toThrow('Partida llena');
     });
 
-    it('retorna estado existente si el usuario ya esta en la sala', async () => {
+    it('retorna estado existente si el usuario ya esta en la partida', async () => {
       mockRedis.eval.mockResolvedValue('ALREADY_IN_ROOM');
       // getRoomState calls (room, players, spectators)
       mockRedis.hgetall
@@ -430,7 +430,7 @@ describe('RoomsService', () => {
       expect(mockRedis.expire).toHaveBeenCalledWith('room:ABC123:spectators', 86400);
     });
 
-    it('rechaza si el jugador no esta en la sala', async () => {
+    it('rechaza si el jugador no esta en la partida', async () => {
       mockRedis.hget.mockResolvedValue(null);
 
       await expect(
@@ -594,7 +594,7 @@ describe('RoomsService', () => {
       expect(mockRedis.eval).toHaveBeenCalled();
     });
 
-    it('rechaza si la sala no existe', async () => {
+    it('rechaza si la partida no existe', async () => {
       mockRedis.eval.mockRejectedValue(new Error('Esta partida ya terminó'));
 
       await expect(
@@ -603,19 +603,19 @@ describe('RoomsService', () => {
     });
 
     it('rechaza si ya es jugador', async () => {
-      mockRedis.eval.mockRejectedValue(new Error('Ya eres jugador en esta sala'));
+      mockRedis.eval.mockRejectedValue(new Error('Ya eres jugador en esta partida'));
 
       await expect(
         service.joinAsSpectator('ABC123', 'user-1', spectatorInfo),
-      ).rejects.toThrow('Ya eres jugador en esta sala');
+      ).rejects.toThrow('Ya eres jugador en esta partida');
     });
 
     it('rechaza si esta lleno de espectadores', async () => {
-      mockRedis.eval.mockRejectedValue(new Error('Sala llena de espectadores'));
+      mockRedis.eval.mockRejectedValue(new Error('Partida llena de espectadores'));
 
       await expect(
         service.joinAsSpectator('ABC123', 'spec-1', spectatorInfo),
-      ).rejects.toThrow('Sala llena de espectadores');
+      ).rejects.toThrow('Partida llena de espectadores');
     });
   });
 

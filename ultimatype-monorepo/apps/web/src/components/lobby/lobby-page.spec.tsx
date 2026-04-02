@@ -49,7 +49,7 @@ describe('LobbyPage', () => {
     } as any);
   });
 
-  it('muestra el codigo de la sala', () => {
+  it('muestra el codigo de la partida', () => {
     mockUseLobby.mockReturnValue({
       roomState: {
         code: 'ABC123',

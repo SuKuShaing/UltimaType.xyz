@@ -246,7 +246,7 @@ export class GameGateway
   ) {
     try {
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
 
       const userId = client.data.user.sub;
@@ -326,7 +326,7 @@ export class GameGateway
           }
           client.emit(WS_EVENTS.LOBBY_AUTO_SPECTATE, { message: 'Partida en curso - te uniste como espectador' });
         } else {
-          client.emit(WS_EVENTS.LOBBY_AUTO_SPECTATE, { message: 'Sala llena - te uniste como espectador' });
+          client.emit(WS_EVENTS.LOBBY_AUTO_SPECTATE, { message: 'Partida llena - te uniste como espectador' });
         }
       }
     } catch (err: any) {
@@ -341,7 +341,7 @@ export class GameGateway
   ) {
     try {
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
 
       const userId = client.data.user.sub;
@@ -374,7 +374,7 @@ export class GameGateway
   ) {
     try {
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
 
       const userId = client.data.user.sub;
@@ -402,7 +402,7 @@ export class GameGateway
     try {
       if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
       if (typeof data.ready !== 'boolean') {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Estado ready inválido' });
@@ -427,7 +427,7 @@ export class GameGateway
     try {
       if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
       if (!isValidLevel(data.level)) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Nivel inválido' });
@@ -452,7 +452,7 @@ export class GameGateway
     try {
       if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
       if (!Number.isInteger(data.maxPlayers) || data.maxPlayers < 2 || data.maxPlayers > 20) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Máximo de jugadores inválido (2-20)' });
@@ -477,7 +477,7 @@ export class GameGateway
     try {
       if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
       if (!isValidTimeLimit(data.timeLimit)) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Límite de tiempo inválido' });
@@ -502,7 +502,7 @@ export class GameGateway
     try {
       if (this.isSpectator(client.id)) return;
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
 
       const userId = client.data.user.sub;
@@ -539,7 +539,7 @@ export class GameGateway
       if (!updatedState || updatedState.players.length === 0) {
         await this.roomsService.setRoomStatus(data.code, 'waiting');
         return client.emit(WS_EVENTS.LOBBY_ERROR, {
-          message: 'No se pudo obtener el estado de la sala',
+          message: 'No se pudo obtener el estado de la partida',
         });
       }
 
@@ -591,7 +591,7 @@ export class GameGateway
 
       const conn = this.connections.get(client.id);
       if (!conn) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'No estás en una sala' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'No estás en una partida' });
       }
 
       const roomState = await this.roomsService.getRoomState(conn.roomCode);
@@ -658,7 +658,7 @@ export class GameGateway
       const conn = this.connections.get(client.id);
       if (!conn) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, {
-          message: 'No estás en una sala',
+          message: 'No estás en una partida',
         });
       }
 
@@ -694,7 +694,7 @@ export class GameGateway
   ) {
     try {
       if (!data?.roomCode || typeof data.roomCode !== 'string' || !ROOM_CODE_REGEX.test(data.roomCode)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
 
       const userId = client.data.user.sub;
@@ -736,7 +736,7 @@ export class GameGateway
       // Verify player is still in room (within grace period)
       const inRoom = await this.roomsService.isPlayerInRoom(roomCode, userId);
       if (!inRoom) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Ya no estás en esta sala' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Ya no estás en esta partida' });
       }
 
       const roomState = await this.roomsService.getRoomState(roomCode);
@@ -817,7 +817,7 @@ export class GameGateway
   ) {
     try {
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
 
       const conn = this.connections.get(client.id);
@@ -847,7 +847,7 @@ export class GameGateway
   ) {
     try {
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
 
       const conn = this.connections.get(client.id);
@@ -904,7 +904,7 @@ export class GameGateway
   ): Promise<void> {
     try {
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
       if (!data?.targetUserId || typeof data.targetUserId !== 'string') {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Usuario objetivo inválido' });
@@ -952,7 +952,7 @@ export class GameGateway
   ): Promise<void> {
     try {
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
-        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de sala inválido' });
+        return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
       if (!data?.targetUserId || typeof data.targetUserId !== 'string') {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Usuario objetivo inválido' });

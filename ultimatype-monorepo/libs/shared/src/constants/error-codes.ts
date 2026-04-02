@@ -4,13 +4,13 @@
 // them to localised strings in the frontend.
 export const ROOM_ERROR_CODES = {
   ROOM_NOT_FOUND: 'Esta partida ya terminó',
-  ROOM_FULL: 'Sala llena',
+  ROOM_FULL: 'Partida llena',
   MATCH_STARTED: 'La partida ya ha comenzado',
-  SPECTATORS_FULL: 'Sala llena de espectadores',
-  ALREADY_PLAYER: 'Ya eres jugador en esta sala',
+  SPECTATORS_FULL: 'Partida llena de espectadores',
+  ALREADY_PLAYER: 'Ya eres jugador en esta partida',
   ROLE_SWITCH_MATCH_ACTIVE: 'No puedes cambiar de rol durante una partida',
-  NOT_A_PLAYER: 'No eres jugador en esta sala',
-  NOT_A_SPECTATOR: 'No eres espectador en esta sala',
+  NOT_A_PLAYER: 'No eres jugador en esta partida',
+  NOT_A_SPECTATOR: 'No eres espectador en esta partida',
 } as const;
 
 export type RoomErrorCode = (typeof ROOM_ERROR_CODES)[keyof typeof ROOM_ERROR_CODES];

@@ -209,11 +209,11 @@ describe('GameGateway', () => {
       });
     });
 
-    it('emite error si codigo de sala es invalido', async () => {
+    it('emite error si codigo de partida es invalido', async () => {
       await gateway.handleJoin(mockSocket as any, { code: 'bad' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
-        message: 'Código de sala inválido',
+        message: 'Código de partida inválido',
       });
       expect(roomsService.joinRoom).not.toHaveBeenCalled();
     });
@@ -374,7 +374,7 @@ describe('GameGateway', () => {
 
       expect(roomsService.setRoomStatus).toHaveBeenCalledWith('ABC234', 'waiting');
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
-        message: 'No se pudo obtener el estado de la sala',
+        message: 'No se pudo obtener el estado de la partida',
       });
       expect(matchStateService.initMatch).not.toHaveBeenCalled();
     });
@@ -391,7 +391,7 @@ describe('GameGateway', () => {
       });
     });
 
-    it('valida posicion y broadcast caret:sync a la sala', async () => {
+    it('valida posicion y broadcast caret:sync a la partida', async () => {
       const toEmit = vi.fn();
       const toFn = vi.fn().mockReturnValue({ emit: toEmit });
       (mockSocket as any).to = toFn;
@@ -435,7 +435,7 @@ describe('GameGateway', () => {
       expect(matchStateService.updatePosition).not.toHaveBeenCalled();
     });
 
-    it('rechaza si jugador no esta en sala (sin conexion)', async () => {
+    it('rechaza si jugador no esta en partida (sin conexion)', async () => {
       const unregisteredSocket = {
         id: 'socket-unknown',
         data: { user: { sub: 'user-99', displayName: 'Ghost' } },
@@ -450,11 +450,11 @@ describe('GameGateway', () => {
 
       expect(unregisteredSocket.emit).toHaveBeenCalledWith(
         WS_EVENTS.LOBBY_ERROR,
-        { message: 'No estás en una sala' },
+        { message: 'No estás en una partida' },
       );
     });
 
-    it('rechaza si sala no esta en playing', async () => {
+    it('rechaza si partida no esta en playing', async () => {
       roomsService.getRoomState.mockResolvedValue({
         ...roomState,
         status: 'waiting',
@@ -544,7 +544,7 @@ describe('GameGateway', () => {
       await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
     });
 
-    it('resetea sala y broadcast LOBBY_STATE', async () => {
+    it('resetea partida y broadcast LOBBY_STATE', async () => {
       roomsService.getRoomState
         .mockResolvedValueOnce({ ...roomState, status: 'finished' })
         .mockResolvedValueOnce({ ...roomState, status: 'waiting' });
@@ -556,7 +556,7 @@ describe('GameGateway', () => {
       expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_STATE, expect.any(Object));
     });
 
-    it('emite error si sala no está en finished', async () => {
+    it('emite error si partida no está en finished', async () => {
       roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'playing' });
 
       await gateway.handleRematch(mockSocket as any);
@@ -572,7 +572,7 @@ describe('GameGateway', () => {
       await gateway.handleRematch(unknownSocket as any);
       expect((unknownSocket as any).emit).toHaveBeenCalledWith(
         WS_EVENTS.LOBBY_ERROR,
-        { message: 'No estás en una sala' },
+        { message: 'No estás en una partida' },
       );
     });
   });
@@ -872,21 +872,21 @@ describe('GameGateway', () => {
       );
     });
 
-    it('emite error si jugador no esta en la sala', async () => {
+    it('emite error si jugador no esta en la partida', async () => {
       roomsService.isPlayerInRoom.mockResolvedValue(false);
 
       await gateway.handleRejoin(mockSocket as any, { roomCode: 'ABC234' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
-        message: 'Ya no estás en esta sala',
+        message: 'Ya no estás en esta partida',
       });
     });
 
-    it('emite error si codigo de sala es invalido', async () => {
+    it('emite error si codigo de partida es invalido', async () => {
       await gateway.handleRejoin(mockSocket as any, { roomCode: 'invalid' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
-        message: 'Código de sala inválido',
+        message: 'Código de partida inválido',
       });
     });
   });
@@ -1003,7 +1003,7 @@ describe('GameGateway', () => {
       gateway.server = mockServer as any;
     });
 
-    it('expulsa al jugador y emite LOBBY_KICKED al target y LOBBY_STATE a la sala', async () => {
+    it('expulsa al jugador y emite LOBBY_KICKED al target y LOBBY_STATE a la partida', async () => {
       await gateway.handleKickPlayer(hostSocket as any, {
         code: 'ABC234',
         targetUserId: 'user-2',
@@ -1045,14 +1045,14 @@ describe('GameGateway', () => {
       expect(roomsService.leaveRoom).not.toHaveBeenCalled();
     });
 
-    it('emite error si codigo de sala es invalido', async () => {
+    it('emite error si codigo de partida es invalido', async () => {
       await gateway.handleKickPlayer(hostSocket as any, {
         code: 'invalid',
         targetUserId: 'user-2',
       });
 
       expect(hostSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
-        message: 'Código de sala inválido',
+        message: 'Código de partida inválido',
       });
     });
   });

@@ -184,7 +184,7 @@ export function LobbyPage() {
   return (
     <div className="flex min-h-screen flex-col items-center bg-surface-base px-4 pt-16 pb-8 font-sans text-text-main">
       <Helmet>
-        <title>Sala {code} | UltimaType</title>
+        <title>Partida {code} | UltimaType</title>
       </Helmet>
       {/* Toast container */}
       {toasts.length > 0 && (
@@ -214,7 +214,7 @@ export function LobbyPage() {
 
       {/* Header */}
       <div className="mb-8 text-center">
-        <h1 className="mb-2 text-3xl font-bold">Sala de Espera</h1>
+        <h1 className="mb-2 text-3xl font-bold">Sala de espera</h1>
         <div className="flex items-center justify-center gap-2">
           <span className="rounded bg-surface-raised px-3 py-1 font-mono text-lg tracking-wider text-primary">
             {code}
@@ -393,7 +393,7 @@ export function LobbyPage() {
                                   Cambiar a jugador
                                 </span>
                                 <span className="mt-0.5 block text-xs text-error">
-                                  Sala llena · {roomState.players.length}/{roomState.maxPlayers}
+                                  Partida llena · {roomState.players.length}/{roomState.maxPlayers}
                                 </span>
                               </div>
                             ) : (
@@ -558,7 +558,7 @@ export function LobbyPage() {
             </p>
             <p className="mb-6 text-sm text-text-muted">
               {confirmModal.action === 'kick'
-                ? `${confirmModal.playerName} será expulsado de la sala.`
+                ? `${confirmModal.playerName} será expulsado de la partida.`
                 : `${confirmModal.playerName} pasará a ser espectador.`}
             </p>
             <div className="flex justify-center gap-4">

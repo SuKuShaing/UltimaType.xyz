@@ -139,7 +139,7 @@ export class MatchStateService {
       try {
         result[userId] = JSON.parse(json);
       } catch {
-        this.logger.error(`Estado corrupto en Redis para jugador ${userId} en sala ${roomCode}`);
+        this.logger.error(`Estado corrupto en Redis para jugador ${userId} en partida ${roomCode}`);
       }
     }
 
@@ -159,7 +159,7 @@ export class MatchStateService {
       const state: PlayerMatchState = JSON.parse(raw);
       return state.position;
     } catch {
-      this.logger.error(`Estado corrupto en Redis para jugador ${userId} en sala ${roomCode}`);
+      this.logger.error(`Estado corrupto en Redis para jugador ${userId} en partida ${roomCode}`);
       return -1;
     }
   }

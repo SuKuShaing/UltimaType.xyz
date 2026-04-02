@@ -54,7 +54,7 @@ end
 local roomMaxPlayers = tonumber(redis.call('HGET', roomKey, 'maxPlayers')) or maxPlayers
 local count = redis.call('HLEN', playersKey)
 if count >= roomMaxPlayers then
-  return redis.error_reply('Sala llena')
+  return redis.error_reply('Partida llena')
 end
 
 local allPlayers = redis.call('HVALS', playersKey)
@@ -159,7 +159,7 @@ end
 
 local existingPlayer = redis.call('HGET', playersKey, userId)
 if existingPlayer then
-  return redis.error_reply('Ya eres jugador en esta sala')
+  return redis.error_reply('Ya eres jugador en esta partida')
 end
 
 local existingSpec = redis.call('HGET', spectatorsKey, userId)
@@ -169,7 +169,7 @@ end
 
 local count = redis.call('HLEN', spectatorsKey)
 if count >= maxSpectators then
-  return redis.error_reply('Sala llena de espectadores')
+  return redis.error_reply('Partida llena de espectadores')
 end
 
 local spectator = cjson.encode({
@@ -211,12 +211,12 @@ end
 
 local existingPlayer = redis.call('HGET', playersKey, userId)
 if not existingPlayer then
-  return redis.error_reply('No eres jugador en esta sala')
+  return redis.error_reply('No eres jugador en esta partida')
 end
 
 local specCount = redis.call('HLEN', spectatorsKey)
 if specCount >= maxSpectators then
-  return redis.error_reply('Sala llena de espectadores')
+  return redis.error_reply('Partida llena de espectadores')
 end
 
 redis.call('HDEL', playersKey, userId)
@@ -280,13 +280,13 @@ end
 
 local existingSpec = redis.call('HGET', spectatorsKey, userId)
 if not existingSpec then
-  return redis.error_reply('No eres espectador en esta sala')
+  return redis.error_reply('No eres espectador en esta partida')
 end
 
 local roomMaxPlayers = tonumber(redis.call('HGET', roomKey, 'maxPlayers')) or maxPlayers
 local count = redis.call('HLEN', playersKey)
 if count >= roomMaxPlayers then
-  return redis.error_reply('Sala llena')
+  return redis.error_reply('Partida llena')
 end
 
 redis.call('HDEL', spectatorsKey, userId)
@@ -580,7 +580,7 @@ export class RoomsService {
 
     const playerJson = await this.redis.hget(playersKey, userId);
     if (!playerJson) {
-      throw new Error('Jugador no encontrado en la sala');
+      throw new Error('Jugador no encontrado en la partida');
     }
 
     const player: PlayerInfo = JSON.parse(playerJson);
