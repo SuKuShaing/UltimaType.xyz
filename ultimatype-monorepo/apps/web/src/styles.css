@@ -46,7 +46,7 @@ body.arena-active .nav-bar-global {
     opacity: 0.3;
   }
   100% {
-    transform: scale(1.5, 1.8);
+    transform: scale(1.5, 2.5);
     opacity: 0;
   }
 }
