@@ -4,6 +4,7 @@ import { MatchResultsController } from './match-results.controller';
 const mockService = {
   findByUser: vi.fn(),
   getStats: vi.fn(),
+  findByMatchCode: vi.fn(),
 };
 
 describe('MatchResultsController', () => {
@@ -183,7 +184,7 @@ describe('MatchResultsController', () => {
 
   describe('getMyStats', () => {
     it('retorna stats del service', async () => {
-      const mockStats = { avgWpm: 87.6, bestWpm: 120.3, totalMatches: 15 };
+      const mockStats = { avgScore: 87.6, bestScore: 120.3, totalMatches: 15 };
       mockService.getStats.mockResolvedValue(mockStats);
 
       const result = await controller.getMyStats(mockReq('user-1') as any);
@@ -193,7 +194,7 @@ describe('MatchResultsController', () => {
     });
 
     it('pasa level valido al service', async () => {
-      mockService.getStats.mockResolvedValue({ avgWpm: 0, bestWpm: 0, totalMatches: 0 });
+      mockService.getStats.mockResolvedValue({ avgScore: 0, bestScore: 0, totalMatches: 0 });
 
       await controller.getMyStats(mockReq('user-1') as any, '2');
 
@@ -201,7 +202,7 @@ describe('MatchResultsController', () => {
     });
 
     it('pasa period valido al service', async () => {
-      mockService.getStats.mockResolvedValue({ avgWpm: 0, bestWpm: 0, totalMatches: 0 });
+      mockService.getStats.mockResolvedValue({ avgScore: 0, bestScore: 0, totalMatches: 0 });
 
       await controller.getMyStats(mockReq('user-1') as any, undefined, '30d');
 
@@ -209,7 +210,7 @@ describe('MatchResultsController', () => {
     });
 
     it('ignora level invalido', async () => {
-      mockService.getStats.mockResolvedValue({ avgWpm: 0, bestWpm: 0, totalMatches: 0 });
+      mockService.getStats.mockResolvedValue({ avgScore: 0, bestScore: 0, totalMatches: 0 });
 
       await controller.getMyStats(mockReq('user-1') as any, '6');
 
@@ -217,7 +218,7 @@ describe('MatchResultsController', () => {
     });
 
     it('ignora period invalido', async () => {
-      mockService.getStats.mockResolvedValue({ avgWpm: 0, bestWpm: 0, totalMatches: 0 });
+      mockService.getStats.mockResolvedValue({ avgScore: 0, bestScore: 0, totalMatches: 0 });
 
       await controller.getMyStats(mockReq('user-1') as any, undefined, 'semana');
 
@@ -225,14 +226,63 @@ describe('MatchResultsController', () => {
     });
 
     it('acepta todos los periods validos', async () => {
-      mockService.getStats.mockResolvedValue({ avgWpm: 0, bestWpm: 0, totalMatches: 0 });
+      mockService.getStats.mockResolvedValue({ avgScore: 0, bestScore: 0, totalMatches: 0 });
 
       for (const period of ['7d', '30d', 'all'] as const) {
         vi.clearAllMocks();
-        mockService.getStats.mockResolvedValue({ avgWpm: 0, bestWpm: 0, totalMatches: 0 });
+        mockService.getStats.mockResolvedValue({ avgScore: 0, bestScore: 0, totalMatches: 0 });
         await controller.getMyStats(mockReq('user-1') as any, undefined, period);
         expect(mockService.getStats).toHaveBeenCalledWith('user-1', undefined, period);
       }
+    });
+  });
+
+  describe('getMatchDetail', () => {
+    const makeMatchResult = (rank: number, displayName: string) => ({
+      wpm: 80 + rank * 5,
+      precision: 95 - rank,
+      score: 800 - rank * 50,
+      missingChars: rank,
+      level: 3,
+      finished: true,
+      finishedAt: new Date('2026-04-02T12:00:00Z'),
+      rank,
+      createdAt: new Date('2026-04-02T12:00:00Z'),
+      user: { displayName, avatarUrl: null, countryCode: 'AR' },
+    });
+
+    it('retorna detalle de partida con participantes', async () => {
+      mockService.findByMatchCode.mockResolvedValue([
+        makeMatchResult(1, 'Player 1'),
+        makeMatchResult(2, 'Player 2'),
+      ]);
+
+      const result = await controller.getMatchDetail('ABC123');
+
+      expect(result.matchCode).toBe('ABC123');
+      expect(result.level).toBe(3);
+      expect(result.participants).toHaveLength(2);
+      expect(result.participants[0].displayName).toBe('Player 1');
+      expect(result.participants[0].finishedAt).toBe('2026-04-02T12:00:00.000Z');
+      expect(result.participants[1].displayName).toBe('Player 2');
+    });
+
+    it('lanza NotFoundException si matchCode no existe', async () => {
+      mockService.findByMatchCode.mockResolvedValue([]);
+
+      await expect(controller.getMatchDetail('NOEXIST')).rejects.toThrow('no encontrada');
+    });
+
+    it('convierte finishedAt null correctamente', async () => {
+      const result = makeMatchResult(1, 'DNF Player');
+      result.finished = false;
+      result.finishedAt = null;
+      mockService.findByMatchCode.mockResolvedValue([result]);
+
+      const detail = await controller.getMatchDetail('ABC123');
+
+      expect(detail.participants[0].finishedAt).toBeNull();
+      expect(detail.participants[0].finished).toBe(false);
     });
   });
 });

@@ -134,7 +134,7 @@ FR27: Epic 4 - Leaderboard global con país
 FR28: Epic 4 - Filtro leaderboard por nivel y periodo temporal
 FR29: Epic 4 - Actualización auto leaderboard
 FR30: Epic 4 - Historial personal
-FR31: Epic 4 - Promedio WPM y marcas
+FR31: Epic 4 - Puntaje promedio y mejor puntaje personal
 FR32: Epic 4 - Progresión en el tiempo
 FR33: Epic 1 - Detección Geo API de país
 FR34: Epic 1 - Cambio manual de país
@@ -155,7 +155,7 @@ Los usuarios pueden unirse a salas activas simplemente para observar la competen
 **FRs covered:** FR10, FR11, FR12
 
 ### Epic 4: Global Progression & Rankings
-Los usuarios pueden rastrear su progreso histórico, ver su WPM promedio y competir en tablas de posiciones globales filtradas por nivel de dificultad y país de origen, dándole persistencia y retención a largo plazo.
+Los usuarios pueden rastrear su progreso histórico, ver su puntaje promedio y mejor puntaje personal, y competir en tablas de posiciones globales ordenadas por puntaje y filtradas por nivel de dificultad, país y período, dándole persistencia y retención a largo plazo.
 **FRs covered:** FR23, FR27, FR28, FR29, FR30, FR31, FR32, FR35
 
 ## Epic 1: User Identity & Profiles
@@ -382,7 +382,7 @@ So that I can seamlessly transition from watching to competing if a slot is avai
 
 ## Epic 4: Global Progression & Rankings
 
-Los usuarios pueden rastrear su progreso histórico, ver su WPM promedio y competir en tablas de posiciones globales filtradas por nivel de dificultad y país de origen, dándole persistencia y retención a largo plazo.
+Los usuarios pueden rastrear su progreso histórico, ver su puntaje promedio y mejor marca personal, y competir en tablas de posiciones globales ordenadas por puntaje y filtradas por nivel de dificultad, país y período de tiempo, dándole persistencia y retención a largo plazo.
 
 ### Story 4.1: Match Results Persistence
 
@@ -394,26 +394,33 @@ So that my historical performance is properly recorded in the database.
 
 **Given** a completed match
 **When** the final results are generated
-**Then** a record containing WPM, precision, level, and timestamp is safely persisted to PostgreSQL for each participating user.
+**Then** a record containing WPM, score, precision, missingChars, rank, level, finished, finishedAt and timestamp is safely persisted to PostgreSQL for each participating user (non-guests).
+
+**Given** any match in the player's history
+**When** they click on it from their history list
+**Then** the system can retrieve all MatchResult records sharing the same matchCode, with player info (displayName, avatarUrl, countryCode), enabling a full match replay view showing all participants and their results.
+
+> ℹ️ **Implementado:** Story 4.1 completada el 2026-04-02. Schema, servicio, controller, integración en gateway y tests (209 API tests passing).
 
 ### Story 4.2: Personal History & Progression Dashboard
 
 As a player,
-I want to view my past matches, average WPM, and best personal score,
+I want to view my past matches, average score, and best personal score,
 So that I can see my typing progression over time.
 
 **Acceptance Criteria:**
 
 **Given** an authenticated user in their Profile screen
 **When** they view their history section
-**Then** they see a list of recent matches with their respective WPM, precision, level, and date played
-**And** calculated metrics for their all-time "Average WPM" and "Best WPM".
+**Then** they see a list of recent matches with their respective score, WPM, precision, level, and date played
+**And** calculated metrics for their all-time "Mejor Puntaje" (best score ever) and "Puntaje Promedio" (filtered average)
+**And** each match in the list is clickable and opens the full match result view (all participants, via matchCode).
 
 **Given** an authenticated user viewing their history section
 **When** they select a time range filter ("Últimos 7 días", "Últimos 30 días", "Todo el tiempo")
 **Then** the match list updates to show only matches played within that range
-**And** the "Average WPM" metric recalculates to reflect only the filtered matches
-**And** "Best WPM" always reflects the all-time best regardless of the active filter.
+**And** the "Puntaje Promedio" metric recalculates to reflect only the filtered matches
+**And** "Mejor Puntaje" always reflects the all-time best regardless of the active filter.
 
 **Given** an authenticated user viewing their history section
 **When** they select a difficulty level filter (niveles 1–5 o "Todos")
@@ -423,15 +430,32 @@ So that I can see my typing progression over time.
 ### Story 4.3: Global Leaderboard
 
 As a competitive player,
-I want to view a global leaderboard showing the fastest players and their countries,
+I want to view a global leaderboard showing the top-scoring players and their countries,
 So that I can see how I rank against the global community.
 
 **Acceptance Criteria:**
 
 **Given** a user navigating to the Leaderboard page
 **When** the page loads
-**Then** it displays a paginated/top-100 list of players sorted by highest WPM
-**And** each entry shows the player's name, avatar, WPM, and associated country.
+**Then** it displays a paginated/top-100 list of players sorted by highest score (not WPM)
+**And** each row shows, in order: position (#), country flag, avatar + name (together), best score, average precision.
+
+**Given** an authenticated user on the Leaderboard page
+**When** the page loads
+**Then** a "Tu posición" widget is displayed showing:
+  - 🏆 Tu mejor puntaje: N pts · conseguido en partida [matchCode], [fecha]
+  - 🌍 Mundial: posición #N · Top X% del mundo
+  - 🏳️ [País]: posición #N · Top X% de [país]
+**And** the percentile is calculated as: `(players_with_higher_best_score / total_players) * 100`, subtracted from 100
+**And** "Tu mejor puntaje" and the match reference come from the MatchResult record with the highest score for that user (filtered by active level/period)
+**And** the matchCode in the widget is a link that opens the full match result view for that partida
+**And** the widget reflects the currently active filters (level, period).
+
+**Given** the leaderboard data
+**When** it is fetched from the backend
+**Then** the response is cached in Redis with a TTL of 12 hours
+**And** the cache key encodes the active filters (level, country, period)
+**And** if no new record has invalidated the cache, the TTL serves as the fallback expiry.
 
 ### Story 4.4: Leaderboard Filtering (Level, Country & Period)
 
@@ -448,7 +472,7 @@ So that I can find my ranking among peers in my region, skill bracket, or recent
 **Given** the time period filter
 **When** the user selects a period option
 **Then** the available options are: "Histórico" (all-time), "Último año", "Último mes", "Últimos 7 días"
-**And** the leaderboard recalculates the best WPM within the selected period.
+**And** the leaderboard recalculates the best score (not WPM) within the selected period.
 
 **Given** the Leaderboard view
 **When** the user navigates to it
@@ -461,14 +485,23 @@ So that I can find my ranking among peers in my region, skill bracket, or recent
 ### Story 4.5: Automated Leaderboard Updates
 
 As the system,
-I want to update the global leaderboards automatically as matches conclude,
-So that the rankings are always fresh and accurate without manual intervention.
+I want to invalidate the relevant leaderboard cache automatically when a player sets a new personal best,
+So that the rankings are always fresh without manual intervention and without rebuilding the full dataset on every match.
 
 **Acceptance Criteria:**
 
 **Given** a newly persisted match result
-**When** the player's new score is higher than their previous best for that level
-**Then** the system automatically updates their entry in the aggregated leaderboard view to ensure real-time accuracy.
+**When** the player's new score is strictly higher than their previous best score for that level
+**Then** the backend deletes all Redis cache keys matching the pattern `leaderboard:level:{level}:*` (affecting all country/period combinations for that level)
+**And** also deletes `leaderboard:level:ALL:*` (the "Todos los niveles" view)
+**And** the next leaderboard request for any of those keys triggers a fresh Postgres query and re-populates the cache with a new 12-hour TTL
+**And** if no new record is set, the existing cache is never touched (no unnecessary invalidation).
+
+**Given** the cache invalidation logic
+**When** the Postgres query to fetch the previous best fails or the Redis DEL fails
+**Then** the match result is still persisted successfully (invalidation failure is non-blocking)
+**And** the error is logged with level `warn` including userId, level, and reason
+**And** the TTL fallback (12h) ensures the cache eventually expires anyway.
 
 ## Epic 5: La Visual — Rediseño Pantalla Principal
 

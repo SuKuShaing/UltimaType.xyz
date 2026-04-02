@@ -62,7 +62,27 @@ export interface PaginatedResponse<T> {
 export type MatchPeriod = '7d' | '30d' | 'all';
 
 export interface MatchStatsDto {
-  avgWpm: number;
-  bestWpm: number;
+  avgScore: number;
+  bestScore: number;
   totalMatches: number;
+}
+
+export interface MatchDetailParticipantDto {
+  displayName: string;
+  avatarUrl: string | null;
+  countryCode: string | null;
+  wpm: number;
+  precision: number;
+  score: number;
+  missingChars: number;
+  rank: number;
+  finished: boolean;
+  finishedAt: string | null;
+}
+
+export interface MatchDetailDto {
+  matchCode: string;
+  level: number;
+  createdAt: string;
+  participants: MatchDetailParticipantDto[];
 }

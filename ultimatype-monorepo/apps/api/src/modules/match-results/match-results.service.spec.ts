@@ -340,56 +340,96 @@ describe('MatchResultsService', () => {
     });
   });
 
+  describe('findByMatchCode', () => {
+    it('retorna resultados con info del usuario ordenados por rank', async () => {
+      const mockData = [
+        {
+          wpm: 85.5, precision: 97, score: 829, missingChars: 0,
+          level: 3, finished: true, finishedAt: new Date(), rank: 1,
+          createdAt: new Date(), user: { displayName: 'Player 1', avatarUrl: null, countryCode: 'AR' },
+        },
+        {
+          wpm: 70.2, precision: 92, score: 645, missingChars: 5,
+          level: 3, finished: true, finishedAt: new Date(), rank: 2,
+          createdAt: new Date(), user: { displayName: 'Player 2', avatarUrl: 'http://img.png', countryCode: 'CL' },
+        },
+      ];
+      mockPrisma.matchResult.findMany.mockResolvedValue(mockData);
+
+      const result = await service.findByMatchCode('ABC123');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].user.displayName).toBe('Player 1');
+      expect(result[1].user.displayName).toBe('Player 2');
+      expect(mockPrisma.matchResult.findMany).toHaveBeenCalledWith({
+        where: { matchCode: 'ABC123' },
+        orderBy: { rank: 'asc' },
+        select: expect.objectContaining({
+          wpm: true, score: true, rank: true,
+          user: { select: { displayName: true, avatarUrl: true, countryCode: true } },
+        }),
+      });
+    });
+
+    it('retorna array vacío si matchCode no existe', async () => {
+      mockPrisma.matchResult.findMany.mockResolvedValue([]);
+
+      const result = await service.findByMatchCode('NOEXIST');
+
+      expect(result).toHaveLength(0);
+    });
+  });
+
   describe('getStats', () => {
     it('retorna 0s cuando no hay partidas', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { wpm: null },
+        _avg: { score: null },
         _count: { id: 0 },
       });
       mockPrisma.matchResult.findFirst.mockResolvedValue(null);
 
       const result = await service.getStats('user-1');
 
-      expect(result).toEqual({ avgWpm: 0, bestWpm: 0, totalMatches: 0 });
+      expect(result).toEqual({ avgScore: 0, bestScore: 0, totalMatches: 0 });
     });
 
     it('retorna stats correctas con partidas', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { wpm: 87.567 },
+        _avg: { score: 87.567 },
         _count: { id: 15 },
       });
-      mockPrisma.matchResult.findFirst.mockResolvedValue({ wpm: 120.3 });
+      mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 120.3 });
 
       const result = await service.getStats('user-1');
 
-      expect(result.avgWpm).toBe(87.6); // redondeado a 1 decimal
-      expect(result.bestWpm).toBe(120.3);
+      expect(result.avgScore).toBe(87.6); // redondeado a 1 decimal
+      expect(result.bestScore).toBe(120.3);
       expect(result.totalMatches).toBe(15);
     });
 
-    it('bestWpm usa where solo con userId (sin filtros de period)', async () => {
+    it('bestScore usa where solo con userId (sin filtros de period)', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { wpm: 60 },
+        _avg: { score: 60 },
         _count: { id: 3 },
       });
-      mockPrisma.matchResult.findFirst.mockResolvedValue({ wpm: 100 });
+      mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 100 });
 
       await service.getStats('user-1', undefined, '7d');
 
       // findFirst solo filtra por userId (no por period)
       expect(mockPrisma.matchResult.findFirst).toHaveBeenCalledWith({
         where: { userId: 'user-1' },
-        orderBy: { wpm: 'desc' },
-        select: { wpm: true },
+        orderBy: { score: 'desc' },
+        select: { score: true },
       });
     });
 
-    it('avgWpm aplica filtro de level', async () => {
+    it('avgScore aplica filtro de level', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { wpm: 75 },
+        _avg: { score: 75 },
         _count: { id: 5 },
       });
-      mockPrisma.matchResult.findFirst.mockResolvedValue({ wpm: 95 });
+      mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 95 });
 
       await service.getStats('user-1', 3);
 
@@ -400,16 +440,16 @@ describe('MatchResultsService', () => {
       );
     });
 
-    it('redondea avgWpm a 1 decimal', async () => {
+    it('redondea avgScore a 1 decimal', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { wpm: 87.555 },
+        _avg: { score: 87.555 },
         _count: { id: 2 },
       });
-      mockPrisma.matchResult.findFirst.mockResolvedValue({ wpm: 90 });
+      mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 90 });
 
       const result = await service.getStats('user-1');
 
-      expect(result.avgWpm).toBe(87.6);
+      expect(result.avgScore).toBe(87.6);
     });
   });
 });

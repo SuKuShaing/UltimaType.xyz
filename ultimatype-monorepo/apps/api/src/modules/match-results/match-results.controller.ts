@@ -1,10 +1,11 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards, NotFoundException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MatchResultsService, MatchResultRecord } from './match-results.service';
 import {
   PaginatedResponse,
   MatchResultDto,
   MatchStatsDto,
+  MatchDetailDto,
   MatchPeriod,
 } from '@ultimatype-monorepo/shared';
 
@@ -82,6 +83,36 @@ export class MatchResultsController {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  @Get(':matchCode')
+  @UseGuards(JwtAuthGuard)
+  async getMatchDetail(
+    @Param('matchCode') matchCode: string,
+  ): Promise<MatchDetailDto> {
+    const results = await this.matchResultsService.findByMatchCode(matchCode);
+
+    if (results.length === 0) {
+      throw new NotFoundException(`Partida ${matchCode} no encontrada`);
+    }
+
+    return {
+      matchCode,
+      level: results[0].level,
+      createdAt: results[0].createdAt.toISOString(),
+      participants: results.map((r) => ({
+        displayName: r.user.displayName,
+        avatarUrl: r.user.avatarUrl,
+        countryCode: r.user.countryCode,
+        wpm: r.wpm,
+        precision: r.precision,
+        score: r.score,
+        missingChars: r.missingChars,
+        rank: r.rank,
+        finished: r.finished,
+        finishedAt: r.finishedAt ? r.finishedAt.toISOString() : null,
+      })),
     };
   }
 }

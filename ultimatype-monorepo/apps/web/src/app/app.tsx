@@ -6,6 +6,7 @@ import { AuthCallback } from '../components/auth/auth-callback';
 import { ProtectedRoute } from '../components/auth/protected-route';
 import { ProfilePage } from '../components/profile/profile-page';
 import { LobbyPage } from '../components/lobby/lobby-page';
+import { MatchDetailPage } from '../components/match/match-detail-page';
 import { CreateRoomButton } from '../components/lobby/create-room-button';
 import { NavBar } from '../components/ui/nav-bar';
 import { Logo } from '../components/ui/logo';
@@ -70,6 +71,14 @@ export function App() {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/match/:matchCode"
+          element={
+            <ProtectedRoute>
+              <MatchDetailPage />
             </ProtectedRoute>
           }
         />

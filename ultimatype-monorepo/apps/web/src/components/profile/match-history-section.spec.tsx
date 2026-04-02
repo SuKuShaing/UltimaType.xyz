@@ -3,6 +3,11 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MatchHistorySection } from './match-history-section';
 import type { PaginatedResponse, MatchResultDto, MatchStatsDto } from '@ultimatype-monorepo/shared';
 
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+}));
+
 vi.mock('../../hooks/use-match-history', () => ({
   useMatchHistory: vi.fn(),
 }));
@@ -32,7 +37,7 @@ const makeHistoryResult = (overrides: Partial<MatchResultDto> = {}): MatchResult
   ...overrides,
 });
 
-const defaultStats: MatchStatsDto = { avgWpm: 85.5, bestWpm: 120.3, totalMatches: 10 };
+const defaultStats: MatchStatsDto = { avgScore: 85.5, bestScore: 120.3, totalMatches: 10 };
 
 const emptyHistory: PaginatedResponse<MatchResultDto> = {
   data: [],
@@ -41,6 +46,7 @@ const emptyHistory: PaginatedResponse<MatchResultDto> = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockNavigate.mockClear();
   mockUseMatchStats.mockReturnValue({ data: defaultStats, isLoading: false });
   mockUseMatchHistory.mockReturnValue({ data: emptyHistory, isLoading: false });
 });
@@ -49,9 +55,9 @@ describe('MatchHistorySection', () => {
   it('muestra las 3 tarjetas de stats', () => {
     render(<MatchHistorySection />);
 
-    expect(screen.getByText('WPM Promedio')).toBeDefined();
-    expect(screen.getByText('Mejor WPM')).toBeDefined();
-    expect(screen.getByText('Partidas')).toBeDefined();
+    expect(screen.getByText('Puntaje Promedio')).toBeDefined();
+    expect(screen.getByText('Mejor Puntaje')).toBeDefined();
+    expect(screen.getByText('Total Partidas')).toBeDefined();
   });
 
   it('muestra los valores de stats', () => {
@@ -62,14 +68,14 @@ describe('MatchHistorySection', () => {
     expect(screen.getByText('10')).toBeDefined();
   });
 
-  it('estado loading muestra underscore mientras carga', () => {
+  it('estado loading muestra skeletons mientras carga', () => {
     mockUseMatchStats.mockReturnValue({ data: undefined, isLoading: true });
     mockUseMatchHistory.mockReturnValue({ data: undefined, isLoading: true });
 
-    render(<MatchHistorySection />);
+    const { container } = render(<MatchHistorySection />);
 
-    const underscores = screen.getAllByText('_');
-    expect(underscores.length).toBeGreaterThanOrEqual(1);
+    const skeletons = container.querySelectorAll('.animate-pulse');
+    expect(skeletons.length).toBeGreaterThanOrEqual(4);
   });
 
   it('estado vacío sin filtros muestra mensaje general', () => {
@@ -93,7 +99,19 @@ describe('MatchHistorySection', () => {
     const btnLevel = screen.getByRole('button', { name: /3 Puntuación/i });
     fireEvent.click(btnLevel);
 
-    expect(screen.getByText('Sin partidas en este período')).toBeDefined();
+    expect(screen.getByText('Sin partidas en este nivel')).toBeDefined();
+  });
+
+  it('estado error muestra mensaje y botón reintentar', () => {
+    const refetchFn = vi.fn();
+    mockUseMatchHistory.mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch: refetchFn });
+
+    render(<MatchHistorySection />);
+
+    expect(screen.getByText('Error al cargar el historial')).toBeDefined();
+    const retryBtn = screen.getByText('Reintentar');
+    fireEvent.click(retryBtn);
+    expect(refetchFn).toHaveBeenCalledTimes(1);
   });
 
   it('renderiza lista de partidas con datos', () => {
@@ -108,6 +126,7 @@ describe('MatchHistorySection', () => {
 
     render(<MatchHistorySection />);
 
+    expect(screen.getAllByText('829')).toHaveLength(2);
     expect(screen.getByText('92.3')).toBeDefined();
     expect(screen.getByText('74.1')).toBeDefined();
     expect(screen.getByText('98%')).toBeDefined();
@@ -190,5 +209,20 @@ describe('MatchHistorySection', () => {
     expect(screen.getByLabelText('Página anterior')).toBeDefined();
     expect(screen.getByLabelText('Página siguiente')).toBeDefined();
     expect(screen.getByText('1 / 3')).toBeDefined();
+  });
+
+  it('click en una fila navega a /match/:matchCode', () => {
+    const matchData: PaginatedResponse<MatchResultDto> = {
+      data: [makeHistoryResult({ matchCode: 'XYZ789' })],
+      meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+    };
+    mockUseMatchHistory.mockReturnValue({ data: matchData, isLoading: false });
+
+    render(<MatchHistorySection />);
+
+    const row = screen.getByText('829').closest('tr')!;
+    fireEvent.click(row);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/match/XYZ789');
   });
 });

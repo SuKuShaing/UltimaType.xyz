@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DIFFICULTY_LEVELS, MatchPeriod } from '@ultimatype-monorepo/shared';
 import { useMatchHistory } from '../../hooks/use-match-history';
 import { useMatchStats } from '../../hooks/use-match-stats';
@@ -22,6 +23,7 @@ function getLevelName(level: number): string {
 }
 
 export function MatchHistorySection() {
+  const navigate = useNavigate();
   const [period, setPeriod] = useState<MatchPeriod>('all');
   const [level, setLevel] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -37,10 +39,10 @@ export function MatchHistorySection() {
   }
 
   const { data: stats, isLoading: isStatsLoading } = useMatchStats({ level, period });
-  const { data: history, isLoading: isHistoryLoading } = useMatchHistory({ page, level, period });
+  const { data: history, isLoading: isHistoryLoading, isError, refetch } = useMatchHistory({ page, level, period });
 
   const hasFilters = period !== 'all' || level !== null;
-  const isEmpty = !isHistoryLoading && (history?.data.length ?? 0) === 0;
+  const isEmpty = !isHistoryLoading && !isError && (history?.data.length ?? 0) === 0;
   const totalPages = history?.meta.totalPages ?? 1;
 
   return (
@@ -50,12 +52,16 @@ export function MatchHistorySection() {
       {/* Stats row */}
       <div className="mb-6 grid grid-cols-3 gap-4">
         {[
-          { label: 'WPM Promedio', value: isStatsLoading ? '_' : (stats?.avgWpm ?? 0).toString() },
-          { label: 'Mejor WPM', value: isStatsLoading ? '_' : (stats?.bestWpm ?? 0).toString() },
-          { label: 'Partidas', value: isStatsLoading ? '_' : (stats?.totalMatches ?? 0).toString() },
+          { label: 'Puntaje Promedio', value: stats?.avgScore ?? 0 },
+          { label: 'Mejor Puntaje', value: stats?.bestScore ?? 0 },
+          { label: 'Total Partidas', value: stats?.totalMatches ?? 0 },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-xl bg-surface-raised p-4 text-center">
-            <div className="text-2xl font-semibold text-primary font-sans">{value}</div>
+            {isStatsLoading ? (
+              <div className="mx-auto h-8 w-16 animate-pulse rounded bg-surface-sunken" />
+            ) : (
+              <div className="text-2xl font-semibold text-primary font-sans">{value}</div>
+            )}
             <div className="mt-1 text-xs uppercase tracking-wide text-text-muted font-sans">{label}</div>
           </div>
         ))}
@@ -110,14 +116,34 @@ export function MatchHistorySection() {
 
       {/* Match list */}
       {isHistoryLoading && (
-        <div className="py-8 text-center text-text-muted font-sans text-sm">_</div>
+        <div className="space-y-3 py-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-10 animate-pulse rounded-lg bg-surface-raised" />
+          ))}
+        </div>
+      )}
+
+      {!isHistoryLoading && isError && (
+        <div className="py-8 text-center font-sans text-sm">
+          <p className="text-error">Error al cargar el historial</p>
+          <button
+            onClick={() => refetch()}
+            className="mt-3 rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted hover:text-text-main"
+          >
+            Reintentar
+          </button>
+        </div>
       )}
 
       {!isHistoryLoading && isEmpty && (
         <div className="py-8 text-center text-text-muted font-sans text-sm italic">
-          {hasFilters
-            ? 'Sin partidas en este período'
-            : 'Aún no tienes partidas registradas'}
+          {!hasFilters
+            ? 'Aún no tienes partidas registradas'
+            : period !== 'all' && level !== null
+              ? 'Sin partidas con estos filtros'
+              : level !== null
+                ? 'Sin partidas en este nivel'
+                : 'Sin partidas en este período'}
         </div>
       )}
 
@@ -127,6 +153,7 @@ export function MatchHistorySection() {
             <table className="w-full font-sans text-sm">
               <thead>
                 <tr className="border-b border-surface-raised text-left text-xs uppercase tracking-wide text-text-muted">
+                  <th className="pb-2 pr-4">Puntaje</th>
                   <th className="pb-2 pr-4">WPM</th>
                   <th className="pb-2 pr-4">Precisión</th>
                   <th className="pb-2 pr-4">Nivel</th>
@@ -138,9 +165,11 @@ export function MatchHistorySection() {
                 {history.data.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-b border-surface-raised last:border-0"
+                    onClick={() => navigate(`/match/${r.matchCode}`)}
+                    className="cursor-pointer border-b border-surface-raised last:border-0 hover:bg-surface-raised/50"
                   >
-                    <td className="py-3 pr-4 font-semibold text-text-main">{r.wpm.toFixed(1)}</td>
+                    <td className="py-3 pr-4 font-semibold text-primary">{r.score.toFixed(0)}</td>
+                    <td className="py-3 pr-4 text-text-main">{r.wpm.toFixed(1)}</td>
                     <td className="py-3 pr-4 text-text-main">{r.precision}%</td>
                     <td className="py-3 pr-4 text-text-muted">{getLevelName(r.level)}</td>
                     <td className="py-3 pr-4 text-text-muted">

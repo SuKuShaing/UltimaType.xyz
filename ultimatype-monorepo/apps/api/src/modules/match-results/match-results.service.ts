@@ -171,8 +171,8 @@ export class MatchResultsService {
 
   /**
    * Calcula métricas agregadas de un usuario:
-   * - avgWpm: promedio filtrado por level y period
-   * - bestWpm: máximo histórico all-time (sin filtros)
+   * - avgScore: promedio de score filtrado por level y period
+   * - bestScore: máximo de score histórico all-time (sin filtros de period)
    * - totalMatches: conteo filtrado
    */
   async getStats(
@@ -190,21 +190,49 @@ export class MatchResultsService {
     const [stats, best] = await Promise.all([
       this.prisma.matchResult.aggregate({
         where: filteredWhere,
-        _avg: { wpm: true },
+        _avg: { score: true },
         _count: { id: true },
       }),
       this.prisma.matchResult.findFirst({
         where: { userId },
-        orderBy: { wpm: 'desc' },
-        select: { wpm: true },
+        orderBy: { score: 'desc' },
+        select: { score: true },
       }),
     ]);
 
     return {
-      avgWpm: Math.round((stats._avg.wpm ?? 0) * 10) / 10,
-      bestWpm: best?.wpm ?? 0,
+      avgScore: Math.round((stats._avg.score ?? 0) * 10) / 10,
+      bestScore: best?.score ?? 0,
       totalMatches: stats._count.id,
     };
+  }
+
+  /**
+   * Busca todos los resultados de una partida por matchCode, con info del jugador.
+   */
+  async findByMatchCode(matchCode: string) {
+    return this.prisma.matchResult.findMany({
+      where: { matchCode },
+      orderBy: { rank: 'asc' },
+      select: {
+        wpm: true,
+        precision: true,
+        score: true,
+        missingChars: true,
+        level: true,
+        finished: true,
+        finishedAt: true,
+        rank: true,
+        createdAt: true,
+        user: {
+          select: {
+            displayName: true,
+            avatarUrl: true,
+            countryCode: true,
+          },
+        },
+      },
+    });
   }
 
   private periodToDateFrom(period?: MatchPeriod): Date | null {

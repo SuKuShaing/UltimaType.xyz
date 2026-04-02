@@ -117,7 +117,7 @@ Detalle completo de features por fase en la sección **Project Scoping & Phased 
 
 **Climax:** 3... 2... 1... ¡GO! El texto aparece, los 4 carets empiezan a moverse. Camilo ve que el caret azul (su amigo Martín) va adelante. Adrenalina. Teclea más rápido. El Focus Fade ha desvanecido todo excepto el texto y los carets. Solo existe la competencia.
 
-**Resolution:** Camilo termina segundo — 58 WPM, 94% precisión. La pantalla de resultados muestra el ranking de la partida, el WPM de cada jugador, y un botón "Revancha". Martín ganó con 67 WPM. Camilo dice "otra vez".
+**Resolution:** Camilo termina segundo — 58 WPM, 94% precisión, 820 pts. La pantalla de resultados muestra el ranking de la partida ordenado por puntaje, con el WPM y precisión de cada jugador, y un botón "Revancha". Martín ganó con más puntaje (67 WPM, 97% precisión). Camilo dice "otra vez".
 
 ### Journey 2: "Vinimos a Ver" — Espectador
 
@@ -138,15 +138,15 @@ Detalle completo de features por fase en la sección **Project Scoping & Phased 
 
 **Protagonista:** Andrés, 25 años. Perdió ayer y quiere mejorar su récord.
 
-**Opening Scene:** Andrés abre UltimaType directamente. Login automático (sesión persistida). Ve su perfil: WPM promedio 52, mejor marca 61, Nivel 3 desbloqueado.
+**Opening Scene:** Andrés abre UltimaType directamente. Login automático (sesión persistida). Ve su perfil: puntaje promedio 480 pts, mejor puntaje 610 pts, Nivel 3 desbloqueado.
 
 **Rising Action:**
 1. Revisa el Leaderboard global filtrando por Nivel 3
-2. Ve que su amigo Martín está en el top 10 con 72 WPM
-3. Crea una sala, selecciona Nivel 3 (con puntuación), comparte el link
-4. Mientras espera, revisa su historial de puntajes — ve su progresión de las últimas partidas
+2. Ve que su amigo Martín está en el top 10 con 1,240 pts
+3. Crea una sala, selecciona Nivel 3, comparte el link
+4. Mientras espera, revisa su historial de partidas — ve su progresión de puntaje en las últimas semanas
 
-**Climax:** Martín se une. Esta vez Andrés gana: 63 WPM vs 59 WPM. Su nuevo récord personal.
+**Climax:** Martín se une. Esta vez Andrés gana: 630 pts vs 590 pts (63 WPM vs 59 WPM). Nuevo récord personal de puntaje.
 
 **Resolution:** El leaderboard se actualiza. Andrés sube 3 posiciones. Abre el Nivel 4 para practicar con números.
 
@@ -278,7 +278,7 @@ Nivel básico. Detalle en **Non-Functional Requirements > Accessibility** (NFR22
 | 6 | Focus Fade | Diferenciador UX exclusivo. |
 | 7 | Pantalla de resultados | WPM, precisión, ranking. Botón revancha. |
 | 8 | Modo espectador | Hasta 100 espectadores read-only. |
-| 9 | Leaderboard/Rankings | Global por WPM, filtrable por nivel. |
+| 9 | Leaderboard/Rankings | Global por puntaje (score), filtrable por nivel, país y período. Widget de posición propia con percentil. |
 | 10 | Puntajes históricos | Historial de partidas del usuario. |
 
 ### Post-MVP Features
@@ -366,16 +366,17 @@ Nivel básico. Detalle en **Non-Functional Requirements > Accessibility** (NFR22
 
 ### Leaderboard & Rankings
 
-- **FR27:** Un usuario puede ver el leaderboard global con los mejores WPM
-- **FR28:** Un usuario puede filtrar el leaderboard por nivel de dificultad
-- **FR29:** El sistema actualiza el leaderboard automáticamente al finalizar cada partida
-- **FR35:** Un usuario puede filtrar el leaderboard por país
+- **FR27:** Un usuario puede ver el leaderboard global con los mejores puntajes (score), ordenado por score descendente. Cada fila muestra: posición, país, avatar + nombre, mejor puntaje, precisión promedio.
+- **FR27b:** El usuario autenticado ve un widget "Tu posición" con su ranking mundial y por país, más su percentil (ej: "Top 8% del mundo").
+- **FR28:** Un usuario puede filtrar el leaderboard por nivel de dificultad (1-5 o Todos) y por período (Histórico, Último año, Último mes, Últimos 7 días).
+- **FR29:** El sistema invalida automáticamente el cache Redis del leaderboard cuando un jugador establece un nuevo puntaje personal máximo para un nivel. TTL de fallback: 12 horas.
+- **FR35:** Un usuario puede filtrar el leaderboard por país de origen.
 
 ### Historical Scores
 
-- **FR30:** Un usuario puede ver su historial de partidas con WPM, precisión, nivel y fecha
-- **FR31:** Un usuario puede ver su WPM promedio y su mejor marca personal
-- **FR32:** Un usuario puede ver su progresión a lo largo del tiempo
+- **FR30:** Un usuario puede ver su historial de partidas con score, WPM, precisión, nivel y fecha. Cada entrada es clickeable y abre la vista completa de esa partida con todos los participantes (via matchCode).
+- **FR31:** Un usuario puede ver su mejor puntaje personal all-time y su puntaje promedio (filtrable por período y nivel).
+- **FR32:** Un usuario puede ver su progresión a lo largo del tiempo.
 
 ## Non-Functional Requirements
 

@@ -1,5 +1,10 @@
 # Deferred Work
 
+## Deferred from: code review de 4-2-personal-history-progression-dashboard (2026-04-02)
+
+- **Sin test HTTP-level de routing GET /matches/stats vs GET /matches** — Controller spec instancia la clase directamente; el orden `@Get('stats')` antes de `@Get()` no está cubierto por ningún test de transporte. Gap e2e pre-existente en el proyecto.
+- **Sin respuesta 400 para query params malformados** — `level=abc`, `period=invalid` se descartan silenciosamente y se usan defaults. Patrón por convención del proyecto; ajustar si se agrega validación global con class-validator.
+
 ## Deferred from: code review de 4-1-match-results-persistence (2026-04-02)
 
 - **Ruta del controller 'matches' vs 'match-results'** — Naming convention discutible. El controller usa `@Controller('matches')` pero el recurso son match *results*. No bloquea funcionalidad.

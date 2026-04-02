@@ -1,11 +1,11 @@
 # Story 4.2: Personal History & Progression Dashboard
 
-Status: review
+Status: done
 
 ## Story
 
 As a player,
-I want to view my past matches, average WPM, and best personal score in my profile,
+I want to view my past matches, average score, and best personal score in my profile,
 so that I can see my typing progression over time.
 
 ## Acceptance Criteria
@@ -14,13 +14,13 @@ so that I can see my typing progression over time.
 
 **Given** un usuario autenticado en `/profile`
 **When** carga la página
-**Then** ve una sección "Historial" debajo de su tarjeta de perfil con: lista de partidas recientes (WPM, precisión, nivel, fecha, rank) y métricas calculadas "WPM Promedio" y "Mejor WPM"
+**Then** ve una sección "Historial" debajo de su tarjeta de perfil con: lista de partidas recientes (puntaje, WPM, precisión, nivel, rank, fecha) y métricas calculadas "Puntaje Promedio" y "Mejor Puntaje"
 
 ### AC2: Métricas globales
 
 **Given** el usuario tiene partidas registradas
 **When** ve la sección de historial
-**Then** se muestra "WPM Promedio" (promedio de todas sus partidas sin filtros activos) y "Mejor WPM" (máximo histórico, **siempre all-time sin importar los filtros activos**)
+**Then** se muestra "Puntaje Promedio" (promedio de score filtrado por período y nivel activos) y "Mejor Puntaje" (máximo score histórico, **siempre all-time sin importar los filtros activos**)
 **And** se muestra "Total Partidas" para el conjunto filtrado actualmente
 
 ### AC3: Filtro por período de tiempo
@@ -28,8 +28,8 @@ so that I can see my typing progression over time.
 **Given** el usuario ve la sección de historial
 **When** selecciona un filtro de período ("Últimos 7 días", "Últimos 30 días", "Todo el tiempo")
 **Then** la lista de partidas se actualiza mostrando solo las jugadas en ese rango
-**And** "WPM Promedio" recalcula reflejando solo las partidas filtradas
-**And** "Mejor WPM" sigue mostrando el máximo histórico all-time (sin filtro de período)
+**And** "Puntaje Promedio" recalcula reflejando solo las partidas filtradas
+**And** "Mejor Puntaje" sigue mostrando el máximo score histórico all-time (sin filtro de período)
 
 ### AC4: Filtro por nivel
 
@@ -42,9 +42,9 @@ so that I can see my typing progression over time.
 
 **Given** un usuario autenticado
 **When** hace `GET /api/matches/stats` (con parámetros opcionales `level=1-5` y `period=7d|30d|all`)
-**Then** recibe `{ avgWpm, bestWpm, totalMatches }` donde:
-- `avgWpm` es el promedio filtrado (aplica level y period)
-- `bestWpm` es el máximo WPM all-time del usuario (sin filtros)
+**Then** recibe `{ avgScore, bestScore, totalMatches }` donde:
+- `avgScore` es el promedio de score filtrado (aplica level y period)
+- `bestScore` es el máximo score all-time del usuario (sin filtros)
 - `totalMatches` es el count filtrado
 
 ### AC6: Endpoint GET /api/matches con filtros
@@ -67,7 +67,7 @@ so that I can see my typing progression over time.
 
 - [x] Task 1: DTOs compartidos (AC: #5, #6)
   - [x] Agregar `export type MatchPeriod = '7d' | '30d' | 'all'` en `libs/shared/src/dto/match-result.dto.ts`
-  - [x] Agregar `export interface MatchStatsDto { avgWpm: number; bestWpm: number; totalMatches: number; }` en el mismo archivo
+  - [x] Agregar `export interface MatchStatsDto { avgScore: number; bestScore: number; totalMatches: number; }` en el mismo archivo
   - [x] Re-exportar ambos desde `libs/shared/src/index.ts` (verificar si ya se exporta todo con `export * from './dto/match-result.dto'`)
 
 - [x] Task 2: Backend — extender findByUser con filtros (AC: #6)
@@ -78,9 +78,9 @@ so that I can see my typing progression over time.
 
 - [x] Task 3: Backend — método getStats (AC: #5)
   - [x] Agregar método `async getStats(userId: string, level?: number, period?: MatchPeriod): Promise<MatchStatsDto>` en `MatchResultsService`
-  - [x] Usar `prisma.matchResult.aggregate` para avgWpm y totalMatches
-  - [x] Usar `prisma.matchResult.findFirst` sin filtros para bestWpm (all-time)
-  - [x] Retornar con avgWpm redondeado a 1 decimal
+  - [x] Usar `prisma.matchResult.aggregate` para avgScore y totalMatches
+  - [x] Usar `prisma.matchResult.findFirst` sin filtros para bestScore (all-time)
+  - [x] Retornar con avgScore redondeado a 1 decimal
   - [x] Ejecutar ambas queries en `Promise.all` para eficiencia
 
 - [x] Task 4: Backend — endpoint GET /api/matches/stats (AC: #5)
@@ -92,7 +92,7 @@ so that I can see my typing progression over time.
 
 - [x] Task 5: Tests backend (AC: #5, #6)
   - [x] Tests de `MatchResultsService.findByUser` con filtros: con level, con period 7d, con ambos, sin ninguno
-  - [x] Tests de `MatchResultsService.getStats`: sin datos (retorna 0s), con datos, bestWpm ignora filtros de period, level filter aplicado a avgWpm
+  - [x] Tests de `MatchResultsService.getStats`: sin datos (retorna 0s), con datos, bestScore ignora filtros de period, level filter aplicado a avgScore
   - [x] Tests de `MatchResultsController.getMyStats`: defaults, level válido/inválido, period válido/inválido, todos los periods
   - [x] Tests de `MatchResultsController.getMyResults` con nuevos params: level y period se pasan al service
 
@@ -103,7 +103,7 @@ so that I can see my typing progression over time.
 - [x] Task 7: Frontend — componente MatchHistorySection (AC: #1–#4, #7)
   - [x] Crear `apps/web/src/components/profile/match-history-section.tsx`
   - [x] Estado local: `period`, `level`, `page` con reset de page al cambiar filtros
-  - [x] Stats row: 3 tarjetas (WPM Promedio, Mejor WPM, Partidas)
+  - [x] Stats row: 3 tarjetas (Puntaje Promedio, Mejor Puntaje, Total Partidas)
   - [x] Filter pills para período y nivel con aria-pressed
   - [x] Lista de partidas: tabla con WPM, Precisión, Nivel (DIFFICULTY_LEVELS), Rank, Fecha
   - [x] Estado vacío diferenciado (sin datos vs sin resultados en filtro)
@@ -129,12 +129,12 @@ so that I can see my typing progression over time.
 
 **Controller routing crítico:** El endpoint `@Get('stats')` DEBE declararse **antes** del `@Get()` en el controller. En NestJS, aunque técnicamente son paths distintos, es buena práctica y evita problemas si en el futuro se agrega `@Get(':id')`.
 
-**Prisma aggregate:** Usar `prisma.matchResult.aggregate()` para calcular avgWpm y count en una sola query. Para bestWpm usar `findFirst` con `orderBy: { wpm: 'desc' }`.
+**Prisma aggregate:** Usar `prisma.matchResult.aggregate()` para calcular avgScore y count en una sola query. Para bestScore usar `findFirst` con `orderBy: { wpm: 'desc' }`.
 
-**bestWpm siempre all-time:** Las dos queries en `getStats` tienen `where` distintos:
-- filteredWhere: `{ userId, level?, createdAt: { gte: dateFrom } }` → avgWpm + count
-- allTimeWhere: `{ userId }` solo → bestWpm  
-Así el "Mejor WPM" es siempre el máximo histórico del usuario, sin importar filtros activos.
+**bestScore siempre all-time:** Las dos queries en `getStats` tienen `where` distintos:
+- filteredWhere: `{ userId, level?, createdAt: { gte: dateFrom } }` → avgScore + count
+- allTimeWhere: `{ userId }` solo → bestScore  
+Así el "Mejor Puntaje" es siempre el máximo histórico del usuario, sin importar filtros activos.
 
 **findByUser backward compatible:** Los nuevos parámetros `level` y `period` son el 4to y 5to argumento, opcionales. Las llamadas existentes en el controller sin estos params siguen funcionando.
 
@@ -173,8 +173,8 @@ async getStats(userId: string, level?: number, period?: MatchPeriod): Promise<Ma
   ]);
 
   return {
-    avgWpm: Math.round((stats._avg.wpm ?? 0) * 10) / 10,
-    bestWpm: best?.wpm ?? 0,
+    avgScore: Math.round((stats._avg.wpm ?? 0) * 10) / 10,
+    bestScore: best?.wpm ?? 0,
     totalMatches: stats._count.id,
   };
 }
@@ -287,6 +287,22 @@ libs/shared/src/dto/match-result.dto.ts ← modificar: MatchPeriod + MatchStatsD
 
 ---
 
+### Review Findings (2026-04-02, post-PRD/epics update)
+
+- [x] [Review][Patch] Tests rotos: labels 'WPM Promedio'/'Mejor WPM' → 'Puntaje Promedio'/'Mejor Puntaje' [match-history-section.spec.tsx:52-53] — **fixed**
+- [x] [Review][Patch] Mock semántico incorrecto: `_avg: { wpm: null }` → `_avg: { score: null }` [match-results.service.spec.ts:346] — **fixed**
+- [x] [Review][Patch] Tabla sin columna Score — agregada columna "Puntaje" como primera columna [match-history-section.tsx:130] — **fixed**
+- [x] [Review][Patch] Label "Partidas" → "Total Partidas" per AC2 [match-history-section.tsx:55] — **fixed**
+- [x] [Review][Patch] Loading placeholder `_` reemplazado por skeletons con animate-pulse [match-history-section.tsx:53-55,113] — **fixed**
+- [x] [Review][Patch] Empty-state contextual: "en este nivel" / "en este período" / "con estos filtros" [match-history-section.tsx:119] — **fixed**
+- [x] [Review][Patch] Error state con mensaje + botón reintentar cuando fetch falla [match-history-section.tsx:124-133] — **fixed**
+- [x] [Review][Patch] Story ACs actualizados de WPM a Score para sincronizar con PRD/epics — **fixed**
+- [x] [Review][Patch] Match detail: entradas clickeables → nueva vista /match/:matchCode con todos los participantes [match-detail-page.tsx] — **implemented**
+- [x] [Review][Defer] Sin test HTTP-level de routing GET /matches/stats vs GET /matches — gap e2e pre-existente
+- [x] [Review][Defer] Sin respuesta 400 para query params malformados — por convención del proyecto (defaults silenciosos)
+
+---
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -297,22 +313,31 @@ claude-sonnet-4-6 (create-story + dev-story, 2026-04-02)
 
 ### Completion Notes List
 
-- Implementados 9 tasks completos. 237 API tests + 115 web tests pasando (352 total, sin regresiones).
-- `findByUser` extendido con params opcionales level/period (backward compatible — controller existente sin cambios de comportamiento).
-- `getStats` usa dos queries paralelas: aggregate filtrado para avgWpm/totalMatches, findFirst sin filtros para bestWpm all-time (cumple AC2/AC3).
+- Implementados 9 tasks + 9 patches de review. 242 API tests + 125 web tests pasando (367 total, sin regresiones).
+- `findByUser` extendido con params opcionales level/period (backward compatible).
+- `getStats` usa score (no wpm): aggregate filtrado para avgScore/totalMatches, findFirst sin filtros para bestScore all-time (cumple AC2/AC3).
 - Controller agrega helpers `parseLevelParam`/`parsePeriodParam` con validación estricta; `@Get('stats')` declarado antes de `@Get()`.
-- Frontend: 2 hooks TanStack Query con cache keys completos (refetch automático al cambiar filtros), componente con 14 tests.
+- `findByMatchCode` nuevo método con join a User para obtener participantes de una partida.
+- `GET /matches/:matchCode` endpoint nuevo con NotFoundException si no existe.
+- Frontend: 3 hooks TanStack Query, componente historial con 16 tests, componente detalle con 8 tests.
+- Historial: columna Score agregada, skeletons en loading, error state con reintentar, filas clickeables, mensajes vacíos contextuales.
+- Match detail: vista completa de partida con tabla de participantes (avatar, nombre, score, WPM, precisión, estado).
 - ProfilePage ampliado a max-w-2xl para acomodar la sección de historial.
+- Story ACs sincronizados con PRD/epics actualizados (WPM → Score).
 
 ### File List
 
-- libs/shared/src/dto/match-result.dto.ts (modificado: MatchPeriod, MatchStatsDto)
-- ultimatype-monorepo/apps/api/src/modules/match-results/match-results.service.ts (modificado: findByUser filtros, getStats, periodToDateFrom)
-- ultimatype-monorepo/apps/api/src/modules/match-results/match-results.controller.ts (modificado: @Get('stats'), filtros en @Get())
-- ultimatype-monorepo/apps/api/src/modules/match-results/match-results.service.spec.ts (modificado: tests getStats y findByUser filtrado)
-- ultimatype-monorepo/apps/api/src/modules/match-results/match-results.controller.spec.ts (modificado: tests getMyStats y nuevos params)
+- libs/shared/src/dto/match-result.dto.ts (modificado: MatchPeriod, MatchStatsDto, MatchDetailParticipantDto, MatchDetailDto)
+- ultimatype-monorepo/apps/api/src/modules/match-results/match-results.service.ts (modificado: findByUser filtros, getStats score-based, findByMatchCode, periodToDateFrom)
+- ultimatype-monorepo/apps/api/src/modules/match-results/match-results.controller.ts (modificado: @Get('stats'), filtros en @Get(), @Get(':matchCode'))
+- ultimatype-monorepo/apps/api/src/modules/match-results/match-results.service.spec.ts (modificado: tests getStats, findByUser filtrado, findByMatchCode)
+- ultimatype-monorepo/apps/api/src/modules/match-results/match-results.controller.spec.ts (modificado: tests getMyStats, nuevos params, getMatchDetail)
 - ultimatype-monorepo/apps/web/src/hooks/use-match-history.ts (nuevo)
 - ultimatype-monorepo/apps/web/src/hooks/use-match-stats.ts (nuevo)
+- ultimatype-monorepo/apps/web/src/hooks/use-match-detail.ts (nuevo)
 - ultimatype-monorepo/apps/web/src/components/profile/match-history-section.tsx (nuevo)
 - ultimatype-monorepo/apps/web/src/components/profile/match-history-section.spec.tsx (nuevo)
+- ultimatype-monorepo/apps/web/src/components/match/match-detail-page.tsx (nuevo)
+- ultimatype-monorepo/apps/web/src/components/match/match-detail-page.spec.tsx (nuevo)
 - ultimatype-monorepo/apps/web/src/components/profile/profile-page.tsx (modificado: max-w-2xl, MatchHistorySection)
+- ultimatype-monorepo/apps/web/src/app/app.tsx (modificado: ruta /match/:matchCode)
