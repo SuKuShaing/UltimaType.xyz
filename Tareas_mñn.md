@@ -2,20 +2,13 @@
 
 ## Tareas
 
-- [x] Sacar el login, que alguien como invitado pueda jugar, sin tener que registrarse, que pueda crear sala y unirse, que al momento de los resultados le ofrezca registrarse, para ir guardando su progreso
-- [x] Es muy brusco el cambio de numero en el tiempo, hay alguna transición suave
-- [x] Por qué el temporizador se acaba a los 4 segundo, entiendo que puede haber un desface de 500ms a 1000ms, pero 4 segundos me parece mucho
-- [x] Ver el tema del SEO para el home, y para cuando se comparta el link de una partida
-- [x] El login solo permite google, debiese permitir github
-- [x] og al readme
-- [x] Debe decir "crear partida" en vez de "crear sala"
-- [x] Ocupar el logo de la web como lo hizo para la ogg template
-- [x] Sí la partida ya comenzó cuando entré, que me tire a ser espectador; sí la sala ya no existe, que me diga que la partida ya no existe
+- [x] El logo del main del home debiese ser el logo de la web
+- [x] Ingrese código de sala debiese decir código de partida
+- [x] Que el pulse del botón "Listo" en el lobby se expanda el doble verticalmente que horizontalmente
 - [ ] Cuando alguien se une a la sala, que haga un sonido
-- [ ] Que el pulse del botón "Listo" en el lobby se expanda el doble verticalmente que horizontalmente
 - [ ] Hacer al retrospectiva
 - [ ] Hacer el resto de Epics
-
+- [ ] Que el nivel de dificultad diga en el 1. Solo minúsculas, 2. Minúsculas y mayúsculas, 3. Minúsculas, mayúsculas, acentos y puntuación, 4. Minúsculas, mayúsculas, acentos, puntuación y números, 5. Todo lo anterior más símbolos
 - [ ] que claudflare redirija www a apex
 - [ ] Añadir un registro manual de sesión de nombre, usuario y contraseña
 - [ ] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
@@ -23,6 +16,13 @@
 - [ ] Tener un perfil, que se visible públicamente y muestre las estadísticas de las partidas jugadas
 - [ ] En el botón de revancha o en la pantalla de resultados debiese estar revancha con subir el nivel de dificultad
 - [ ] Que en una feature futura, se vean las salas jugando en este momento, y listar las salas y poder ingresar como espectador a esas salas
+- [ ] Visualizador de ping, en algún lugar visible, <120 ms verde, 120-250 ms amarillo , 250 ms o más ms rojo
+- [ ] Que se pueda dar host a otro jugador
+- [ ] Que el usuario pueda agregar sus propios textos
+- [ ] Tabla de posiciones de la semana en el home
+- [ ] Salas publicas y privadas
+- [ ] Salas activas en el home, que diga el nivel y la cantidad de jugadores
+- [ ] Instalar traqueo
 
 ## Preguntas
 
@@ -36,6 +36,15 @@
 
 ### Tareas
 
+- [x] Sacar el login, que alguien como invitado pueda jugar, sin tener que registrarse, que pueda crear sala y unirse, que al momento de los resultados le ofrezca registrarse, para ir guardando su progreso
+- [x] Es muy brusco el cambio de numero en el tiempo, hay alguna transición suave
+- [x] Por qué el temporizador se acaba a los 4 segundo, entiendo que puede haber un desface de 500ms a 1000ms, pero 4 segundos me parece mucho
+- [x] Ver el tema del SEO para el home, y para cuando se comparta el link de una partida
+- [x] El login solo permite google, debiese permitir github
+- [x] og al readme
+- [x] Debe decir "crear partida" en vez de "crear sala"
+- [x] Ocupar el logo de la web como lo hizo para la ogg template
+- [x] Sí la partida ya comenzó cuando entré, que me tire a ser espectador; sí la sala ya no existe, que me diga que la partida ya no existe
 - [x] Revisar sí los fix fueron solucionados
 - [x] Reparar los fix que no fueron reparados
 - [x] Desplegar el proyecto en un servidor, ver el tema de las claves de postgres y redis, y tema de puertos expuestos
