@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { COUNTRIES } from '@ultimatype-monorepo/shared';
 import { useAuth } from '../../hooks/use-auth';
 import { apiClient } from '../../lib/api-client';
+import { MatchHistorySection } from './match-history-section';
 
 export function ProfilePage() {
   const { user, isFetchingProfile, isAuthenticated } = useAuth();
@@ -84,7 +85,7 @@ export function ProfilePage() {
       <Helmet>
         <title>Perfil | UltimaType</title>
       </Helmet>
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-2xl">
         <button
           className="mb-6 bg-transparent p-0 text-sm text-text-muted hover:text-text-main"
           onClick={() => navigate('/')}
@@ -162,6 +163,10 @@ export function ProfilePage() {
               Error al guardar. Intenta nuevamente.
             </div>
           )}
+        </div>
+
+        <div className="mt-6">
+          <MatchHistorySection />
         </div>
       </div>
     </div>

@@ -37,7 +37,11 @@ Code Review (**bmad-code-review**): Revisión asertiva del código para cazar bu
 
 ### Promp de create-story y dev-story juntos
 
-> usa la skill bmad-create-story para avanzar el punto 3-3 de @\_bmad-output/implementation-artifacts/sprint-status.yaml y cuando hayas terminado, solo en ese punto usa la siguinte skill bmad-dev-story para avanzar ese mismo punto
+> usa la skill bmad-create-story para avanzar el punto X-X de @\_bmad-output/implementation-artifacts/sprint-status.yaml y cuando hayas terminado, solo en ese punto usa la siguiente skill bmad-dev-story para avanzar ese mismo punto
+
+### Promp de code-review
+
+> usa la skill bmad-code-review para avanzar el punto X-X de @\_bmad-output/implementation-artifacts/sprint-status.yaml
 
 ### Para la review
 

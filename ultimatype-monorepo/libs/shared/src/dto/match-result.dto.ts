@@ -32,3 +32,37 @@ export interface PlayerFinishClientPayload {
   totalKeystrokes: number;
   errorKeystrokes: number;
 }
+
+export interface MatchResultDto {
+  id: string;
+  matchCode: string;
+  wpm: number;
+  precision: number;
+  score: number;
+  missingChars: number;
+  level: number;
+  finished: boolean;
+  finishedAt: string | null;
+  rank: number;
+  createdAt: string;
+}
+
+export interface PaginatedMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginatedMeta;
+}
+
+export type MatchPeriod = '7d' | '30d' | 'all';
+
+export interface MatchStatsDto {
+  avgWpm: number;
+  bestWpm: number;
+  totalMatches: number;
+}

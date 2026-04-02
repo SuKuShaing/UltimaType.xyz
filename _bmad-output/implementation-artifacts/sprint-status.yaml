@@ -35,7 +35,14 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-01T12:00:00-03:00
+last_updated: 2026-04-02T20:00:00-03:00
+# 2026-04-02: Story 4-2 implementation complete, set to review (237 API + 115 web tests passing).
+# 2026-04-02: Story 4-2 dev started, set to in-progress.
+# 2026-04-02: Story 4-2 created (personal-history-progression-dashboard), set to ready-for-dev.
+# 2026-04-02: Story 4-1 code review complete, set to done (11 patches applied, 218 API + 101 web tests passing).
+# 2026-04-02: Story 4-1 created (match-results-persistence), set to ready-for-dev. Epic 4 set to in-progress.
+# 2026-04-02: Story 4-1 dev started, set to in-progress.
+# 2026-04-02: Story 4-1 implementation complete, set to review (209 API + 101 web tests passing).
 # 2026-04-01: Epic 3 retrospective completed, set to done. Key takeaways: validación funcional por story (no solo por epic), edge cases explícitos en stories, integration tests de capa de datos para Epic 4. Defer "integration tests del gateway" cerrado. Epic 3 set to done.
 # 2026-04-01: Epic 5 "La Visual — Rediseño Pantalla Principal" created with 8 stories (5-1 through 5-8). Depends on Epic 4 for leaderboard/stats APIs.
 # 2026-03-31: Story 4-4 re-scoped: renamed to level-country-period, added time period filtering (histórico/año/mes/7d), dedicated tab. Custom date-range deferred to V2.
@@ -92,9 +99,9 @@ development_status:
   3-4-spectator-to-player-transition: done
   3-5-bug-fixes-and-ux-polish: done
   epic-3-retrospective: done
-  epic-4: backlog
-  4-1-match-results-persistence: backlog
-  4-2-personal-history-progression-dashboard: backlog
+  epic-4: in-progress
+  4-1-match-results-persistence: done
+  4-2-personal-history-progression-dashboard: review
   4-3-global-leaderboard: backlog
   4-4-leaderboard-filtering-level-country-period: backlog
   4-5-automated-leaderboard-updates: backlog

@@ -17,6 +17,7 @@ import { RoomsService } from '../modules/rooms/rooms.service';
 import { UsersService } from '../modules/users/users.service';
 import { TextsService } from '../modules/texts/texts.service';
 import { MatchStateService } from '../modules/matches/match-state.service';
+import { MatchResultsService } from '../modules/match-results/match-results.service';
 import {
   WS_EVENTS,
   isValidLevel,
@@ -57,6 +58,7 @@ export class GameGateway
     private usersService: UsersService,
     private textsService: TextsService,
     private matchStateService: MatchStateService,
+    private matchResultsService: MatchResultsService,
     private configService: ConfigService,
   ) {}
 
@@ -1106,13 +1108,22 @@ export class GameGateway
       playerInfoMap,
     );
 
-    await this.matchStateService.cleanupMatch(roomCode);
+    // Persist match results to PostgreSQL (fire-and-forget)
+    if (!roomState?.level) {
+      this.logger.warn(`roomState.level null para ${roomCode}, usando fallback level=1`);
+    }
+    const level = roomState?.level ?? 1;
+    this.matchResultsService.persistResults(roomCode, level, results);
 
-    this.server.to(roomCode).emit(WS_EVENTS.MATCH_END, {
-      roomCode,
-      results,
-      reason,
-    });
+    try {
+      await this.matchStateService.cleanupMatch(roomCode);
+    } finally {
+      this.server.to(roomCode).emit(WS_EVENTS.MATCH_END, {
+        roomCode,
+        results,
+        reason,
+      });
+    }
   }
 
   private startMatchTimeout(roomCode: string, timeoutMs: number = MATCH_TIMEOUT_MS): void {

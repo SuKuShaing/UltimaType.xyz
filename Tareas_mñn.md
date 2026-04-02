@@ -2,9 +2,6 @@
 
 ## Tareas
 
-- [x] El logo del main del home debiese ser el logo de la web
-- [x] Ingrese código de sala debiese decir código de partida
-- [x] Que el pulse del botón "Listo" en el lobby se expanda el doble verticalmente que horizontalmente
 - [ ] Cuando alguien se une a la sala, que haga un sonido
 - [ ] Hacer al retrospectiva
 - [ ] Hacer el resto de Epics
@@ -36,6 +33,9 @@
 
 ### Tareas
 
+- [x] El logo del main del home debiese ser el logo de la web
+- [x] Ingrese código de sala debiese decir código de partida
+- [x] Que el pulse del botón "Listo" en el lobby se expanda el doble verticalmente que horizontalmente
 - [x] Sacar el login, que alguien como invitado pueda jugar, sin tener que registrarse, que pueda crear sala y unirse, que al momento de los resultados le ofrezca registrarse, para ir guardando su progreso
 - [x] Es muy brusco el cambio de numero en el tiempo, hay alguna transición suave
 - [x] Por qué el temporizador se acaba a los 4 segundo, entiendo que puede haber un desface de 500ms a 1000ms, pero 4 segundos me parece mucho

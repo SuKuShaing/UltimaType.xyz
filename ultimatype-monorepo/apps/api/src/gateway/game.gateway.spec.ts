@@ -4,6 +4,7 @@ import { RoomsService } from '../modules/rooms/rooms.service';
 import { UsersService } from '../modules/users/users.service';
 import { TextsService } from '../modules/texts/texts.service';
 import { MatchStateService } from '../modules/matches/match-state.service';
+import { MatchResultsService } from '../modules/match-results/match-results.service';
 import { ConfigService } from '@nestjs/config';
 import { WS_EVENTS, DISCONNECT_GRACE_PERIOD_MS } from '@ultimatype-monorepo/shared';
 
@@ -49,6 +50,9 @@ describe('GameGateway', () => {
     getPlayerMatchState: ReturnType<typeof vi.fn>;
     getAllPlayerPositions: ReturnType<typeof vi.fn>;
     getMatchMetadata: ReturnType<typeof vi.fn>;
+  };
+  let matchResultsService: {
+    persistResults: ReturnType<typeof vi.fn>;
   };
   let configService: {
     getOrThrow: ReturnType<typeof vi.fn>;
@@ -138,11 +142,16 @@ describe('GameGateway', () => {
       get: vi.fn().mockReturnValue('http://localhost:4200'),
     };
 
+    matchResultsService = {
+      persistResults: vi.fn().mockResolvedValue(undefined),
+    };
+
     gateway = new GameGateway(
       roomsService as unknown as RoomsService,
       usersService as unknown as UsersService,
       textsService as unknown as TextsService,
       matchStateService as unknown as MatchStateService,
+      matchResultsService as unknown as MatchResultsService,
       configService as unknown as ConfigService,
     );
 
@@ -763,6 +772,12 @@ describe('GameGateway', () => {
 
       // setRoomStatusAtomically should have been called
       expect(roomsService.setRoomStatusAtomically).toHaveBeenCalledWith('ABC234', 'finished');
+      // persistResults should have been called with correct args
+      expect(matchResultsService.persistResults).toHaveBeenCalledWith(
+        'ABC234',
+        expect.any(Number),
+        expect.any(Array),
+      );
       // MATCH_END emitted once
       const matchEndCalls = mockServer.emit.mock.calls.filter(
         (c: any[]) => c[0] === WS_EVENTS.MATCH_END,

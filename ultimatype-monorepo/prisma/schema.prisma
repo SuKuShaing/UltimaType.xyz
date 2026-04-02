@@ -26,8 +26,33 @@ model User {
   updatedAt   DateTime     @updatedAt @map("updated_at")
   lastLoginAt DateTime     @default(now()) @map("last_login_at")
 
+  matchResults MatchResult[]
+
   @@unique([provider, providerId])
   @@map("users")
+}
+
+model MatchResult {
+  id           String    @id @default(uuid())
+  matchCode    String    @map("match_code")
+  userId       String    @map("user_id")
+  wpm          Float
+  precision    Int
+  score        Float
+  missingChars Int       @map("missing_chars")
+  level        Int
+  finished     Boolean
+  finishedAt   DateTime? @map("finished_at")
+  rank         Int
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchCode, userId])
+  @@index([userId, createdAt])
+  @@index([level, createdAt])
+  @@index([userId, level, createdAt])
+  @@map("match_results")
 }
 
 model Text {

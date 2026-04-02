@@ -4,9 +4,10 @@ import { RoomsModule } from '../modules/rooms/rooms.module';
 import { UsersModule } from '../modules/users/users.module';
 import { TextsModule } from '../modules/texts/texts.module';
 import { MatchesModule } from '../modules/matches/matches.module';
+import { MatchResultsModule } from '../modules/match-results/match-results.module';
 
 @Module({
-  imports: [RoomsModule, UsersModule, TextsModule, MatchesModule],
+  imports: [RoomsModule, UsersModule, TextsModule, MatchesModule, MatchResultsModule],
   providers: [GameGateway],
 })
 export class GameModule {}

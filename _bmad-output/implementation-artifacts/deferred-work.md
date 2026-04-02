@@ -1,5 +1,15 @@
 # Deferred Work
 
+## Deferred from: code review de 4-1-match-results-persistence (2026-04-02)
+
+- **Ruta del controller 'matches' vs 'match-results'** — Naming convention discutible. El controller usa `@Controller('matches')` pero el recurso son match *results*. No bloquea funcionalidad.
+- **Sin campo updatedAt en MatchResult** — Inconsistente con modelos User y Text que sí lo tienen. Match results son inmutables, así que no es necesario.
+- **Sin constraints DB-level en valores numéricos** — No hay CHECK constraints para missingChars ≥ 0, rank ≥ 1, wpm ≥ 0, precision 0-100. Patrón pre-existente en el proyecto.
+- **Controller spec no ejercita JwtAuthGuard** — El test unitario instancia el controller directamente sin pasar por NestJS routing. Patrón estándar para unit tests; guard se valida en e2e.
+- **matchCode sin índice standalone** — No hay query actual que busque por matchCode solo. Agregar cuando se implemente vista por partida.
+- **Sin rate-limiting específico para GET /matches** — El throttle global (120 req/min) cubre. Ajustar si se detecta abuso.
+- **Si cleanupMatch lanza o cuelga, match:end nunca se emite** — Concern arquitectural pre-existente en endMatch(). Aplicar try/catch alrededor de cleanup + emit si se refactoriza.
+
 ## V2: Replay de partida terminada (2026-04-01)
 
 - **Replay cuando el usuario llega tarde a una partida** — Cuando un usuario recibe un link de sala y la partida ya terminó (sala expirada en Redis), permitir ver un replay de la partida. Requiere: (1) persistir eventos de match (keystrokes, posiciones, timestamps) en una tabla `match_events` en Postgres al finalizar cada partida, (2) endpoint REST para obtener los datos del replay, (3) reproductor en frontend que reconstruya la partida frame a frame mostrando el progreso de cada jugador. Feature de engagement alto, complejidad media-alta.
