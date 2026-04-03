@@ -10,11 +10,13 @@ import {
 const CACHE_TTL = 43200; // 12 hours in seconds
 
 interface RawLeaderboardRow {
+  userId: string;
   displayName: string;
   avatarUrl: string | null;
   countryCode: string | null;
   bestScore: number;
-  avgPrecision: number;
+  bestScorePrecision: number;
+  bestScoreMatchCode: string;
 }
 
 interface RawCountRow {
@@ -41,7 +43,7 @@ export class LeaderboardService {
     page = 1,
     limit = 100,
   ): Promise<{ data: LeaderboardEntryDto[]; total: number }> {
-    const cacheKey = this.buildCacheKey('leaderboard', level, country, period);
+    const cacheKey = this.buildCacheKey('leaderboard', level, country, period, page, limit);
 
     try {
       const cached = await this.redis.get(cacheKey);
@@ -72,16 +74,21 @@ export class LeaderboardService {
 
     const dataParams = [...params, limit, offset];
     const entries = await this.prisma.$queryRawUnsafe<RawLeaderboardRow[]>(
-      `SELECT u.display_name AS "displayName",
-              u.avatar_url AS "avatarUrl",
-              u.country_code AS "countryCode",
-              MAX(mr.score) AS "bestScore",
-              ROUND(AVG(mr.precision)::numeric, 1) AS "avgPrecision"
-       FROM match_results mr
-       JOIN users u ON mr.user_id = u.id
-       ${whereClause}
-       GROUP BY u.id, u.display_name, u.avatar_url, u.country_code
-       ORDER BY "bestScore" DESC
+      `SELECT * FROM (
+         SELECT DISTINCT ON (mr.user_id)
+           u.id AS "userId",
+           u.display_name AS "displayName",
+           u.avatar_url AS "avatarUrl",
+           u.country_code AS "countryCode",
+           mr.score AS "bestScore",
+           mr.precision AS "bestScorePrecision",
+           mr.match_code AS "bestScoreMatchCode"
+         FROM match_results mr
+         JOIN users u ON mr.user_id = u.id
+         ${whereClause}
+         ORDER BY mr.user_id, mr.score DESC
+       ) ranked
+       ORDER BY "bestScore" DESC, "bestScorePrecision" DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       ...dataParams,
     );
@@ -96,12 +103,14 @@ export class LeaderboardService {
 
     const total = Number(countResult[0]?.total ?? 0);
     const data: LeaderboardEntryDto[] = entries.map((e, i) => ({
+      userId: e.userId,
       position: offset + i + 1,
       displayName: e.displayName,
       avatarUrl: e.avatarUrl,
       countryCode: e.countryCode,
       bestScore: Number(e.bestScore),
-      avgPrecision: Number(e.avgPrecision),
+      bestScorePrecision: Number(e.bestScorePrecision),
+      bestScoreMatchCode: e.bestScoreMatchCode,
     }));
 
     const result = { data, total };
@@ -241,13 +250,16 @@ export class LeaderboardService {
     level?: number,
     country?: string,
     period?: MatchPeriod,
+    page = 1,
+    limit = 100,
   ): string {
-    return `${prefix}:level:${level ?? 'ALL'}:country:${country ?? 'ALL'}:period:${period ?? 'all'}`;
+    return `${prefix}:level:${level ?? 'ALL'}:country:${country ?? 'ALL'}:period:${period ?? 'all'}:page:${page}:limit:${limit}`;
   }
 
   private periodToDateFrom(period?: MatchPeriod): Date | null {
     if (period === '7d') return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     if (period === '30d') return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    if (period === '1y') return new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
     return null;
   }
 }

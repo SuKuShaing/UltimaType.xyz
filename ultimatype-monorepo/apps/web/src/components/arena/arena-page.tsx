@@ -69,7 +69,7 @@ export function ArenaPage({
   // Initialize arena store on mount
   useEffect(() => {
     const data = matchDataRef.current;
-    arenaStore.getState().initArena(data.textContent, data.players, data.timeLimit);
+    arenaStore.getState().initArena(data.textContent, data.players, data.timeLimit, data.startedAt);
     // Spectators see ALL carets; players see all except their own
     otherPlayerIdsRef.current = isSpectator
       ? data.players.map((p) => p.id)
@@ -206,7 +206,7 @@ export function ArenaPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base px-4 py-8 font-sans text-text-main">
-      {!isSpectator && (
+      {!isSpectator && matchStatus !== 'finished' && (
         <div className="relative w-full max-w-3xl">
           <FocusWPMCounter matchStatus={matchStatus} />
           {matchData.timeLimit > 0 && (

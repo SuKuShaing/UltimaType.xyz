@@ -324,6 +324,7 @@ export class GameGateway
               textContent: matchMeta.textContent,
               players: state.players,
               timeLimit,
+              startedAt: matchMeta.startedAt,
             });
           }
           client.emit(WS_EVENTS.LOBBY_AUTO_SPECTATE, { message: 'Partida en curso - te uniste como espectador' });
@@ -364,6 +365,23 @@ export class GameGateway
       });
 
       this.server.to(data.code).emit(WS_EVENTS.LOBBY_STATE, state);
+
+      // If the match is already in progress, send MATCH_START so the spectator
+      // enters the arena directly (skipping the countdown)
+      if (state.status === 'playing') {
+        const matchMeta = await this.matchStateService.getMatchMetadata(data.code);
+        if (matchMeta) {
+          const timeLimit = await this.roomsService.getTimeLimit(data.code);
+          client.emit(WS_EVENTS.MATCH_START, {
+            code: data.code,
+            textId: Number(matchMeta.textId),
+            textContent: matchMeta.textContent,
+            players: state.players,
+            timeLimit,
+            startedAt: matchMeta.startedAt,
+          });
+        }
+      }
     } catch (err: any) {
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
     }

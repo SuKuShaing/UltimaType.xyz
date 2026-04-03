@@ -13,7 +13,7 @@ interface AuthenticatedRequest {
   user: { id: string };
 }
 
-const VALID_PERIODS: MatchPeriod[] = ['7d', '30d', 'all'];
+const VALID_PERIODS: MatchPeriod[] = ['7d', '30d', '1y', 'all'];
 
 function parseLevelParam(param?: string): number | undefined {
   if (param && /^[1-5]$/.test(param)) return parseInt(param, 10);

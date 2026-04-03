@@ -57,10 +57,28 @@ describe('LeaderboardController', () => {
       expect(service.getLeaderboard).toHaveBeenCalledWith(undefined, undefined, undefined, 1, 100);
     });
 
-    it('should pass country param', async () => {
+    it('should pass valid 2-letter uppercase country param', async () => {
       await controller.getLeaderboard(undefined, undefined, 'AR');
 
       expect(service.getLeaderboard).toHaveBeenCalledWith(undefined, undefined, 'AR', 1, 100);
+    });
+
+    it('should ignore country param with lowercase letters', async () => {
+      await controller.getLeaderboard(undefined, undefined, 'ar');
+
+      expect(service.getLeaderboard).toHaveBeenCalledWith(undefined, undefined, undefined, 1, 100);
+    });
+
+    it('should ignore country param longer than 2 chars', async () => {
+      await controller.getLeaderboard(undefined, undefined, 'ARG');
+
+      expect(service.getLeaderboard).toHaveBeenCalledWith(undefined, undefined, undefined, 1, 100);
+    });
+
+    it('should ignore country param with arbitrary string', async () => {
+      await controller.getLeaderboard(undefined, undefined, '<script>alert(1)</script>');
+
+      expect(service.getLeaderboard).toHaveBeenCalledWith(undefined, undefined, undefined, 1, 100);
     });
 
     it('should parse page and limit params', async () => {
@@ -75,6 +93,12 @@ describe('LeaderboardController', () => {
       expect(service.getLeaderboard).toHaveBeenCalledWith(undefined, undefined, undefined, 1, 100);
     });
 
+    it('should clamp page to maximum 10 (top-1000 leaderboard cap)', async () => {
+      await controller.getLeaderboard(undefined, undefined, undefined, '999999');
+
+      expect(service.getLeaderboard).toHaveBeenCalledWith(undefined, undefined, undefined, 10, 100);
+    });
+
     it('should clamp limit to maximum 100', async () => {
       await controller.getLeaderboard(undefined, undefined, undefined, undefined, '500');
 
@@ -82,7 +106,7 @@ describe('LeaderboardController', () => {
     });
 
     it('should handle all valid periods', async () => {
-      for (const period of ['7d', '30d', 'all']) {
+      for (const period of ['7d', '30d', '1y', 'all']) {
         await controller.getLeaderboard(undefined, period);
         expect(service.getLeaderboard).toHaveBeenCalledWith(undefined, period, undefined, 1, 100);
       }

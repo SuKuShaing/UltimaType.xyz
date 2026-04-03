@@ -35,8 +35,8 @@ describe('LeaderboardService', () => {
     it('should return leaderboard entries without filters', async () => {
       prisma.$queryRawUnsafe
         .mockResolvedValueOnce([
-          { displayName: 'Alice', avatarUrl: 'http://a.com/1.jpg', countryCode: 'AR', bestScore: 1200, avgPrecision: 98.5 },
-          { displayName: 'Bob', avatarUrl: null, countryCode: 'CL', bestScore: 1100, avgPrecision: 95.0 },
+          { userId: 'user-alice', displayName: 'Alice', avatarUrl: 'http://a.com/1.jpg', countryCode: 'AR', bestScore: 1200, bestScorePrecision: 98.5, bestScoreMatchCode: 'ABC123' },
+          { userId: 'user-bob', displayName: 'Bob', avatarUrl: null, countryCode: 'CL', bestScore: 1100, bestScorePrecision: 95.0, bestScoreMatchCode: 'DEF456' },
         ])
         .mockResolvedValueOnce([{ total: BigInt(2) }]);
 
@@ -44,12 +44,14 @@ describe('LeaderboardService', () => {
 
       expect(result.data).toHaveLength(2);
       expect(result.data[0]).toEqual({
+        userId: 'user-alice',
         position: 1,
         displayName: 'Alice',
         avatarUrl: 'http://a.com/1.jpg',
         countryCode: 'AR',
         bestScore: 1200,
-        avgPrecision: 98.5,
+        bestScorePrecision: 98.5,
+        bestScoreMatchCode: 'ABC123',
       });
       expect(result.data[1].position).toBe(2);
       expect(result.total).toBe(2);
@@ -102,7 +104,7 @@ describe('LeaderboardService', () => {
     });
 
     it('should return cached data on cache hit', async () => {
-      const cachedData = { data: [{ position: 1, displayName: 'Cached', avatarUrl: null, countryCode: null, bestScore: 999, avgPrecision: 99 }], total: 1 };
+      const cachedData = { data: [{ position: 1, displayName: 'Cached', avatarUrl: null, countryCode: null, bestScore: 999, bestScorePrecision: 99 }], total: 1 };
       redis.get.mockResolvedValue(JSON.stringify(cachedData));
 
       const result = await service.getLeaderboard();
@@ -119,7 +121,7 @@ describe('LeaderboardService', () => {
       await service.getLeaderboard();
 
       expect(redis.set).toHaveBeenCalledWith(
-        'leaderboard:level:ALL:country:ALL:period:all',
+        'leaderboard:level:ALL:country:ALL:period:all:page:1:limit:100',
         expect.any(String),
         43200,
       );
@@ -128,7 +130,7 @@ describe('LeaderboardService', () => {
     it('should handle pagination correctly', async () => {
       prisma.$queryRawUnsafe
         .mockResolvedValueOnce([
-          { displayName: 'Page2User', avatarUrl: null, countryCode: null, bestScore: 500, avgPrecision: 80 },
+          { userId: 'user-page2', displayName: 'Page2User', avatarUrl: null, countryCode: null, bestScore: 500, bestScorePrecision: 80, bestScoreMatchCode: 'P2M001' },
         ])
         .mockResolvedValueOnce([{ total: BigInt(150) }]);
 
@@ -154,7 +156,7 @@ describe('LeaderboardService', () => {
       redis.set.mockRejectedValue(new Error('Redis down'));
       prisma.$queryRawUnsafe
         .mockResolvedValueOnce([
-          { displayName: 'Test', avatarUrl: null, countryCode: null, bestScore: 100, avgPrecision: 90 },
+          { userId: 'user-test', displayName: 'Test', avatarUrl: null, countryCode: null, bestScore: 100, bestScorePrecision: 90, bestScoreMatchCode: 'TST001' },
         ])
         .mockResolvedValueOnce([{ total: BigInt(1) }]);
 
@@ -171,7 +173,7 @@ describe('LeaderboardService', () => {
       await service.getLeaderboard(3, '7d', 'AR');
 
       expect(redis.set).toHaveBeenCalledWith(
-        'leaderboard:level:3:country:AR:period:7d',
+        'leaderboard:level:3:country:AR:period:7d:page:1:limit:100',
         expect.any(String),
         43200,
       );

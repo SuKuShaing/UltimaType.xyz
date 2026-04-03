@@ -24,7 +24,7 @@ describe('RedisModule DI', () => {
     const mockRedis = {
       get: vi.fn(), set: vi.fn(), hset: vi.fn(), hget: vi.fn(),
       hgetall: vi.fn(), hdel: vi.fn(), hlen: vi.fn(), del: vi.fn(),
-      expire: vi.fn(), keys: vi.fn(),
+      expire: vi.fn(), scan: vi.fn(),
     };
 
     const module = await Test.createTestingModule({
@@ -52,7 +52,7 @@ describe('RedisService', () => {
     hlen: ReturnType<typeof vi.fn>;
     del: ReturnType<typeof vi.fn>;
     expire: ReturnType<typeof vi.fn>;
-    keys: ReturnType<typeof vi.fn>;
+    scan: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -66,7 +66,7 @@ describe('RedisService', () => {
       hlen: vi.fn(),
       del: vi.fn(),
       expire: vi.fn(),
-      keys: vi.fn(),
+      scan: vi.fn(),
     };
     service = new RedisService(mockRedis as any);
   });
@@ -154,16 +154,38 @@ describe('RedisService', () => {
   });
 
   describe('keys', () => {
-    it('retorna claves que coinciden con el patron', async () => {
-      mockRedis.keys.mockResolvedValue(['leaderboard:level:1:country:ALL:period:all']);
+    it('retorna claves que coinciden con el patron (una sola iteracion)', async () => {
+      // cursor '0' al final indica que SCAN terminó
+      mockRedis.scan.mockResolvedValueOnce(['0', ['leaderboard:level:1:country:ALL:period:all']]);
+
       const result = await service.keys('leaderboard:*');
+
       expect(result).toEqual(['leaderboard:level:1:country:ALL:period:all']);
-      expect(mockRedis.keys).toHaveBeenCalledWith('leaderboard:*');
+      expect(mockRedis.scan).toHaveBeenCalledWith(0, 'MATCH', 'leaderboard:*', 'COUNT', 100);
+    });
+
+    it('acumula resultados de multiples iteraciones del cursor', async () => {
+      // Primera iteracion: cursor != 0, hay mas keys por recorrer
+      mockRedis.scan
+        .mockResolvedValueOnce(['42', ['leaderboard:level:1:country:ALL:period:all:page:1:limit:100']])
+        .mockResolvedValueOnce(['0',  ['leaderboard:level:2:country:ALL:period:all:page:1:limit:100']]);
+
+      const result = await service.keys('leaderboard:*');
+
+      expect(result).toEqual([
+        'leaderboard:level:1:country:ALL:period:all:page:1:limit:100',
+        'leaderboard:level:2:country:ALL:period:all:page:1:limit:100',
+      ]);
+      expect(mockRedis.scan).toHaveBeenCalledTimes(2);
+      expect(mockRedis.scan).toHaveBeenNthCalledWith(1, 0,  'MATCH', 'leaderboard:*', 'COUNT', 100);
+      expect(mockRedis.scan).toHaveBeenNthCalledWith(2, 42, 'MATCH', 'leaderboard:*', 'COUNT', 100);
     });
 
     it('retorna array vacio si no hay coincidencias', async () => {
-      mockRedis.keys.mockResolvedValue([]);
+      mockRedis.scan.mockResolvedValueOnce(['0', []]);
+
       const result = await service.keys('nonexistent:*');
+
       expect(result).toEqual([]);
     });
   });

@@ -222,22 +222,24 @@ export function LiveTextCanvas({
           </span>
         ))}
 
-        {/* Local player caret */}
-        <div
-          ref={localCaretRef}
-          className="pointer-events-none absolute left-0 top-0"
-          data-testid="local-caret"
-          style={{
-            width: '3px',
-            height: '1.2em',
-            backgroundColor: caretColor,
-            borderRadius: '1px',
-            transform: 'translate(0px, 0px)',
-            boxShadow: `0 0 6px ${caretColor}99`,
-            zIndex: 10,
-            opacity: 0.65,
-          }}
-        />
+        {/* Local player caret — hidden for spectators and disabled state */}
+        {!disabled && (
+          <div
+            ref={localCaretRef}
+            className="pointer-events-none absolute left-0 top-0"
+            data-testid="local-caret"
+            style={{
+              width: '3px',
+              height: '1.2em',
+              backgroundColor: caretColor,
+              borderRadius: '1px',
+              transform: 'translate(0px, 0px)',
+              boxShadow: `0 0 6px ${caretColor}99`,
+              zIndex: 10,
+              opacity: 0.65,
+            }}
+          />
+        )}
       </div>
     </div>
   );

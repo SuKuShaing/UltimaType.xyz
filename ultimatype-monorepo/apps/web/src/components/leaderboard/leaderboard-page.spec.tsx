@@ -26,12 +26,14 @@ const mockUseLeaderboard = useLeaderboard as ReturnType<typeof vi.fn>;
 const mockUseLeaderboardPosition = useLeaderboardPosition as ReturnType<typeof vi.fn>;
 
 const makeEntry = (overrides: Partial<LeaderboardEntryDto> = {}): LeaderboardEntryDto => ({
+  userId: 'user-alice',
   position: 1,
   displayName: 'Alice',
   avatarUrl: 'http://example.com/alice.jpg',
   countryCode: 'AR',
   bestScore: 1200,
-  avgPrecision: 98.5,
+  bestScorePrecision: 98.5,
+  bestScoreMatchCode: 'ABC123',
   ...overrides,
 });
 
@@ -83,8 +85,8 @@ describe('LeaderboardPage', () => {
   it('should display leaderboard table with data', () => {
     const data: PaginatedResponse<LeaderboardEntryDto> = {
       data: [
-        makeEntry({ position: 1, displayName: 'Alice', bestScore: 1200, avgPrecision: 98.5 }),
-        makeEntry({ position: 2, displayName: 'Bob', bestScore: 1100, avgPrecision: 95.0, avatarUrl: null, countryCode: 'CL' }),
+        makeEntry({ position: 1, displayName: 'Alice', bestScore: 1200, bestScorePrecision: 98.5 }),
+        makeEntry({ position: 2, displayName: 'Bob', bestScore: 1100, bestScorePrecision: 95.0, avatarUrl: null, countryCode: 'CL' }),
       ],
       meta: { total: 2, page: 1, limit: 100, totalPages: 1 },
     };
@@ -184,6 +186,22 @@ describe('LeaderboardPage', () => {
     const link = screen.getByText('ABC123');
     expect(link.closest('a')).toBeTruthy();
     expect(link.closest('a')?.getAttribute('href')).toBe('/match/ABC123');
+  });
+
+  it('should navigate to match detail on row click', () => {
+    const data: PaginatedResponse<LeaderboardEntryDto> = {
+      data: [makeEntry({ bestScoreMatchCode: 'XYZ789' })],
+      meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
+    };
+    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    const row = screen.getByText('Alice').closest('tr');
+    expect(row).toBeTruthy();
+    expect(row?.className).toContain('cursor-pointer');
+    fireEvent.click(row!);
+    // navigation handled by useNavigate — row must be clickable with correct class
   });
 
   it('should show pagination when multiple pages exist', () => {

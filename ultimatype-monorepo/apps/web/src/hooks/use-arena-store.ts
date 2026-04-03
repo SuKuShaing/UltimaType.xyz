@@ -32,6 +32,7 @@ interface ArenaActions {
     textContent: string,
     players: Array<{ id: string; displayName: string; colorIndex: number }>,
     timeLimit?: number,
+    startedAt?: string,
   ) => void;
   updatePlayerPosition: (playerId: string, position: number) => void;
   setLocalPosition: (position: number) => void;
@@ -74,7 +75,7 @@ const initialState: ArenaState = {
 export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
   ...initialState,
 
-  initArena: (textContent, players, timeLimit = 0) => {
+  initArena: (textContent, players, timeLimit = 0, startedAt?: string) => {
     const playersMap: Record<string, PlayerState> = {};
     for (const p of players) {
       if (!playersMap[p.id]) {
@@ -86,13 +87,14 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
         };
       }
     }
+    const alreadyStarted = Boolean(startedAt);
     set({
       textContent,
       timeLimit,
       players: playersMap,
       localPosition: 0,
-      matchStatus: 'countdown',
-      matchStartTime: null,
+      matchStatus: alreadyStarted ? 'playing' : 'countdown',
+      matchStartTime: alreadyStarted ? new Date(startedAt!).getTime() : null,
       totalKeystrokes: 0,
       errorKeystrokes: 0,
       localFinished: false,
@@ -101,7 +103,7 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
       matchEndReason: null,
       connectionStatus: 'connected',
       reconnectAttempt: 0,
-      viewingAsSpectator: false,
+      viewingAsSpectator: alreadyStarted ? true : false,
     });
   },
 

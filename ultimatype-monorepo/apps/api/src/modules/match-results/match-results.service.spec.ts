@@ -383,33 +383,34 @@ describe('MatchResultsService', () => {
   describe('getStats', () => {
     it('retorna 0s cuando no hay partidas', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { score: null },
+        _avg: { score: null, precision: null },
         _count: { id: 0 },
       });
       mockPrisma.matchResult.findFirst.mockResolvedValue(null);
 
       const result = await service.getStats('user-1');
 
-      expect(result).toEqual({ avgScore: 0, bestScore: 0, totalMatches: 0 });
+      expect(result).toEqual({ avgScore: 0, avgPrecision: 0, bestScore: 0, totalMatches: 0 });
     });
 
     it('retorna stats correctas con partidas', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { score: 87.567 },
+        _avg: { score: 87.567, precision: 96.4 },
         _count: { id: 15 },
       });
       mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 120.3 });
 
       const result = await service.getStats('user-1');
 
-      expect(result.avgScore).toBe(87.6); // redondeado a 1 decimal
+      expect(result.avgScore).toBe(87.6);
+      expect(result.avgPrecision).toBe(96.4);
       expect(result.bestScore).toBe(120.3);
       expect(result.totalMatches).toBe(15);
     });
 
     it('bestScore aplica filtros de period', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { score: 60 },
+        _avg: { score: 60, precision: 90 },
         _count: { id: 3 },
       });
       mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 100 });
@@ -424,7 +425,7 @@ describe('MatchResultsService', () => {
 
     it('avgScore aplica filtro de level', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { score: 75 },
+        _avg: { score: 75, precision: 85 },
         _count: { id: 5 },
       });
       mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 95 });
@@ -438,9 +439,9 @@ describe('MatchResultsService', () => {
       );
     });
 
-    it('redondea avgScore a 1 decimal', async () => {
+    it('redondea avgScore y avgPrecision a 1 decimal', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { score: 87.555 },
+        _avg: { score: 87.555, precision: 94.333 },
         _count: { id: 2 },
       });
       mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 90 });
@@ -448,6 +449,7 @@ describe('MatchResultsService', () => {
       const result = await service.getStats('user-1');
 
       expect(result.avgScore).toBe(87.6);
+      expect(result.avgPrecision).toBe(94.3);
     });
   });
 });

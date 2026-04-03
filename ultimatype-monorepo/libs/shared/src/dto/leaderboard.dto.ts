@@ -1,10 +1,12 @@
 export interface LeaderboardEntryDto {
+  userId: string;
   position: number;
   displayName: string;
   avatarUrl: string | null;
   countryCode: string | null;
   bestScore: number;
-  avgPrecision: number;
+  bestScorePrecision: number;
+  bestScoreMatchCode: string;
 }
 
 export interface UserLeaderboardPositionDto {

@@ -88,7 +88,11 @@
       "Bash(taskkill:*)",
       "Bash(cmd:*)",
       "Bash(powershell -Command \"Stop-Process -Id 28164 -Force\")",
-      "Bash(powershell.exe:*)"
+      "Bash(powershell.exe:*)",
+      "Bash(docker exec ultimatype-redis:*)",
+      "Bash(xargs docker:*)",
+      "Bash(docker exec ultimatype-postgres:*)",
+      "Bash(npx skills:*)"
     ]
   }
 }

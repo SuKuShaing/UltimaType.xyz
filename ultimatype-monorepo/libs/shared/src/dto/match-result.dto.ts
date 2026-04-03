@@ -59,10 +59,11 @@ export interface PaginatedResponse<T> {
   meta: PaginatedMeta;
 }
 
-export type MatchPeriod = '7d' | '30d' | 'all';
+export type MatchPeriod = '7d' | '30d' | '1y' | 'all';
 
 export interface MatchStatsDto {
   avgScore: number;
+  avgPrecision: number;
   bestScore: number;
   totalMatches: number;
 }

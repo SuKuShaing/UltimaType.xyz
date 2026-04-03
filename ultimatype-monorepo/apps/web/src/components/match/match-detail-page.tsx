@@ -89,7 +89,7 @@ export function MatchDetailPage() {
                         className="border-b border-surface-raised last:border-0"
                       >
                         <td className="py-3 pr-4 font-semibold text-text-muted">
-                          {p.finished ? p.rank : '—'}
+                          {p.rank}
                         </td>
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
@@ -103,11 +103,11 @@ export function MatchDetailPage() {
                             <span className="text-text-main">{p.displayName}</span>
                           </div>
                         </td>
-                        <td className="py-3 pr-4 font-semibold text-primary">{p.score.toFixed(0)}</td>
+                        <td className="py-3 pr-4 font-semibold text-primary">{p.score.toFixed(1)}</td>
                         <td className="py-3 pr-4 text-text-main">{p.wpm.toFixed(1)}</td>
                         <td className="py-3 pr-4 text-text-main">{p.precision}%</td>
                         <td className="py-3 text-text-muted">
-                          {p.finished ? 'Terminó' : 'No terminó'}
+                          {p.finished ? 'Completada' : 'No completada'}
                         </td>
                       </tr>
                     ))}

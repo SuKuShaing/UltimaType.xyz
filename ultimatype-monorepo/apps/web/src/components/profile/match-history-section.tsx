@@ -8,6 +8,7 @@ const PERIOD_OPTIONS: { value: MatchPeriod; label: string }[] = [
   { value: 'all', label: 'Todo el tiempo' },
   { value: '7d', label: 'Últimos 7 días' },
   { value: '30d', label: 'Últimos 30 días' },
+  { value: '1y', label: 'Último año' },
 ];
 
 function formatDate(isoString: string): string {
@@ -50,10 +51,11 @@ export function MatchHistorySection() {
       <h2 className="mb-6 text-lg font-semibold text-text-main font-sans">Historial de partidas</h2>
 
       {/* Stats row */}
-      <div className="mb-6 grid grid-cols-3 gap-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: 'Puntaje Promedio', value: stats?.avgScore ?? 0 },
           { label: 'Mejor Puntaje', value: stats?.bestScore ?? 0 },
+          { label: 'Puntaje Promedio', value: stats?.avgScore ?? 0 },
+          { label: 'Precisión Promedio', value: stats ? `${stats.avgPrecision}%` : '0%' },
           { label: 'Total Partidas', value: stats?.totalMatches ?? 0 },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-xl bg-surface-raised p-4 text-center">
@@ -173,7 +175,7 @@ export function MatchHistorySection() {
                     <td className="py-3 pr-4 text-text-main">{r.precision}%</td>
                     <td className="py-3 pr-4 text-text-muted">{getLevelName(r.level)}</td>
                     <td className="py-3 pr-4 text-text-muted">
-                      {r.finished ? `#${r.rank}` : '—'}
+                      {`#${r.rank}`}
                     </td>
                     <td className="py-3 text-text-muted">{formatDate(r.createdAt)}</td>
                   </tr>

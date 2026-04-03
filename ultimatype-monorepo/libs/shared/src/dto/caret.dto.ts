@@ -19,4 +19,6 @@ export interface MatchStartPayload {
   textContent: string;
   players: PlayerInfo[];
   timeLimit: number;
+  /** ISO string — present when the match is already in progress (late-joining spectator) */
+  startedAt?: string;
 }

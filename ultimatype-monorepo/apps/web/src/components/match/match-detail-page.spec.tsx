@@ -70,8 +70,8 @@ describe('MatchDetailPage', () => {
 
     expect(screen.getByText('Player 1')).toBeDefined();
     expect(screen.getByText('Player 2')).toBeDefined();
-    expect(screen.getByText('829')).toBeDefined();
-    expect(screen.getByText('645')).toBeDefined();
+    expect(screen.getByText('829.0')).toBeDefined();
+    expect(screen.getByText('645.0')).toBeDefined();
     expect(screen.getByText('85.5')).toBeDefined();
     expect(screen.getByText('97%')).toBeDefined();
   });
@@ -89,19 +89,19 @@ describe('MatchDetailPage', () => {
     expect(img).not.toBeNull();
   });
 
-  it('muestra estado "No terminó" para participante que no finalizó', () => {
+  it('muestra estado "No completada" y rank para participante que no finalizó', () => {
     const match: MatchDetailDto = {
       ...defaultMatch,
       participants: [
-        { ...defaultMatch.participants[0], finished: false, finishedAt: null },
+        { ...defaultMatch.participants[0], finished: false, finishedAt: null, rank: 2 },
       ],
     };
     mockUseMatchDetail.mockReturnValue({ data: match, isLoading: false, isError: false });
 
     render(<MatchDetailPage />);
 
-    expect(screen.getByText('No terminó')).toBeDefined();
-    expect(screen.getByText('—')).toBeDefined();
+    expect(screen.getByText('No completada')).toBeDefined();
+    expect(screen.getByText('2')).toBeDefined();
   });
 
   it('muestra skeletons durante la carga', () => {

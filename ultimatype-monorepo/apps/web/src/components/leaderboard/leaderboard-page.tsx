@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { DIFFICULTY_LEVELS, COUNTRIES, MatchPeriod } from '@ultimatype-monorepo/shared';
 import { useAuth } from '../../hooks/use-auth';
@@ -25,6 +25,7 @@ function getCountryName(code: string | null): string {
 }
 
 export function LeaderboardPage() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [level, setLevel] = useState<number | null>(null);
   const [period] = useState<MatchPeriod>('all');
@@ -179,8 +180,9 @@ export function LeaderboardPage() {
                   <tbody>
                     {leaderboard.data.map((entry) => (
                       <tr
-                        key={`${entry.position}-${entry.displayName}`}
-                        className="border-b border-surface-raised last:border-0"
+                        key={entry.userId}
+                        onClick={() => navigate(`/match/${entry.bestScoreMatchCode}`)}
+                        className="cursor-pointer border-b border-surface-raised last:border-0 hover:bg-surface-raised/50"
                       >
                         <td className="py-3 pr-4 font-semibold text-text-muted">{entry.position}</td>
                         <td className="py-3 pr-4">
@@ -201,7 +203,7 @@ export function LeaderboardPage() {
                           </div>
                         </td>
                         <td className="py-3 pr-4 text-right font-semibold text-primary">{formatScore(entry.bestScore)}</td>
-                        <td className="py-3 text-right text-text-muted">{entry.avgPrecision}%</td>
+                        <td className="py-3 text-right text-text-muted">{entry.bestScorePrecision}%</td>
                       </tr>
                     ))}
                   </tbody>

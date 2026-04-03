@@ -190,7 +190,7 @@ export class MatchResultsService {
     const [stats, best] = await Promise.all([
       this.prisma.matchResult.aggregate({
         where: filteredWhere,
-        _avg: { score: true },
+        _avg: { score: true, precision: true },
         _count: { id: true },
       }),
       this.prisma.matchResult.findFirst({
@@ -202,6 +202,7 @@ export class MatchResultsService {
 
     return {
       avgScore: Math.round((stats._avg.score ?? 0) * 10) / 10,
+      avgPrecision: Math.round((stats._avg.precision ?? 0) * 10) / 10,
       bestScore: best?.score ?? 0,
       totalMatches: stats._count.id,
     };
@@ -238,6 +239,7 @@ export class MatchResultsService {
   private periodToDateFrom(period?: MatchPeriod): Date | null {
     if (period === '7d') return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     if (period === '30d') return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    if (period === '1y') return new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
     return null;
   }
 }

@@ -15,14 +15,14 @@ so that I can see how I rank against the global community.
 **Given** un usuario navegando a la pagina de Leaderboard (`/leaderboard`)
 **When** la pagina carga
 **Then** se muestra una lista top-100 de jugadores ordenada por mejor puntaje (score, NO wpm) descendente
-**And** cada fila muestra, en orden: posicion (#), bandera de pais, avatar + nombre (juntos), mejor puntaje, precision promedio
+**And** cada fila muestra, en orden: posicion (#), bandera de pais, avatar + nombre (juntos), mejor puntaje, precision de esa partida (no promedio)
 
 ### AC2: Widget "Tu posicion"
 
 **Given** un usuario autenticado en la pagina de Leaderboard
 **When** la pagina carga
 **Then** se muestra un widget "Tu posicion" con:
-- Tu mejor puntaje: N pts, conseguido en partida [matchCode], [fecha]
+- Tu mejor puntaje: N pts · partida [matchCode], [fecha]
 - Mundial: posicion #N, Top X% del mundo
 - [Pais]: posicion #N, Top X% de [pais]
 **And** el percentil se calcula como: `(1 - (players_with_higher_best_score / total_players)) * 100`
@@ -451,16 +451,16 @@ claude-opus-4-6 (create-story + dev-story, 2026-04-02)
 
 ### Review Findings
 
-- [ ] [Review][Decision] `avgPrecision` es promedio de TODAS las partidas del usuario — ¿es esto correcto o debería ser solo la precisión de la partida con mejor score? [leaderboard.service.ts:79]
+- [x] [Review][Decision] `avgPrecision` → `bestScorePrecision`: muestra la precisión de la partida del mejor score, no el promedio histórico. Decisión: la columna del ranking pertenece a ese logro específico; ver promedio histórico es función del perfil. SQL cambiado a DISTINCT ON. [leaderboard.service.ts, leaderboard.dto.ts]
 - [x] [Review][Patch] **CRÍTICO — APLICADO** `PrismaService` no exponía `$queryRawUnsafe` → 500 en todos los endpoints del leaderboard. Fix: agregar método delegador en `prisma.service.ts:31`. [prisma.service.ts]
 - [x] [Review][Patch] **CRÍTICO — APLICADO** `req.user.id` → `undefined` porque `JwtStrategy.validate()` retorna `userId`. Fix: cambiar interface y acceso a `req.user.userId`. [leaderboard.controller.ts:12,72]
-- [ ] [Review][Patch] Cache key no incluye `page`/`limit` → página 2 devuelve datos cacheados de página 1 [leaderboard.service.ts:44,245]
-- [ ] [Review][Patch] Param `country` sin validación → Redis key explosion con strings arbitrarios [leaderboard.controller.ts:34]
-- [ ] [Review][Patch] `ORDER BY "bestScore" DESC` sin tiebreaker → orden no-determinístico para empates entre usuarios [leaderboard.service.ts:84]
-- [ ] [Review][Patch] Param `page` sin límite superior → OFFSET enorme en DB con page=999999 [leaderboard.controller.ts:41]
-- [ ] [Review][Patch] Table row key `position-displayName` → colisión React si dos usuarios tienen mismo displayName [leaderboard-page.tsx:182]
-- [ ] [Review][Patch] Widget copy: falta "conseguido en", usa `·` en lugar de `,` — desvío del spec [leaderboard-page.tsx:75]
-- [ ] [Review][Patch] `RedisService.keys()` usa comando `KEYS` bloqueante O(N) — debe usar `SCAN` para producción [redis.service.ts:46]
+- [x] [Review][Patch] Cache key ahora incluye `page` y `limit` → cada página tiene su propia entrada en Redis. [leaderboard.service.ts]
+- [x] [Review][Patch] Param `country` validado con `/^[A-Z]{2}$/` → strings inválidos se ignoran, Redis key explosion eliminado. [leaderboard.controller.ts]
+- [x] [Review][Patch] Tiebreaker agregado: `ORDER BY "bestScore" DESC, "bestScorePrecision" DESC` → empates se desempatan por mayor precisión, consistente con la tabla de resultados del perfil. [leaderboard.service.ts]
+- [x] [Review][Patch] Param `page` limitado a máximo 10 (top-1000 leaderboard cap: 10 páginas × 100 = 1000 jugadores). Widget "Tu posición" usa query separada sin este límite → siempre muestra rank real. [leaderboard.controller.ts]
+- [x] [Review][Patch] React key cambiada a `entry.userId` (único garantizado). `userId` agregado a `LeaderboardEntryDto`, SQL query y mapping. Prepara terreno para links de perfil cuando se implemente slug. [leaderboard.dto.ts, leaderboard.service.ts, leaderboard-page.tsx]
+- [x] [Review][Patch] Widget copy: AC actualizado para reflejar la implementación (`·` en lugar de `,`, sin "conseguido en"). Formato preferido por el equipo. [4-3-global-leaderboard.md AC2]
+- [x] [Review][Patch] `RedisService.keys()` reemplazado con `SCAN` iterativo no-bloqueante (COUNT 100 por iteración). Tests actualizados para cubrir iteración simple, multi-cursor y vacío. [redis.service.ts, redis.service.spec.ts]
 - [x] [Review][Defer] `getUserPosition` ejecuta 4-5 queries secuenciales sin transacción → snapshot inconsistente bajo carga — deferred, pre-existing pattern
 - [x] [Review][Defer] Cálculo de período con `Date.now()` ignora DST — deferred, pre-existing en match-results también
 - [x] [Review][Defer] Sin invalidación activa del cache al guardar nuevo resultado — deferred, scope Story 4-5

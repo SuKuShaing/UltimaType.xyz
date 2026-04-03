@@ -37,7 +37,7 @@ const makeHistoryResult = (overrides: Partial<MatchResultDto> = {}): MatchResult
   ...overrides,
 });
 
-const defaultStats: MatchStatsDto = { avgScore: 85.5, bestScore: 120.3, totalMatches: 10 };
+const defaultStats: MatchStatsDto = { avgScore: 85.5, avgPrecision: 96.2, bestScore: 120.3, totalMatches: 10 };
 
 const emptyHistory: PaginatedResponse<MatchResultDto> = {
   data: [],
@@ -133,7 +133,7 @@ describe('MatchHistorySection', () => {
     expect(screen.getByText('95%')).toBeDefined();
   });
 
-  it('muestra guión para partidas no terminadas en la columna rank', () => {
+  it('muestra el rank aunque la partida no esté completada', () => {
     const matchData: PaginatedResponse<MatchResultDto> = {
       data: [makeHistoryResult({ finished: false, rank: 3 })],
       meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
@@ -142,7 +142,7 @@ describe('MatchHistorySection', () => {
 
     render(<MatchHistorySection />);
 
-    expect(screen.getByText('—')).toBeDefined();
+    expect(screen.getByText('#3')).toBeDefined();
   });
 
   it('muestra nombre del nivel usando DIFFICULTY_LEVELS', () => {
