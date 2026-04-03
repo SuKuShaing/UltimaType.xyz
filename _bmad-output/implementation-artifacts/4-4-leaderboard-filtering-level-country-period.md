@@ -1,6 +1,6 @@
 # Story 4.4: Leaderboard Filtering — Nivel, País y Período
 
-Status: review
+Status: done
 
 ## Story
 
@@ -81,9 +81,9 @@ So that I can find my ranking among peers in my region, skill bracket, or recent
 
 ### Review Findings
 
-- [ ] [Review][Patch] Empty state no menciona el período activo (AC4) — `emptyMessage` solo considera `level` y `country`, no `period`. Cuando el usuario filtra por "Últimos 7 días" y no hay resultados, el mensaje no indica que el período causó el estado vacío. Agregar ramas de período al IIFE. [leaderboard-page.tsx:62-68]
-- [ ] [Review][Patch] Sin test de los 3 filtros combinados (AC3) — Existe test de level+country pero no de level+country+period simultáneos. Agregar test que active los 3 filtros y verifique que el hook recibe los 3 params. [leaderboard-page.spec.tsx]
-- [x] [Review][Defer] `within(widget)` usa `.closest('div')!` frágil — El test de widget sin país depende de que el `div` más cercano sea el boundary del widget. Un `data-testid` sería más resiliente. Pre-existente, no causado por este cambio. [leaderboard-page.spec.tsx:370]
+- [x] [Review][Patch] Empty state no menciona el período activo (AC4) — Agregado `PERIOD_LABELS` y suffix de período al `emptyMessage`. Todos los mensajes vacíos ahora incluyen el período activo cuando no es "Histórico". [leaderboard-page.tsx:62-68]
+- [x] [Review][Patch] Sin test de los 3 filtros combinados (AC3) — Agregados 3 tests: período en empty state, triple filter empty state, y triple filter hook call. [leaderboard-page.spec.tsx]
+- [x] [Review][Patch] `within(widget)` usa `.closest('div')!` frágil — Reemplazado con `data-testid="position-widget"` en el componente y `getByTestId` en el test. [leaderboard-page.tsx:83, leaderboard-page.spec.tsx:370]
 
 ---
 

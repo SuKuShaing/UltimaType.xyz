@@ -340,6 +340,50 @@ describe('LeaderboardPage', () => {
     expect(screen.getByText('No hay jugadores de Argentina registrados en este nivel')).toBeTruthy();
   });
 
+  it('should show contextual empty state with period active', () => {
+    mockUseLeaderboard.mockReturnValue({ data: emptyLeaderboard, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    fireEvent.click(screen.getByText('Últimos 7 días'));
+
+    expect(screen.getByText('No hay jugadores registrados en los últimos 7 días')).toBeTruthy();
+  });
+
+  it('should show contextual empty state with all three filters active', () => {
+    mockUseLeaderboard.mockReturnValue({ data: emptyLeaderboard, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    fireEvent.click(screen.getByText(/Minúscula/));
+    fireEvent.click(screen.getByText('Último mes'));
+    fireEvent.change(screen.getByLabelText('Filtrar por país') as HTMLSelectElement, {
+      target: { value: 'AR' },
+    });
+
+    expect(screen.getByText('No hay jugadores de Argentina registrados en este nivel en el último mes')).toBeTruthy();
+  });
+
+  it('should pass combined level, country and period filters to hook', () => {
+    const data: PaginatedResponse<LeaderboardEntryDto> = {
+      data: [makeEntry()],
+      meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
+    };
+    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    fireEvent.click(screen.getByText(/Minúscula/));
+    fireEvent.click(screen.getByText('Últimos 7 días'));
+    fireEvent.change(screen.getByLabelText('Filtrar por país') as HTMLSelectElement, {
+      target: { value: 'CL' },
+    });
+
+    expect(mockUseLeaderboard).toHaveBeenCalledWith(
+      expect.objectContaining({ level: 1, country: 'CL', period: '7d', page: 1 }),
+    );
+  });
+
   it('should reset country to null when selecting "Todos los países"', () => {
     const data: PaginatedResponse<LeaderboardEntryDto> = {
       data: [makeEntry()],
@@ -367,8 +411,7 @@ describe('LeaderboardPage', () => {
 
     renderPage();
 
-    const widget = screen.getByText('Tu posición').closest('div')!;
-    expect(widget).toBeTruthy();
+    const widget = screen.getByTestId('position-widget');
     expect(within(widget).getByText('#5')).toBeTruthy();
     // Country rank row must not appear in the widget (countryCode is null)
     expect(within(widget).queryByText(/Top.*%.*de /)).toBeNull();

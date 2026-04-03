@@ -21,11 +21,12 @@
 - [ ] Que el usuario pueda agregar sus propios textos
 - [ ] felicitar al jugador por entrar en los top 1000 mundial o top 1000 de su país
 - [ ] pedirle a la ia que me actualice la arquitectura de la página y me dé la arquitectura de la db
+- [ ] Para un futuro que los países se puedan seleccionar por continente y sea vean las banderas de los países
 
 ## Preguntas
 
 - [ ] Cuando volvamos al lobby usa el mismo código de sala, es decir la partida nueva reescribe la anterior?, sí jugué 3 partidas con mis amigos se guarda la última?
-- [ ] Preguntar que son las spec AC y PRD en bmad
+- [x] Preguntar que son las spec AC y PRD en bmad
 - [ ] qué es este fallo "Los tests existentes siguen pasando (el fallo en game.gateway.spec.ts es
       pre-existente)"
 - [ ] Debo hacer algo con estos warning: "Build: exitoso. Los warnings son de source-maps de @nestjs/throttler,

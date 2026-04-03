@@ -2,7 +2,7 @@
 
 ## Deferred from: code review de 4-4-leaderboard-filtering-level-country-period (2026-04-03)
 
-- **Test `within(widget)` usa `.closest('div')!` frágil** — El test del widget "Tu posición" sin país usa `screen.getByText('Tu posición').closest('div')!` para scoping. Si el markup cambia y el `div` más cercano no es el boundary del widget, el test produce falsos positivos. Reemplazar con `data-testid` en el widget. Pre-existente.
+*Sin items diferidos — todos los findings fueron patcheados.*
 
 ## Deferred from: code review de 4-3-global-leaderboard (2026-04-02)
 

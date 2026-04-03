@@ -31,6 +31,13 @@ const PERIOD_OPTIONS: { label: string; value: MatchPeriod }[] = [
   { label: 'Últimos 7 días', value: '7d' },
 ];
 
+const PERIOD_LABELS: Record<MatchPeriod, string> = {
+  'all': '',
+  '1y': ' en el último año',
+  '30d': ' en el último mes',
+  '7d': ' en los últimos 7 días',
+};
+
 export function LeaderboardPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -61,10 +68,11 @@ export function LeaderboardPage() {
 
   const emptyMessage = (() => {
     const countryName = country ? getCountryName(country) : null;
-    if (level !== null && countryName) return `No hay jugadores de ${countryName} registrados en este nivel`;
-    if (countryName) return `No hay jugadores de ${countryName} registrados`;
-    if (level !== null) return 'No hay jugadores registrados en este nivel';
-    return 'No hay jugadores registrados aún';
+    const periodSuffix = PERIOD_LABELS[period];
+    if (level !== null && countryName) return `No hay jugadores de ${countryName} registrados en este nivel${periodSuffix}`;
+    if (countryName) return `No hay jugadores de ${countryName} registrados${periodSuffix}`;
+    if (level !== null) return `No hay jugadores registrados en este nivel${periodSuffix}`;
+    return `No hay jugadores registrados${periodSuffix || ' aún'}`;
   })();
   const totalPages = leaderboard?.meta.totalPages ?? 1;
 
@@ -79,7 +87,7 @@ export function LeaderboardPage() {
 
         {/* Position widget — only for authenticated users */}
         {isAuthenticated && (
-          <div className="rounded-2xl bg-surface-sunken p-6">
+          <div className="rounded-2xl bg-surface-sunken p-6" data-testid="position-widget">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text-muted">Tu posición</h2>
             {isPositionLoading && (
               <div className="space-y-3">
