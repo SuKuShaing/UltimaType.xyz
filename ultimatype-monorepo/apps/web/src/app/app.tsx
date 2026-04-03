@@ -7,6 +7,7 @@ import { ProtectedRoute } from '../components/auth/protected-route';
 import { ProfilePage } from '../components/profile/profile-page';
 import { LobbyPage } from '../components/lobby/lobby-page';
 import { MatchDetailPage } from '../components/match/match-detail-page';
+import { LeaderboardPage } from '../components/leaderboard/leaderboard-page';
 import { CreateRoomButton } from '../components/lobby/create-room-button';
 import { NavBar } from '../components/ui/nav-bar';
 import { Logo } from '../components/ui/logo';
@@ -82,6 +83,7 @@ export function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/room/:code" element={<LobbyPage />} />
         <Route
           path="*"

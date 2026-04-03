@@ -1,5 +1,13 @@
 # Deferred Work
 
+## Deferred from: code review de 4-3-global-leaderboard (2026-04-02)
+
+- **getUserPosition ejecuta 4-5 queries secuenciales sin transacción** — Entre query 1 (best score) y las queries de rank, un nuevo match result podría insertarse, haciendo el snapshot inconsistente. Patrón pre-existente en el proyecto.
+- **Cálculo de período con `Date.now()` ignora DST** — `Date.now() - N*days` puede cruzar un cambio horario y dar resultados levemente incorrectos. Afecta también match-results, es pre-existente.
+- **Sin invalidación activa del cache al guardar nuevo resultado** — Un usuario que gana una partida ve datos stale por hasta 12h. Resuelto en Story 4-5 (automated-leaderboard-updates).
+- **Period filter fijo en `'all'` sin UI** — El frontend no expone selector de período en LeaderboardPage. Planificado como feature V2 junto con 4-4 (level-country-period filtering).
+- **Endpoint `/leaderboard/position` no cacheado en Redis** — Genera 4 queries DB por cada request de usuario autenticado. Evaluar si agregar cache per-user en 4-5 o 4-4.
+
 ## Deferred from: code review de 4-2-personal-history-progression-dashboard (2026-04-02)
 
 - **Sin test HTTP-level de routing GET /matches/stats vs GET /matches** — Controller spec instancia la clase directamente; el orden `@Get('stats')` antes de `@Get()` no está cubierto por ningún test de transporte. Gap e2e pre-existente en el proyecto.

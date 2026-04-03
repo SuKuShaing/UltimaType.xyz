@@ -11,6 +11,7 @@ import { UsersModule } from '../modules/users/users.module';
 import { TextsModule } from '../modules/texts/texts.module';
 import { RedisModule } from '../redis/redis.module';
 import { GameModule } from '../gateway/game.module';
+import { LeaderboardModule } from '../modules/leaderboard/leaderboard.module';
 
 const envSchema = z.object({
   JWT_SECRET: z.string().min(1),
@@ -48,6 +49,7 @@ const envSchema = z.object({
     UsersModule,
     TextsModule,
     GameModule,
+    LeaderboardModule,
   ],
   controllers: [AppController],
   providers: [

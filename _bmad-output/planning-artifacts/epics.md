@@ -503,6 +503,40 @@ So that the rankings are always fresh without manual intervention and without re
 **And** the error is logged with level `warn` including userId, level, and reason
 **And** the TTL fallback (12h) ensures the cache eventually expires anyway.
 
+### Story 4.6: Public User Profiles
+
+As a player,
+I want to view other players' public profiles and share my own profile via a clean URL,
+So that I can explore opponents' stats and history, and share my achievements on social media.
+
+**Acceptance Criteria:**
+
+**Given** a new user registering via OAuth
+**When** their account is created
+**Then** a unique slug is auto-generated with format `{initials}-{3 random hex}` (e.g., `ss-a3f`), all lowercase
+**And** the slug is persisted in the User model as a unique, non-null field.
+
+**Given** an authenticated user on their Profile page
+**When** they edit their slug field
+**Then** a real-time availability indicator (green/red) is shown via `GET /api/users/check-slug/:slug`
+**And** the slug is validated: lowercase letters, numbers, and hyphens only; 3-30 chars; cannot start/end with hyphen
+**And** on save, the slug is updated via `PATCH /api/users/me`.
+
+**Given** any visitor navigating to `/u/:slug`
+**When** the page loads
+**Then** they see the user's public profile: avatar, displayName, country flag, registration date, stats (best score, avg score, total matches), and match history with level/period filters
+**And** each match in the history is clickable, navigating to `/match/:matchCode`
+**And** participant names in match detail and leaderboard are clickable links to `/u/:slug`.
+
+**Given** a non-authenticated visitor viewing a public profile
+**When** the page renders
+**Then** a CTA button "Comienza a competir" is shown, redirecting to the OAuth login flow.
+
+**Given** a social media bot or search engine crawler requesting `/u/:slug`
+**When** the request arrives
+**Then** NestJS serves a minimal HTML with dynamic Open Graph meta tags (og:title, og:description, og:image) for rich link previews
+**And** normal browsers receive the SPA as usual (proxy ligero approach).
+
 ## Epic 5: La Visual — Rediseño Pantalla Principal
 
 Transformar la pantalla principal de un placeholder minimalista a un dashboard de competición rico y atractivo que funcione tanto para usuarios loggeados como no loggeados, alineado con el Design System "Kinetic Monospace". La pantalla debe transmitir energía competitiva, mostrar partidas en vivo, y ofrecer acceso rápido a las acciones principales del juego.
@@ -825,3 +859,65 @@ So that it feels visually consistent with the rest of the platform.
 **And** the "Tu Posición Global" card shows a CTA: "Inicia sesión para ver tu ranking".
 
 **Note:** "Ver Repetición" (match replays) is deferred to a future version.
+
+### Story 5.13: Profile & Public Profile Visual Polish
+
+As a user,
+I want my profile page and any public profile I visit to follow the "Kinetic Monospace" Design System,
+So that the experience feels visually consistent with the rest of the platform.
+
+**Acceptance Criteria:**
+
+**Given** the authenticated user's profile page (`/profile`)
+**When** the Design System tokens from Story 5.1 are applied
+**Then** the profile card uses `surface-container-low` background with `2rem`/`2.5rem` border-radius
+**And** the "No-Line" rule is applied: tonal shifts instead of 1px borders for section separation
+**And** the avatar uses a circular container with `primary/10` background fallback for initials
+**And** typography follows the Design System tokens: display-scale for the username, body-md for secondary info
+**And** the country selector, slug editor, and save button use the Design System's pill and surface styles
+**And** the match history section follows the same tonal surface hierarchy as the rest of the page.
+
+**Given** a public profile page (`/u/:slug`)
+**When** it renders
+**Then** the hero section (avatar, name, country flag, registration date) uses a large avatar with `primary/10` fallback, display-scale username, and `label-md` metadata
+**And** the three stat cards (Mejor Puntaje, Puntaje Promedio, Total Partidas) use `surface-container-lowest` background with `2rem` border-radius and display-lg scale values
+**And** the match history section follows the same visual treatment as the authenticated profile's history
+**And** the "Comienza a competir" CTA uses the primary pill style, prominently placed.
+
+**Given** the slug editor in the authenticated profile
+**When** the availability indicator is shown
+**Then** the "Disponible" state uses the Design System's success color token
+**And** the "No disponible" state uses the error color token
+**And** the shareable link (`ultimatype.com/u/{slug}`) is displayed as a pill-style readonly field with a copy icon button.
+
+**Given** the authenticated user's profile page (`/profile`)
+**When** it renders with match history (from Story 4.2) and slug editor (from Story 4.6)
+**Then** the page is divided into two clearly differentiated sections using tonal surface shifts (not divider lines):
+  - **Configuración**: avatar, display name, email, country selector, slug editor, save button
+  - **Historial**: match history list with filters (reuses the HistoryPage component from Story 4.2)
+**And** section headings use `label-md` style (uppercase, muted).
+
+**Given** a user who has never played a match
+**When** the stats section of a profile (own or public `/u/:slug`) renders
+**Then** an elegant empty state is shown with a subtle icon and text: "Aún no hay partidas registradas"
+**And** for the authenticated user's own profile: a CTA "¡Crea una partida y empieza!" that triggers the create-room flow
+**And** stat cards (Mejor Puntaje, Puntaje Promedio, Total Partidas) show `—` or `0` with muted styling, not broken/empty.
+
+**Given** an authenticated user visiting their own public profile (`/u/:slug`)
+**When** the page renders
+**Then** a prominent "Editar perfil" button is shown (secondary pill style) linking to `/profile`
+**And** no "Comienza a competir" CTA is shown (it is reserved for unauthenticated visitors only).
+
+**Given** a player's name appearing in match history rows, leaderboard table, or match results overlay
+**When** it renders
+**Then** the name is styled as an inline link to `/u/:slug` using `text-primary` color with underline on hover
+**And** the link hover state uses a subtle `primary/10` background transition consistent with the Design System.
+
+**Given** a match history row clicked by a user (navigating to `/match/:matchCode`)
+**When** the match detail page renders
+**Then** it shows the match results in the same visual treatment as the Match Results Overlay (Story 5.11): hero stats for the viewed player, full ranking table, player names as links to their public profiles
+**And** a "Volver" back button uses tertiary button style
+**And** the page follows the full Design System surface hierarchy and typography tokens
+**And** for unauthenticated visitors, a "Comienza a competir" CTA is shown below the results.
+
+**Note:** Depends on Story 4.6 (Public User Profiles) for the `/u/:slug` and `/match/:matchCode` routes, Story 4.2 (Personal History) for the history component, and Story 5.1 (Design System Migration) for the CSS tokens. The `/match/:matchCode` page is a new route introduced by this story.

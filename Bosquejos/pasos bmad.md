@@ -45,7 +45,7 @@ Code Review (**bmad-code-review**): Revisión asertiva del código para cazar bu
 
 ### Para la review
 
-> me los vas a mostrar de uno en uno para analizarlos individualmente cada uno de los [tareas_a_analizar], dame todo el contexto necesario para tomar una buena decisión, cómo afecta al usuario o al sistema, los pro y contras de cada opción y tu sugerencia a elegir y porque eliges esa opción; El proceso es me pasas uno, decidimos sobre ese, una vez tenga la decisión, me pasas el siguiente
+> me los vas a mostrar de uno en uno para analizarlos individualmente cada uno de los [tareas_a_analizar], dame todo el contexto necesario para tomar una buena decisión, cómo afecta al usuario y al sistema, los pro y contras de cada opción y tu sugerencia a elegir y porque eliges esa opción; El proceso es me pasas uno, decidimos sobre ese, una vez tenga la decisión, me pasas el siguiente
 
 Para activar la retrospectiva del epic-1-retrospective, el comando que debes usar es (**bmad-retrospective**)
 

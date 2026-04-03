@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
-import { REDIS_CLIENT } from './redis.module';
+import { REDIS_CLIENT } from './redis.constants';
 
 @Injectable()
 export class RedisService {
@@ -44,5 +44,9 @@ export class RedisService {
 
   async expire(key: string, seconds: number): Promise<void> {
     await this.redis.expire(key, seconds);
+  }
+
+  async keys(pattern: string): Promise<string[]> {
+    return this.redis.keys(pattern);
   }
 }

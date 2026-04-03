@@ -35,7 +35,12 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-02T21:00:00-03:00
+last_updated: 2026-04-03T00:30:00-03:00
+# 2026-04-03: Story 5-13 added to backlog (profile-and-public-profile-visual-polish). Depends on 4.6 and 5.1.
+# 2026-04-03: Story 4-6 created (public-user-profiles), set to ready-for-dev. Added to Epic 4 and epics.md.
+# 2026-04-02: Story 4-3 implementation complete, set to review (275 API + 144 web tests passing).
+# 2026-04-02: Story 4-3 dev started, set to in-progress.
+# 2026-04-02: Story 4-3 created (global-leaderboard), set to ready-for-dev.
 # 2026-04-02: Story 4-2 code review complete, set to done (9 patches applied + match detail feature, 242 API + 125 web tests passing).
 # 2026-04-02: Story 4-2 implementation complete, set to review (237 API + 115 web tests passing).
 # 2026-04-02: Story 4-2 dev started, set to in-progress.
@@ -103,9 +108,10 @@ development_status:
   epic-4: in-progress
   4-1-match-results-persistence: done
   4-2-personal-history-progression-dashboard: done
-  4-3-global-leaderboard: backlog
+  4-3-global-leaderboard: review
   4-4-leaderboard-filtering-level-country-period: backlog
   4-5-automated-leaderboard-updates: backlog
+  4-6-public-user-profiles: ready-for-dev
   epic-4-retrospective: optional
   epic-5: backlog
   5-1-design-system-migration: backlog
@@ -120,4 +126,5 @@ development_status:
   5-10-arena-visual-restyling: backlog
   5-11-match-results-overlay-redesign: backlog
   5-12-leaderboard-page-visual-design: backlog
+  5-13-profile-and-public-profile-visual-polish: backlog
   epic-5-retrospective: optional

@@ -78,7 +78,17 @@
       "Bash(npx -y kill-port 3334)",
       "Bash(npx -y http-server -p 3335 --silent)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3335/og-image-template.html)",
-      "Bash(npx -y kill-port 3335)"
+      "Bash(npx -y kill-port 3335)",
+      "Bash(curl -s \"http://localhost:3000/api/leaderboard\")",
+      "Bash(curl -v \"http://localhost:3000/api/leaderboard\")",
+      "Bash(curl:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3000\")",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(taskkill:*)",
+      "Bash(cmd:*)",
+      "Bash(powershell -Command \"Stop-Process -Id 28164 -Force\")",
+      "Bash(powershell.exe:*)"
     ]
   }
 }

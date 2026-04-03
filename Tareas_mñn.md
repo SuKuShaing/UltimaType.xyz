@@ -3,27 +3,24 @@
 ## Tareas
 
 - [ ] Cuando alguien se une a la sala, que haga un sonido
-- [ ] Hacer al retrospectiva
-- [ ] Hacer el resto de Epics
 - [ ] Que el nivel de dificultad diga en el 1. Solo minúsculas, 2. Minúsculas y mayúsculas, 3. Minúsculas, mayúsculas, acentos y puntuación, 4. Minúsculas, mayúsculas, acentos, puntuación y números, 5. Todo lo anterior más símbolos
-- [ ] que claudflare redirija www a apex
-- [ ] Añadir un registro manual de sesión de nombre, usuario y contraseña
 - [ ] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
-- [ ] Darle a la IA lso mensajes de la consola de los logs para solucionar los warnings
-- [ ] Tener un perfil, que se visible públicamente y muestre las estadísticas de las partidas jugadas
 - [ ] En el botón de revancha o en la pantalla de resultados debiese estar revancha con subir el nivel de dificultad
-- [ ] Que en una feature futura, se vean las salas jugando en este momento, y listar las salas y poder ingresar como espectador a esas salas
+- [ ] Que se pueda ceder el host a otro jugador
 - [ ] Visualizador de ping, en algún lugar visible, <120 ms verde, 120-250 ms amarillo , 250 ms o más ms rojo
-- [ ] Que se pueda dar host a otro jugador
-- [ ] Que el usuario pueda agregar sus propios textos
-- [ ] Tabla de posiciones de la semana en el home
 - [ ] Salas publicas y privadas
+- [ ] Tabla de posiciones de la semana en el home
 - [ ] Salas activas en el home, que diga el nivel y la cantidad de jugadores
+- [ ] que claudflare redirija www a apex
+- [ ] Que en una feature futura, se vean las salas jugando en este momento, y listar las salas y poder ingresar como espectador a esas salas
 - [ ] Instalar traqueo
+- [ ] Añadir un registro manual de sesión de nombre, usuario y contraseña
+- [ ] Al terminar la Epic 4, solucionar todos los errores y warnings del servidor local
+- [ ] Darle a la IA lso mensajes de la consola de los logs del servidor VPS para solucionar los warnings
+- [ ] Que el usuario pueda agregar sus propios textos
 
 ## Preguntas
 
-- [ ] Sí elijo la revancha, es el mismo texto o puede ser cualquier otro
 - [ ] qué es este fallo "Los tests existentes siguen pasando (el fallo en game.gateway.spec.ts es
       pre-existente)"
 - [ ] Debo hacer algo con estos warning: "Build: exitoso. Los warnings son de source-maps de @nestjs/throttler,
@@ -33,6 +30,8 @@
 
 ### Tareas
 
+- [x] Tener un perfil, que sea visible públicamente y muestre las estadísticas de las partidas jugadas
+- [x] Hacer al retrospectiva Epic 3
 - [x] El logo del main del home debiese ser el logo de la web
 - [x] Ingrese código de sala debiese decir código de partida
 - [x] Que el pulse del botón "Listo" en el lobby se expanda el doble verticalmente que horizontalmente
@@ -58,6 +57,7 @@
 
 ### Preguntas
 
+- [x] Sí elijo la revancha, es el mismo texto o puede ser cualquier otro
 - [x] Seguridad de la bases de datos, cómo es el tema de las claves, que no las veo, la seguridad en la plataforma
 - [x] Seguridad del sistema en general, sí no van a hackear mi vps y consumir mis recursos
 - [x] Al ir haciendo mejoras voy Desplegando nuevamente la plataforma, la base de datos, los usuarios que se han registrado se pierden, sus registros se pierden con cada deploy o como es eso?

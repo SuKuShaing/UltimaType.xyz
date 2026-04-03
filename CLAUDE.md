@@ -109,4 +109,12 @@ Copy `.env.example` to `.env` and fill in OAuth credentials and secrets. Require
 
 ## Party Mode
 
-- When the user requests a party mode, you have to find out how to activate it, that's in the @.agent skills.
+To activate Party Mode, read these files in order:
+
+1. `.agent/skills/bmad-party-mode/SKILL.md`
+2. `.agent/skills/bmad-party-mode/workflow.md`
+3. `.agent/skills/bmad-party-mode/steps/step-02-discussion-orchestration.md`
+4. `_bmad/core/config.yaml` — obtener `user_name` e `communication_language`
+5. `_bmad/_config/agent-manifest.csv` — roster completo de agentes con personalidades
+
+Luego ejecutar la activación según las instrucciones del `workflow.md`.

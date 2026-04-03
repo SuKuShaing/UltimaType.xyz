@@ -1,5 +1,44 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Test } from '@nestjs/testing';
 import { RedisService } from './redis.service';
+import { REDIS_CLIENT } from './redis.module';
+import { REDIS_CLIENT as REDIS_CLIENT_CONST } from './redis.constants';
+
+describe('REDIS_CLIENT token', () => {
+  it('no debe ser undefined al importar desde redis.module (circular import guard)', () => {
+    // Si redis.module y redis.service se importan mutuamente, Node.js devuelve
+    // undefined en la exportación porque el módulo aún no terminó de evaluarse.
+    // Este test falla inmediatamente si se introduce ese ciclo.
+    expect(REDIS_CLIENT).toBeDefined();
+    expect(typeof REDIS_CLIENT).toBe('string');
+    expect(REDIS_CLIENT.length).toBeGreaterThan(0);
+  });
+
+  it('el token re-exportado desde redis.module debe ser idéntico al de redis.constants', () => {
+    expect(REDIS_CLIENT).toBe(REDIS_CLIENT_CONST);
+  });
+});
+
+describe('RedisModule DI', () => {
+  it('RedisService debe poder inyectarse sin errores de dependencia', async () => {
+    const mockRedis = {
+      get: vi.fn(), set: vi.fn(), hset: vi.fn(), hget: vi.fn(),
+      hgetall: vi.fn(), hdel: vi.fn(), hlen: vi.fn(), del: vi.fn(),
+      expire: vi.fn(), keys: vi.fn(),
+    };
+
+    const module = await Test.createTestingModule({
+      providers: [
+        { provide: REDIS_CLIENT, useValue: mockRedis },
+        RedisService,
+      ],
+    }).compile();
+
+    const service = module.get(RedisService);
+    expect(service).toBeDefined();
+    expect(service).toBeInstanceOf(RedisService);
+  });
+});
 
 describe('RedisService', () => {
   let service: RedisService;
@@ -13,6 +52,7 @@ describe('RedisService', () => {
     hlen: ReturnType<typeof vi.fn>;
     del: ReturnType<typeof vi.fn>;
     expire: ReturnType<typeof vi.fn>;
+    keys: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -26,6 +66,7 @@ describe('RedisService', () => {
       hlen: vi.fn(),
       del: vi.fn(),
       expire: vi.fn(),
+      keys: vi.fn(),
     };
     service = new RedisService(mockRedis as any);
   });
@@ -109,6 +150,21 @@ describe('RedisService', () => {
     it('establece TTL en una clave', async () => {
       await service.expire('key', 3600);
       expect(mockRedis.expire).toHaveBeenCalledWith('key', 3600);
+    });
+  });
+
+  describe('keys', () => {
+    it('retorna claves que coinciden con el patron', async () => {
+      mockRedis.keys.mockResolvedValue(['leaderboard:level:1:country:ALL:period:all']);
+      const result = await service.keys('leaderboard:*');
+      expect(result).toEqual(['leaderboard:level:1:country:ALL:period:all']);
+      expect(mockRedis.keys).toHaveBeenCalledWith('leaderboard:*');
+    });
+
+    it('retorna array vacio si no hay coincidencias', async () => {
+      mockRedis.keys.mockResolvedValue([]);
+      const result = await service.keys('nonexistent:*');
+      expect(result).toEqual([]);
     });
   });
 });

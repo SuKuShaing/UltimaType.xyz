@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './theme-toggle';
 import { useAuth } from '../../hooks/use-auth';
 import { LoginModal } from './login-modal';
@@ -7,8 +7,10 @@ import { Logo } from './logo';
 
 export function NavBar() {
   const { user, isAuthenticated } = useAuth();
+  const location = useLocation();
   const [imgError, setImgError] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const isLeaderboard = location.pathname === '/leaderboard';
 
   const initials = user?.displayName
     ?.split(' ')
@@ -23,6 +25,14 @@ export function NavBar() {
       <nav className="nav-bar-global fixed left-0 right-0 top-0 z-40 flex items-center justify-between bg-surface-sunken px-4 py-2 transition-opacity duration-500">
         <Logo />
         <div className="flex items-center gap-3">
+          <Link
+            to="/leaderboard"
+            className={`text-sm transition-colors font-sans ${
+              isLeaderboard ? 'text-text-main font-semibold' : 'text-text-muted hover:text-text-main'
+            }`}
+          >
+            Ranking
+          </Link>
           <ThemeToggle />
           {isAuthenticated && user ? (
             <Link
