@@ -126,7 +126,7 @@ describe('MatchHistorySection', () => {
 
     render(<MatchHistorySection />);
 
-    expect(screen.getAllByText('829')).toHaveLength(2);
+    expect(screen.getAllByText('829.4')).toHaveLength(2);
     expect(screen.getByText('92.3')).toBeDefined();
     expect(screen.getByText('74.1')).toBeDefined();
     expect(screen.getByText('98%')).toBeDefined();
@@ -220,7 +220,7 @@ describe('MatchHistorySection', () => {
 
     render(<MatchHistorySection />);
 
-    const row = screen.getByText('829').closest('tr')!;
+    const row = screen.getByText('829.4').closest('tr')!;
     fireEvent.click(row);
 
     expect(mockNavigate).toHaveBeenCalledWith('/match/XYZ789');

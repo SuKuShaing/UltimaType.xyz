@@ -91,6 +91,21 @@ describe('arenaStore', () => {
     expect(state.errorKeystrokes).toBe(1);
   });
 
+  it('decrementErrorKeystrokes decrementa errorKeystrokes', () => {
+    arenaStore.getState().incrementKeystrokes(false);
+    arenaStore.getState().incrementKeystrokes(false);
+    expect(arenaStore.getState().errorKeystrokes).toBe(2);
+
+    arenaStore.getState().decrementErrorKeystrokes();
+    expect(arenaStore.getState().errorKeystrokes).toBe(1);
+  });
+
+  it('decrementErrorKeystrokes no baja de 0', () => {
+    expect(arenaStore.getState().errorKeystrokes).toBe(0);
+    arenaStore.getState().decrementErrorKeystrokes();
+    expect(arenaStore.getState().errorKeystrokes).toBe(0);
+  });
+
   it('resetRaceMetrics resetea matchStartTime, totalKeystrokes y errorKeystrokes', () => {
     arenaStore.getState().setMatchStarted();
     arenaStore.getState().incrementKeystrokes(true);

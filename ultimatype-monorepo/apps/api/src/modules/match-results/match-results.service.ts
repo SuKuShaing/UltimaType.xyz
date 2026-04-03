@@ -172,7 +172,7 @@ export class MatchResultsService {
   /**
    * Calcula métricas agregadas de un usuario:
    * - avgScore: promedio de score filtrado por level y period
-   * - bestScore: máximo de score histórico all-time (sin filtros de period)
+   * - bestScore: máximo de score filtrado por level y period
    * - totalMatches: conteo filtrado
    */
   async getStats(
@@ -194,7 +194,7 @@ export class MatchResultsService {
         _count: { id: true },
       }),
       this.prisma.matchResult.findFirst({
-        where: { userId },
+        where: filteredWhere,
         orderBy: { score: 'desc' },
         select: { score: true },
       }),

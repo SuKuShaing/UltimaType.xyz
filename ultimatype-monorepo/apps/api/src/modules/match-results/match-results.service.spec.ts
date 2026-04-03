@@ -407,7 +407,7 @@ describe('MatchResultsService', () => {
       expect(result.totalMatches).toBe(15);
     });
 
-    it('bestScore usa where solo con userId (sin filtros de period)', async () => {
+    it('bestScore aplica filtros de period', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
         _avg: { score: 60 },
         _count: { id: 3 },
@@ -416,12 +416,10 @@ describe('MatchResultsService', () => {
 
       await service.getStats('user-1', undefined, '7d');
 
-      // findFirst solo filtra por userId (no por period)
-      expect(mockPrisma.matchResult.findFirst).toHaveBeenCalledWith({
-        where: { userId: 'user-1' },
-        orderBy: { score: 'desc' },
-        select: { score: true },
-      });
+      const call = mockPrisma.matchResult.findFirst.mock.calls[0][0];
+      expect(call.where.userId).toBe('user-1');
+      expect(call.where.createdAt.gte).toBeInstanceOf(Date);
+      expect(call.orderBy).toEqual({ score: 'desc' });
     });
 
     it('avgScore aplica filtro de level', async () => {

@@ -133,6 +133,11 @@ export const arenaStore = createStore<ArenaState & ArenaActions>()((set) => ({
       errorKeystrokes: correct ? state.errorKeystrokes : state.errorKeystrokes + 1,
     })),
 
+  decrementErrorKeystrokes: () =>
+    set((state) => ({
+      errorKeystrokes: Math.max(0, state.errorKeystrokes - 1),
+    })),
+
   resetRaceMetrics: () =>
     set({
       matchStartTime: null,

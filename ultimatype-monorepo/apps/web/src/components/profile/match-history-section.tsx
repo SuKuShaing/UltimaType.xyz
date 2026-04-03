@@ -168,7 +168,7 @@ export function MatchHistorySection() {
                     onClick={() => navigate(`/match/${r.matchCode}`)}
                     className="cursor-pointer border-b border-surface-raised last:border-0 hover:bg-surface-raised/50"
                   >
-                    <td className="py-3 pr-4 font-semibold text-primary">{r.score.toFixed(0)}</td>
+                    <td className="py-3 pr-4 font-semibold text-primary">{r.score.toFixed(1)}</td>
                     <td className="py-3 pr-4 text-text-main">{r.wpm.toFixed(1)}</td>
                     <td className="py-3 pr-4 text-text-main">{r.precision}%</td>
                     <td className="py-3 pr-4 text-text-muted">{getLevelName(r.level)}</td>

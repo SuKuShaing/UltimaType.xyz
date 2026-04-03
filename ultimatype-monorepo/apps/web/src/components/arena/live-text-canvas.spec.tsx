@@ -166,4 +166,35 @@ describe('LiveTextCanvas', () => {
     const state = arenaStore.getState();
     expect(state.totalKeystrokes).toBe(1);
   });
+
+  it('Backspace sobre error decrementa errorKeystrokes', () => {
+    const { container } = render(
+      <LiveTextCanvas text={text} onPositionChange={vi.fn()} isActive />,
+    );
+
+    const input = container.querySelector('input')!;
+    fireEvent.keyDown(input, { key: 'X' }); // error at pos 0
+    expect(arenaStore.getState().errorKeystrokes).toBe(1);
+
+    fireEvent.keyDown(input, { key: 'Backspace' }); // correct the error
+    expect(arenaStore.getState().errorKeystrokes).toBe(0);
+  });
+
+  it('Backspace sobre caracter correcto NO decrementa errorKeystrokes', () => {
+    const { container } = render(
+      <LiveTextCanvas text={text} onPositionChange={vi.fn()} isActive />,
+    );
+
+    const input = container.querySelector('input')!;
+    fireEvent.keyDown(input, { key: 'H' }); // correct at pos 0
+    fireEvent.keyDown(input, { key: 'X' }); // error at pos 1
+    expect(arenaStore.getState().errorKeystrokes).toBe(1);
+
+    fireEvent.keyDown(input, { key: 'Backspace' }); // back from pos 2 to pos 1 (error) → decrement
+    expect(arenaStore.getState().errorKeystrokes).toBe(0);
+
+    fireEvent.keyDown(input, { key: 'e' }); // correct pos 1
+    fireEvent.keyDown(input, { key: 'Backspace' }); // back to pos 1 (was correct) → NO decrement
+    expect(arenaStore.getState().errorKeystrokes).toBe(0);
+  });
 });

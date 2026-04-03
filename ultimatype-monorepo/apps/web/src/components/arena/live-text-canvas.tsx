@@ -131,6 +131,9 @@ export function LiveTextCanvas({
         if (pos > 0) {
           const newPos = pos - 1;
           resetChar(newPos);
+          if (errorsRef.current.has(newPos)) {
+            arenaStore.getState().decrementErrorKeystrokes();
+          }
           errorsRef.current.delete(newPos);
           positionRef.current = newPos;
           onPositionChange(newPos);

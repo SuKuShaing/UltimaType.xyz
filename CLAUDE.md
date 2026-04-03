@@ -109,4 +109,4 @@ Copy `.env.example` to `.env` and fill in OAuth credentials and secrets. Require
 
 ## Party Mode
 
-- When the user requests a party mode, you have to find out how to activate it; that's in the @.agent skills.
+- When the user requests a party mode, you have to find out how to activate it, that's in the @.agent skills.
