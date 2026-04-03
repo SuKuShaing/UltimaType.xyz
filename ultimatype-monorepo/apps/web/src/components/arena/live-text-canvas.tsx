@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { arenaStore } from '../../hooks/use-arena-store';
 import { getSocket } from '../../lib/socket';
 import { WS_EVENTS } from '@ultimatype-monorepo/shared';
@@ -25,7 +25,11 @@ export function LiveTextCanvas({
   const localCaretRef = useRef<HTMLDivElement>(null);
 
   const localFinishedRef = useRef(false);
+  const compositionRef = useRef(false);
   const canType = isActive && !disabled && !localFinishedRef.current;
+
+  // Normalize text to NFC once — ensures consistent comparison and correct span rendering
+  const nfcText = useMemo(() => text.normalize('NFC'), [text]);
 
   const updateLocalCaret = useCallback((position: number) => {
     const caret = localCaretRef.current;
@@ -58,7 +62,7 @@ export function LiveTextCanvas({
       updateLocalCaret(positionRef.current);
     });
     return () => cancelAnimationFrame(raf);
-  }, [text, updateLocalCaret]);
+  }, [nfcText, updateLocalCaret]);
 
   // Focus the hidden input when race starts (AC1)
   useEffect(() => {
@@ -120,9 +124,49 @@ export function LiveTextCanvas({
     }
   };
 
+  const processTypedChar = useCallback(
+    (char: string) => {
+      const pos = positionRef.current;
+      if (pos >= nfcText.length) return;
+
+      const expected = nfcText[pos];
+      const isCorrect = char.normalize('NFC') === expected;
+
+      if (isCorrect) {
+        colorChar(pos, '#4ADE80'); // success green
+        arenaStore.getState().incrementKeystrokes(true);
+      } else {
+        colorChar(pos, '#FB7185'); // error red
+        errorsRef.current.add(pos);
+        arenaStore.getState().incrementKeystrokes(false);
+      }
+
+      const newPos = pos + 1;
+      positionRef.current = newPos;
+      onPositionChange(newPos);
+      updateLocalCaret(newPos);
+
+      // Detect finish
+      if (newPos === nfcText.length) {
+        localFinishedRef.current = true;
+        arenaStore.getState().setLocalFinished();
+        const { totalKeystrokes, errorKeystrokes } = arenaStore.getState();
+        const socket = getSocket();
+        socket.emit(WS_EVENTS.PLAYER_FINISH, {
+          totalKeystrokes,
+          errorKeystrokes,
+        });
+      }
+    },
+    [nfcText, onPositionChange, updateLocalCaret],
+  );
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (!isActive || disabled || localFinishedRef.current) return;
+
+      // Skip events during IME composition (macOS dead keys, Linux IBus, etc.)
+      if (e.nativeEvent.isComposing || compositionRef.current) return;
 
       const pos = positionRef.current;
 
@@ -142,42 +186,39 @@ export function LiveTextCanvas({
         return;
       }
 
-      // Ignore non-printable keys
+      // Ignore non-printable keys (Dead, Shift, etc.)
       if (e.key.length !== 1) return;
       e.preventDefault();
 
-      if (pos >= text.length) return;
+      processTypedChar(e.key);
+    },
+    [isActive, disabled, processTypedChar, onPositionChange, updateLocalCaret],
+  );
 
-      const expected = text[pos];
-      const isCorrect = e.key === expected;
+  const handleCompositionStart = useCallback(() => {
+    compositionRef.current = true;
+  }, []);
 
-      if (isCorrect) {
-        colorChar(pos, '#4ADE80'); // success green
-        arenaStore.getState().incrementKeystrokes(true);
-      } else {
-        colorChar(pos, '#FB7185'); // error red
-        errorsRef.current.add(pos);
-        arenaStore.getState().incrementKeystrokes(false);
+  const handleCompositionEnd = useCallback(
+    (e: React.CompositionEvent<HTMLInputElement>) => {
+      compositionRef.current = false;
+      if (!isActive || disabled || localFinishedRef.current) return;
+
+      const composed = e.data;
+      if (!composed) return;
+
+      // Normalize to NFC before iterating to merge combining marks with base chars
+      const normalized = composed.normalize('NFC');
+      for (const char of normalized) {
+        processTypedChar(char);
       }
 
-      const newPos = pos + 1;
-      positionRef.current = newPos;
-      onPositionChange(newPos);
-      updateLocalCaret(newPos);
-
-      // Detect finish
-      if (newPos === text.length) {
-        localFinishedRef.current = true;
-        arenaStore.getState().setLocalFinished();
-        const { totalKeystrokes, errorKeystrokes } = arenaStore.getState();
-        const socket = getSocket();
-        socket.emit(WS_EVENTS.PLAYER_FINISH, {
-          totalKeystrokes,
-          errorKeystrokes,
-        });
+      // Clear input value to prevent text accumulation from IME
+      if (inputRef.current) {
+        inputRef.current.value = '';
       }
     },
-    [text, onPositionChange, isActive, disabled, updateLocalCaret],
+    [isActive, disabled, processTypedChar],
   );
 
   return (
@@ -191,14 +232,15 @@ export function LiveTextCanvas({
         type="text"
         className="absolute h-0 w-0 opacity-0"
         onKeyDown={handleKeyDown}
-        readOnly
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
         aria-label="Área de escritura"
         tabIndex={0}
         disabled={!canType}
       />
 
       {/* Accessible twin for screen readers */}
-      <p className="sr-only">{text}</p>
+      <p className="sr-only">{nfcText}</p>
 
       {/* Visual character spans — blur when not active */}
       <div
@@ -209,7 +251,7 @@ export function LiveTextCanvas({
           transition: 'filter 0.3s ease',
         }}
       >
-        {text.split('').map((char, i) => (
+        {nfcText.split('').map((char, i) => (
           <span
             key={i}
             ref={(el) => {

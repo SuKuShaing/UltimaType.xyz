@@ -197,4 +197,150 @@ describe('LiveTextCanvas', () => {
     fireEvent.keyDown(input, { key: 'Backspace' }); // back to pos 1 (was correct) → NO decrement
     expect(arenaStore.getState().errorKeystrokes).toBe(0);
   });
+
+  describe('Acentos y composición IME (macOS / Linux)', () => {
+    it('detecta acentos correctos via keydown directo (NFC)', () => {
+      const { container } = render(
+        <LiveTextCanvas text="mamá" onPositionChange={vi.fn()} isActive />,
+      );
+      const input = container.querySelector('input')!;
+      const spans = container.querySelectorAll('span[data-index]') as NodeListOf<HTMLSpanElement>;
+
+      fireEvent.keyDown(input, { key: 'm' });
+      fireEvent.keyDown(input, { key: 'a' });
+      fireEvent.keyDown(input, { key: 'm' });
+      fireEvent.keyDown(input, { key: '\u00E1' }); // á NFC
+
+      expect(spans[3].style.color).toBe('rgb(74, 222, 128)');
+      expect(arenaStore.getState().errorKeystrokes).toBe(0);
+    });
+
+    it('detecta acentos correctos via compositionEnd (dead keys macOS)', () => {
+      const { container } = render(
+        <LiveTextCanvas text="mamá" onPositionChange={vi.fn()} isActive />,
+      );
+      const input = container.querySelector('input')!;
+      const spans = container.querySelectorAll('span[data-index]') as NodeListOf<HTMLSpanElement>;
+
+      fireEvent.keyDown(input, { key: 'm' });
+      fireEvent.keyDown(input, { key: 'a' });
+      fireEvent.keyDown(input, { key: 'm' });
+
+      // Simulate macOS dead key: compositionStart → compositionEnd with composed char
+      fireEvent.compositionStart(input);
+      fireEvent.compositionEnd(input, { data: '\u00E1' }); // á
+
+      expect(spans[3].style.color).toBe('rgb(74, 222, 128)');
+      expect(arenaStore.getState().errorKeystrokes).toBe(0);
+    });
+
+    it('compositionEnd con carácter NFD se normaliza y matchea NFC', () => {
+      const { container } = render(
+        <LiveTextCanvas text="país" onPositionChange={vi.fn()} isActive />,
+      );
+      const input = container.querySelector('input')!;
+      const spans = container.querySelectorAll('span[data-index]') as NodeListOf<HTMLSpanElement>;
+
+      fireEvent.keyDown(input, { key: 'p' });
+      fireEvent.keyDown(input, { key: 'a' });
+
+      // í in NFD form (i + combining acute)
+      fireEvent.compositionStart(input);
+      fireEvent.compositionEnd(input, { data: 'i\u0301' });
+
+      fireEvent.keyDown(input, { key: 's' });
+
+      expect(spans[2].style.color).toBe('rgb(74, 222, 128)'); // í green
+      expect(spans[3].style.color).toBe('rgb(74, 222, 128)'); // s green
+      expect(arenaStore.getState().errorKeystrokes).toBe(0);
+      expect(arenaStore.getState().totalKeystrokes).toBe(4);
+    });
+
+    it('ignora keydown durante composición IME activa', () => {
+      const handler = vi.fn();
+      const { container } = render(
+        <LiveTextCanvas text="mamá" onPositionChange={handler} isActive />,
+      );
+      const input = container.querySelector('input')!;
+
+      fireEvent.keyDown(input, { key: 'm' });
+      fireEvent.keyDown(input, { key: 'a' });
+      fireEvent.keyDown(input, { key: 'm' });
+
+      // During composition, keydown with isComposing should be ignored
+      fireEvent.compositionStart(input);
+      fireEvent.keyDown(input, { key: 'a', nativeEvent: { isComposing: true } });
+
+      // Only 3 position changes before composition
+      expect(handler).toHaveBeenCalledTimes(3);
+
+      // The composed character arrives via compositionEnd
+      fireEvent.compositionEnd(input, { data: 'á' });
+      expect(handler).toHaveBeenCalledTimes(4);
+    });
+
+    it('acento incorrecto via compositionEnd se marca rojo', () => {
+      const { container } = render(
+        <LiveTextCanvas text="mamá" onPositionChange={vi.fn()} isActive />,
+      );
+      const input = container.querySelector('input')!;
+      const spans = container.querySelectorAll('span[data-index]') as NodeListOf<HTMLSpanElement>;
+
+      fireEvent.keyDown(input, { key: 'm' });
+      fireEvent.keyDown(input, { key: 'a' });
+      fireEvent.keyDown(input, { key: 'm' });
+
+      // Wrong accent: è instead of á
+      fireEvent.compositionStart(input);
+      fireEvent.compositionEnd(input, { data: 'è' });
+
+      expect(spans[3].style.color).toBe('rgb(251, 113, 133)'); // red
+      expect(arenaStore.getState().errorKeystrokes).toBe(1);
+    });
+
+    it('texto fuente en NFD se normaliza para comparación y renderizado', () => {
+      // "mamá" in NFD: the á is decomposed into a + combining acute
+      const nfdText = 'mam\u0061\u0301';
+      const { container } = render(
+        <LiveTextCanvas text={nfdText} onPositionChange={vi.fn()} isActive />,
+      );
+      const spans = container.querySelectorAll('span[data-index]') as NodeListOf<HTMLSpanElement>;
+      const input = container.querySelector('input')!;
+
+      // NFC normalization should produce 4 spans, not 5
+      expect(spans).toHaveLength(4);
+
+      fireEvent.keyDown(input, { key: 'm' });
+      fireEvent.keyDown(input, { key: 'a' });
+      fireEvent.keyDown(input, { key: 'm' });
+      fireEvent.keyDown(input, { key: '\u00E1' }); // á NFC
+
+      expect(spans[3].style.color).toBe('rgb(74, 222, 128)');
+    });
+
+    it('palabra completa con múltiples acentos: México', () => {
+      const { container } = render(
+        <LiveTextCanvas text="México" onPositionChange={vi.fn()} isActive />,
+      );
+      const input = container.querySelector('input')!;
+      const spans = container.querySelectorAll('span[data-index]') as NodeListOf<HTMLSpanElement>;
+
+      fireEvent.keyDown(input, { key: 'M' });
+
+      // é via compositionEnd
+      fireEvent.compositionStart(input);
+      fireEvent.compositionEnd(input, { data: 'é' });
+
+      fireEvent.keyDown(input, { key: 'x' });
+      fireEvent.keyDown(input, { key: 'i' });
+      fireEvent.keyDown(input, { key: 'c' });
+      fireEvent.keyDown(input, { key: 'o' });
+
+      for (let i = 0; i < 6; i++) {
+        expect(spans[i].style.color).toBe('rgb(74, 222, 128)');
+      }
+      expect(arenaStore.getState().errorKeystrokes).toBe(0);
+      expect(arenaStore.getState().totalKeystrokes).toBe(6);
+    });
+  });
 });
