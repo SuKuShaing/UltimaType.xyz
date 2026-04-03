@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review de 4-4-leaderboard-filtering-level-country-period (2026-04-03)
+
+- **Test `within(widget)` usa `.closest('div')!` frágil** — El test del widget "Tu posición" sin país usa `screen.getByText('Tu posición').closest('div')!` para scoping. Si el markup cambia y el `div` más cercano no es el boundary del widget, el test produce falsos positivos. Reemplazar con `data-testid` en el widget. Pre-existente.
+
 ## Deferred from: code review de 4-3-global-leaderboard (2026-04-02)
 
 - **getUserPosition ejecuta 4-5 queries secuenciales sin transacción** — Entre query 1 (best score) y las queries de rank, un nuevo match result podría insertarse, haciendo el snapshot inconsistente. Patrón pre-existente en el proyecto.

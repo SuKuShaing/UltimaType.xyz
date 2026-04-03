@@ -35,7 +35,9 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-03T12:00:00-03:00
+last_updated: 2026-04-03T16:30:00-03:00
+# 2026-04-03: Story 4-4 implementation complete, set to review (290 API + 154 web tests passing). Frontend-only: period pills + country dropdown + 10 new tests.
+# 2026-04-03: Story 4-4 created (leaderboard-filtering-level-country-period), set to ready-for-dev. Frontend-only: period pills + country dropdown, hook actualizado con country param. Zero backend changes.
 # 2026-04-03: Story 4-3 code review complete, set to done. 9 patches applied (DISTINCT ON SQL, Redis SCAN, userId DTO, bestScorePrecision, clickable leaderboard rows, score toFixed(1), Completada/No completada states, rank always visible, stat card reorder). Post-review bug fixes: timer/WPM hidden on results overlay, spectator countdown skip on mid-match join (startedAt in MatchStartPayload), ghost caret hidden for spectators.
 # 2026-04-03: Story 5-13 added to backlog (profile-and-public-profile-visual-polish). Depends on 4.6 and 5.1.
 # 2026-04-03: Story 4-6 created (public-user-profiles), set to ready-for-dev. Added to Epic 4 and epics.md.
@@ -110,7 +112,7 @@ development_status:
   4-1-match-results-persistence: done
   4-2-personal-history-progression-dashboard: done
   4-3-global-leaderboard: done
-  4-4-leaderboard-filtering-level-country-period: backlog
+  4-4-leaderboard-filtering-level-country-period: review
   4-5-automated-leaderboard-updates: backlog
   4-6-public-user-profiles: ready-for-dev
   epic-4-retrospective: optional

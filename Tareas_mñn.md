@@ -2,6 +2,7 @@
 
 ## Tareas
 
+- [ ] Espacio insuficiente en el timer para más de 60 seg ![img](/Fix%20pendientes/espacio%20insuficiente%20en%20el%20timer%20para%20más%20de%2060%20seg.jpeg)
 - [ ] Cuando alguien se une a la sala, que haga un sonido
 - [ ] Que el nivel de dificultad diga en el 1. Solo minúsculas, 2. Minúsculas y mayúsculas, 3. Minúsculas, mayúsculas, acentos y puntuación, 4. Minúsculas, mayúsculas, acentos, puntuación y números, 5. Todo lo anterior más símbolos
 - [ ] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo

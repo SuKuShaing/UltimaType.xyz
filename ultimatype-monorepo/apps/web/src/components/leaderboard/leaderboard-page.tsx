@@ -24,11 +24,19 @@ function getCountryName(code: string | null): string {
   return COUNTRIES.find((c) => c.code === code)?.name ?? code;
 }
 
+const PERIOD_OPTIONS: { label: string; value: MatchPeriod }[] = [
+  { label: 'Histórico', value: 'all' },
+  { label: 'Último año', value: '1y' },
+  { label: 'Último mes', value: '30d' },
+  { label: 'Últimos 7 días', value: '7d' },
+];
+
 export function LeaderboardPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [level, setLevel] = useState<number | null>(null);
-  const [period] = useState<MatchPeriod>('all');
+  const [period, setPeriod] = useState<MatchPeriod>('all');
+  const [country, setCountry] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
   function handleLevelChange(l: number | null) {
@@ -36,10 +44,28 @@ export function LeaderboardPage() {
     setPage(1);
   }
 
-  const { data: leaderboard, isLoading, isError, refetch } = useLeaderboard({ level, period, page });
+  function handlePeriodChange(p: MatchPeriod) {
+    setPeriod(p);
+    setPage(1);
+  }
+
+  function handleCountryChange(c: string | null) {
+    setCountry(c);
+    setPage(1);
+  }
+
+  const { data: leaderboard, isLoading, isError, refetch } = useLeaderboard({ level, period, country, page });
   const { data: position, isLoading: isPositionLoading } = useLeaderboardPosition({ level, period });
 
   const isEmpty = !isLoading && !isError && (leaderboard?.data.length ?? 0) === 0;
+
+  const emptyMessage = (() => {
+    const countryName = country ? getCountryName(country) : null;
+    if (level !== null && countryName) return `No hay jugadores de ${countryName} registrados en este nivel`;
+    if (countryName) return `No hay jugadores de ${countryName} registrados`;
+    if (level !== null) return 'No hay jugadores registrados en este nivel';
+    return 'No hay jugadores registrados aún';
+  })();
   const totalPages = leaderboard?.meta.totalPages ?? 1;
 
   return (
@@ -105,7 +131,7 @@ export function LeaderboardPage() {
         {/* Leaderboard table */}
         <div className="rounded-2xl bg-surface-sunken p-6">
           {/* Level filter */}
-          <div className="mb-6 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-wrap gap-2">
             <button
               onClick={() => handleLevelChange(null)}
               className={`rounded-lg px-3 py-1.5 text-sm font-sans ${
@@ -133,6 +159,39 @@ export function LeaderboardPage() {
             ))}
           </div>
 
+          {/* Period filter */}
+          <div className="mb-4 flex flex-wrap gap-2">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handlePeriodChange(opt.value)}
+                className={`rounded-lg px-3 py-1.5 text-sm font-sans ${
+                  period === opt.value
+                    ? 'bg-primary text-surface-base font-semibold'
+                    : 'bg-surface-raised text-text-muted'
+                }`}
+                aria-pressed={period === opt.value}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Country filter */}
+          <div className="mb-6">
+            <select
+              value={country ?? ''}
+              onChange={(e) => handleCountryChange(e.target.value || null)}
+              className="rounded-lg bg-surface-raised px-3 py-1.5 text-sm text-text-muted font-sans"
+              aria-label="Filtrar por país"
+            >
+              <option value="">Todos los países</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Loading */}
           {isLoading && (
             <div className="space-y-3 py-4">
@@ -158,9 +217,7 @@ export function LeaderboardPage() {
           {/* Empty */}
           {!isLoading && isEmpty && (
             <div className="py-8 text-center text-text-muted font-sans text-sm italic">
-              {level !== null
-                ? 'No hay jugadores registrados en este nivel'
-                : 'No hay jugadores registrados aún'}
+              {emptyMessage}
             </div>
           )}
 

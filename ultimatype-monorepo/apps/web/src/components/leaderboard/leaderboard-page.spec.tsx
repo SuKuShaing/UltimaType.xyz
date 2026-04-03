@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { LeaderboardPage } from './leaderboard-page';
@@ -231,6 +231,133 @@ describe('LeaderboardPage', () => {
     expect(screen.queryByLabelText('Página siguiente')).toBeNull();
   });
 
+  it('should render period filter buttons', () => {
+    renderPage();
+
+    expect(screen.getByText('Histórico')).toBeTruthy();
+    expect(screen.getByText('Último año')).toBeTruthy();
+    expect(screen.getByText('Último mes')).toBeTruthy();
+    expect(screen.getByText('Últimos 7 días')).toBeTruthy();
+  });
+
+  it('should change period filter and reset page', () => {
+    const data: PaginatedResponse<LeaderboardEntryDto> = {
+      data: [makeEntry()],
+      meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
+    };
+    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    const periodButton = screen.getByText('Últimos 7 días');
+    fireEvent.click(periodButton);
+
+    expect(mockUseLeaderboard).toHaveBeenCalledWith(
+      expect.objectContaining({ period: '7d', page: 1 }),
+    );
+  });
+
+  it('should reflect period filter in useLeaderboardPosition call', () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { displayName: 'Test' } });
+    mockUseLeaderboardPosition.mockReturnValue({ data: defaultPosition, isLoading: false });
+
+    renderPage();
+
+    const periodButton = screen.getByText('Último mes');
+    fireEvent.click(periodButton);
+
+    expect(mockUseLeaderboardPosition).toHaveBeenCalledWith(
+      expect.objectContaining({ period: '30d' }),
+    );
+  });
+
+  it('should render country filter dropdown', () => {
+    renderPage();
+
+    const select = screen.getByLabelText('Filtrar por país');
+    expect(select).toBeTruthy();
+    expect(screen.getByText('Todos los países')).toBeTruthy();
+  });
+
+  it('should change country filter and reset page', () => {
+    const data: PaginatedResponse<LeaderboardEntryDto> = {
+      data: [makeEntry()],
+      meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
+    };
+    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    const select = screen.getByLabelText('Filtrar por país') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'AR' } });
+
+    expect(mockUseLeaderboard).toHaveBeenCalledWith(
+      expect.objectContaining({ country: 'AR', page: 1 }),
+    );
+  });
+
+  it('should pass combined level and country filters to hook', () => {
+    const data: PaginatedResponse<LeaderboardEntryDto> = {
+      data: [makeEntry()],
+      meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
+    };
+    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    fireEvent.click(screen.getByText(/Minúscula/));
+    fireEvent.change(screen.getByLabelText('Filtrar por país') as HTMLSelectElement, {
+      target: { value: 'CL' },
+    });
+
+    expect(mockUseLeaderboard).toHaveBeenCalledWith(
+      expect.objectContaining({ level: 1, country: 'CL', page: 1 }),
+    );
+  });
+
+  it('should show contextual empty state with country active', () => {
+    mockUseLeaderboard.mockReturnValue({ data: emptyLeaderboard, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('Filtrar por país') as HTMLSelectElement, {
+      target: { value: 'AR' },
+    });
+
+    expect(screen.getByText('No hay jugadores de Argentina registrados')).toBeTruthy();
+  });
+
+  it('should show contextual empty state with level and country active', () => {
+    mockUseLeaderboard.mockReturnValue({ data: emptyLeaderboard, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    fireEvent.click(screen.getByText(/Minúscula/));
+    fireEvent.change(screen.getByLabelText('Filtrar por país') as HTMLSelectElement, {
+      target: { value: 'AR' },
+    });
+
+    expect(screen.getByText('No hay jugadores de Argentina registrados en este nivel')).toBeTruthy();
+  });
+
+  it('should reset country to null when selecting "Todos los países"', () => {
+    const data: PaginatedResponse<LeaderboardEntryDto> = {
+      data: [makeEntry()],
+      meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
+    };
+    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    const select = screen.getByLabelText('Filtrar por país') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'AR' } });
+    fireEvent.change(select, { target: { value: '' } });
+
+    expect(mockUseLeaderboard).toHaveBeenCalledWith(
+      expect.objectContaining({ country: null }),
+    );
+  });
+
   it('should not show country row in widget when user has no country', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { displayName: 'Test' } });
     mockUseLeaderboardPosition.mockReturnValue({
@@ -240,9 +367,11 @@ describe('LeaderboardPage', () => {
 
     renderPage();
 
-    expect(screen.getByText('Tu posición')).toBeTruthy();
-    expect(screen.getByText('#5')).toBeTruthy();
-    expect(screen.queryByText('Argentina')).toBeNull();
+    const widget = screen.getByText('Tu posición').closest('div')!;
+    expect(widget).toBeTruthy();
+    expect(within(widget).getByText('#5')).toBeTruthy();
+    // Country rank row must not appear in the widget (countryCode is null)
+    expect(within(widget).queryByText(/Top.*%.*de /)).toBeNull();
   });
 
   it('should show position loading skeletons while loading', () => {
