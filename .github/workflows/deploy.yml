@@ -39,16 +39,6 @@ jobs:
             ${{ env.API_IMAGE }}:latest
             ${{ env.API_IMAGE }}:${{ github.sha }}
 
-      - name: Build & push Web image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./ultimatype-monorepo
-          file: ./ultimatype-monorepo/apps/web/Dockerfile
-          push: true
-          tags: |
-            ${{ env.WEB_IMAGE }}:latest
-            ${{ env.WEB_IMAGE }}:${{ github.sha }}
-
       - name: Trigger Dokploy redeploy
         if: success()
         continue-on-error: true

@@ -72,6 +72,7 @@ export interface MatchDetailParticipantDto {
   displayName: string;
   avatarUrl: string | null;
   countryCode: string | null;
+  slug: string;
   wpm: number;
   precision: number;
   score: number;

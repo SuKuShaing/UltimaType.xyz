@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { DIFFICULTY_LEVELS } from '@ultimatype-monorepo/shared';
 import { useMatchDetail } from '../../hooks/use-match-detail';
@@ -92,7 +92,7 @@ export function MatchDetailPage() {
                           {p.rank}
                         </td>
                         <td className="py-3 pr-4">
-                          <div className="flex items-center gap-2">
+                          <Link to={`/u/${p.slug}`} className="flex items-center gap-2 hover:opacity-80">
                             <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-raised text-xs font-semibold text-primary">
                               {p.avatarUrl ? (
                                 <img src={p.avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -100,8 +100,8 @@ export function MatchDetailPage() {
                                 p.displayName.charAt(0).toUpperCase()
                               )}
                             </div>
-                            <span className="text-text-main">{p.displayName}</span>
-                          </div>
+                            <span className="text-text-main hover:text-primary">{p.displayName}</span>
+                          </Link>
                         </td>
                         <td className="py-3 pr-4 font-semibold text-primary">{p.score.toFixed(1)}</td>
                         <td className="py-3 pr-4 text-text-main">{p.wpm.toFixed(1)}</td>

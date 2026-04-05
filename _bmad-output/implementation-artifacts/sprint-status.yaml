@@ -35,7 +35,9 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-04T23:40:00-03:00
+last_updated: 2026-04-05T00:30:00-03:00
+# 2026-04-05: Story 4-6 implementation complete, set to review (330 API + 174 web tests passing). Full-stack: slug field, public profile endpoints, OG proxy, PublicProfilePage, clickable names. 20 tasks.
+# 2026-04-05: Story 4-6 dev started (public-user-profiles), set to in-progress. Full-stack: slug field, public profile endpoints, OG proxy, PublicProfilePage, clickable names.
 # 2026-04-04: Story 4-5 implementation complete, set to review (300 API + 164 web tests passing). Backend-only: invalidateForLevel + checkAndInvalidateLeaderboard + module wiring. 10 new tests.
 # 2026-04-04: Story 4-5 created (automated-leaderboard-updates), set to ready-for-dev. Backend-only: cache invalidation on new personal best, LeaderboardService.invalidateForLevel + integration in persistResults.
 # 2026-04-03: Story 4-4 code review complete, set to done. 3 patches applied (period-aware empty state messages, triple-filter test, data-testid on position widget). 28 web tests passing (25+3 new).
@@ -117,7 +119,7 @@ development_status:
   4-3-global-leaderboard: done
   4-4-leaderboard-filtering-level-country-period: done
   4-5-automated-leaderboard-updates: done
-  4-6-public-user-profiles: ready-for-dev
+  4-6-public-user-profiles: review
   epic-4-retrospective: optional
   epic-5: backlog
   5-1-design-system-migration: backlog

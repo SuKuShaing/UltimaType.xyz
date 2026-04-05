@@ -4,6 +4,7 @@ export interface LeaderboardEntryDto {
   displayName: string;
   avatarUrl: string | null;
   countryCode: string | null;
+  slug: string;
   bestScore: number;
   bestScorePrecision: number;
   bestScoreMatchCode: string;

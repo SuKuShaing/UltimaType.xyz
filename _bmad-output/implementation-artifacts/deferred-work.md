@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review de 4-6-public-user-profiles (2026-04-05)
+
+- **usePublicProfile sin staleTime** — El hook no tiene `staleTime` configurado, lo que provoca un re-fetch en cada mount. El perfil público es relativamente estático. Agregar `staleTime: 60_000` para reducir carga en rutas populares.
+- **countryPercentile puede ser NaN si globalTotal=0** — `Math.round((1 - (globalRank - 1) / 0) * 100)` produce NaN. Pre-existente en LeaderboardService. Agregar guard `globalTotal > 0 ? ... : 0` cuando se limpie el módulo de leaderboard.
+- **profile.id stale desde cache puede disparar queries de stats para el usuario incorrecto** — Durante navegación de `/u/slug-A` a `/u/slug-B`, si React Query tiene una entrada en caché para slug-A, el componente puede renderizar brevemente con el id del usuario anterior. Bajo impacto por los query keys distintos, pero revisitar si se reportan datos cruzados en producción.
+
 ## Deferred from: code review de 4-5-automated-leaderboard-updates (2026-04-04)
 
 - **Llamadas redundantes a `invalidateForLevel` cuando N jugadores baten PB** — En una partida donde múltiples jugadores superan su marca personal en el mismo nivel, `invalidateForLevel` se llama N veces ejecutando N×2 SCAN sweeps. La caché queda consistente pero Redis recibe trabajo innecesario. Agregar deduplicación por nivel dentro del loop de `persistResults` si se vuelve un hotspot.

@@ -7,6 +7,7 @@ const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
   useParams: () => ({ matchCode: 'ABC123' }),
   useNavigate: () => mockNavigate,
+  Link: ({ to, children, ...props }: any) => <a href={to} {...props}>{children}</a>,
 }));
 
 vi.mock('react-helmet-async', () => ({
@@ -29,6 +30,7 @@ const defaultMatch: MatchDetailDto = {
       displayName: 'Player 1',
       avatarUrl: null,
       countryCode: 'AR',
+      slug: 'p1-abc',
       wpm: 85.5,
       precision: 97,
       score: 829,
@@ -41,6 +43,7 @@ const defaultMatch: MatchDetailDto = {
       displayName: 'Player 2',
       avatarUrl: 'http://img.png',
       countryCode: 'CL',
+      slug: 'p2-def',
       wpm: 70.2,
       precision: 92,
       score: 645,
@@ -87,6 +90,15 @@ describe('MatchDetailPage', () => {
 
     const img = container.querySelector('img[src="http://img.png"]');
     expect(img).not.toBeNull();
+  });
+
+  it('should link player names to public profiles', () => {
+    render(<MatchDetailPage />);
+
+    const p1Link = screen.getByText('Player 1').closest('a');
+    expect(p1Link?.getAttribute('href')).toBe('/u/p1-abc');
+    const p2Link = screen.getByText('Player 2').closest('a');
+    expect(p2Link?.getAttribute('href')).toBe('/u/p2-def');
   });
 
   it('muestra estado "No completada" y rank para participante que no finalizó', () => {

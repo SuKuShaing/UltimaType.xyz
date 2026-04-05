@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { DIFFICULTY_LEVELS, COUNTRIES, MatchPeriod } from '@ultimatype-monorepo/shared';
 import { useAuth } from '../../hooks/use-auth';
@@ -39,7 +39,6 @@ const PERIOD_LABELS: Record<MatchPeriod, string> = {
 };
 
 export function LeaderboardPage() {
-  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [level, setLevel] = useState<number | null>(null);
   const [period, setPeriod] = useState<MatchPeriod>('all');
@@ -246,12 +245,11 @@ export function LeaderboardPage() {
                     {leaderboard.data.map((entry) => (
                       <tr
                         key={entry.userId}
-                        onClick={() => navigate(`/match/${entry.bestScoreMatchCode}`)}
-                        className="cursor-pointer border-b border-surface-raised last:border-0 hover:bg-surface-raised/50"
+                        className="border-b border-surface-raised last:border-0 hover:bg-surface-raised/50"
                       >
                         <td className="py-3 pr-4 font-semibold text-text-muted">{entry.position}</td>
                         <td className="py-3 pr-4">
-                          <div className="flex items-center gap-2">
+                          <Link to={`/u/${entry.slug}`} className="flex items-center gap-2 hover:opacity-80">
                             <CountryFlag countryCode={entry.countryCode} size={16} />
                             {entry.avatarUrl ? (
                               <img
@@ -264,10 +262,14 @@ export function LeaderboardPage() {
                                 {entry.displayName.charAt(0).toUpperCase()}
                               </span>
                             )}
-                            <span className="text-text-main">{entry.displayName}</span>
-                          </div>
+                            <span className="text-text-main hover:text-primary">{entry.displayName}</span>
+                          </Link>
                         </td>
-                        <td className="py-3 pr-4 text-right font-semibold text-primary">{formatScore(entry.bestScore)}</td>
+                        <td className="py-3 pr-4 text-right font-semibold text-primary">
+                          <Link to={`/match/${entry.bestScoreMatchCode}`} className="hover:underline">
+                            {formatScore(entry.bestScore)}
+                          </Link>
+                        </td>
                         <td className="py-3 text-right text-text-muted">{entry.bestScorePrecision}%</td>
                       </tr>
                     ))}

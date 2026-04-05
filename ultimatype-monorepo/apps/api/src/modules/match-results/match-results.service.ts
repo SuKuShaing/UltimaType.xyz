@@ -275,6 +275,7 @@ export class MatchResultsService {
             displayName: true,
             avatarUrl: true,
             countryCode: true,
+            slug: true,
           },
         },
       },

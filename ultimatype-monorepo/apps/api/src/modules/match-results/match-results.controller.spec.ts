@@ -248,7 +248,7 @@ describe('MatchResultsController', () => {
       finishedAt: new Date('2026-04-02T12:00:00Z'),
       rank,
       createdAt: new Date('2026-04-02T12:00:00Z'),
-      user: { displayName, avatarUrl: null, countryCode: 'AR' },
+      user: { displayName, avatarUrl: null, countryCode: 'AR', slug: `${displayName.toLowerCase().replace(' ', '-')}` },
     });
 
     it('retorna detalle de partida con participantes', async () => {

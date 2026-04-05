@@ -22,6 +22,7 @@ model User {
   displayName String       @map("display_name")
   avatarUrl   String?      @map("avatar_url")
   countryCode String?      @map("country_code")
+  slug        String       @unique
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
   lastLoginAt DateTime     @default(now()) @map("last_login_at")

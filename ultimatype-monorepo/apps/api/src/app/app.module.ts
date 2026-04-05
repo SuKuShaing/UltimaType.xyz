@@ -1,6 +1,8 @@
-import { Module } from '@nestjs/common';
+import { join } from 'path';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { z } from 'zod';
 import { AppController } from './app.controller';
@@ -12,6 +14,7 @@ import { TextsModule } from '../modules/texts/texts.module';
 import { RedisModule } from '../redis/redis.module';
 import { GameModule } from '../gateway/game.module';
 import { LeaderboardModule } from '../modules/leaderboard/leaderboard.module';
+import { OgProxyMiddleware } from '../middleware/og-proxy.middleware';
 
 const envSchema = z.object({
   JWT_SECRET: z.string().min(1),
@@ -32,6 +35,26 @@ const envSchema = z.object({
 
 @Module({
   imports: [
+    // En producción, NestJS sirve la SPA y actúa como OG proxy para bots
+    ...(process.env.NODE_ENV === 'production'
+      ? [
+          ServeStaticModule.forRoot({
+            rootPath: join(__dirname, '..', 'public'),
+            // Excluir rutas de la API — las maneja NestJS normalmente
+            exclude: ['/api/(.*)'],
+            serveStaticOptions: {
+              // Cache agresivo para assets con hash (JS, CSS), no-cache para index.html
+              setHeaders: (res: any, filePath: string) => {
+                if (filePath.endsWith('index.html')) {
+                  res.setHeader('Cache-Control', 'no-cache');
+                } else {
+                  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+                }
+              },
+            },
+          }),
+        ]
+      : []),
     ConfigModule.forRoot({
       isGlobal: true,
       validate: (config) => envSchema.parse(config),
@@ -60,4 +83,8 @@ const envSchema = z.object({
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(OgProxyMiddleware).forRoutes('/u/*');
+  }
+}

@@ -31,6 +31,7 @@ const makeEntry = (overrides: Partial<LeaderboardEntryDto> = {}): LeaderboardEnt
   displayName: 'Alice',
   avatarUrl: 'http://example.com/alice.jpg',
   countryCode: 'AR',
+  slug: 'al-abc',
   bestScore: 1200,
   bestScorePrecision: 98.5,
   bestScoreMatchCode: 'ABC123',
@@ -188,20 +189,32 @@ describe('LeaderboardPage', () => {
     expect(link.closest('a')?.getAttribute('href')).toBe('/match/ABC123');
   });
 
-  it('should navigate to match detail on row click', () => {
+  it('should link player name to public profile', () => {
     const data: PaginatedResponse<LeaderboardEntryDto> = {
-      data: [makeEntry({ bestScoreMatchCode: 'XYZ789' })],
+      data: [makeEntry({ slug: 'al-abc' })],
       meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
     };
     mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
 
     renderPage();
 
-    const row = screen.getByText('Alice').closest('tr');
-    expect(row).toBeTruthy();
-    expect(row?.className).toContain('cursor-pointer');
-    fireEvent.click(row!);
-    // navigation handled by useNavigate — row must be clickable with correct class
+    const link = screen.getByText('Alice').closest('a');
+    expect(link).toBeTruthy();
+    expect(link?.getAttribute('href')).toBe('/u/al-abc');
+  });
+
+  it('should link best score to match detail', () => {
+    const data: PaginatedResponse<LeaderboardEntryDto> = {
+      data: [makeEntry({ bestScoreMatchCode: 'XYZ789', bestScore: 1200 })],
+      meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
+    };
+    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
+
+    renderPage();
+
+    // The score is formatted via toLocaleString and wrapped in a Link
+    const matchLink = document.querySelector('a[href="/match/XYZ789"]');
+    expect(matchLink).toBeTruthy();
   });
 
   it('should show pagination when multiple pages exist', () => {

@@ -373,7 +373,7 @@ describe('MatchResultsService', () => {
         orderBy: { rank: 'asc' },
         select: expect.objectContaining({
           wpm: true, score: true, rank: true,
-          user: { select: { displayName: true, avatarUrl: true, countryCode: true } },
+          user: { select: { displayName: true, avatarUrl: true, countryCode: true, slug: true } },
         }),
       });
     });

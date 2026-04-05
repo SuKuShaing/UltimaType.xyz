@@ -15,6 +15,7 @@ interface RawLeaderboardRow {
   displayName: string;
   avatarUrl: string | null;
   countryCode: string | null;
+  slug: string;
   bestScore: number;
   bestScorePrecision: number;
   bestScoreMatchCode: string;
@@ -81,6 +82,7 @@ export class LeaderboardService {
            u.display_name AS "displayName",
            u.avatar_url AS "avatarUrl",
            u.country_code AS "countryCode",
+           u.slug AS "slug",
            mr.score AS "bestScore",
            mr.precision AS "bestScorePrecision",
            mr.match_code AS "bestScoreMatchCode"
@@ -109,6 +111,7 @@ export class LeaderboardService {
       displayName: e.displayName,
       avatarUrl: e.avatarUrl,
       countryCode: e.countryCode,
+      slug: e.slug,
       bestScore: Number(e.bestScore),
       bestScorePrecision: Number(e.bestScorePrecision),
       bestScoreMatchCode: e.bestScoreMatchCode,

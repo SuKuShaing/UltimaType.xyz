@@ -1,6 +1,6 @@
 # Story 4.6: Public User Profiles
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -109,129 +109,148 @@ so that I can explore opponents' stats and history, and share my achievements on
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Migración Prisma — campo slug (AC: #1)
-  - [ ] Agregar campo `slug String? @unique @map("slug")` al modelo User (nullable inicialmente para migración)
-  - [ ] Crear migración: `npx prisma migrate dev --name add-user-slug`
-  - [ ] Script de backfill: generar slugs para usuarios existentes (iniciales + 3 hex random)
-  - [ ] Cambiar campo a `slug String @unique` (not null) después del backfill
-  - [ ] Regenerar Prisma client
+- [x] Task 1: Migración Prisma — campo slug (AC: #1)
+  - [x] Agregar campo `slug String? @unique @map("slug")` al modelo User (nullable inicialmente para migración)
+  - [x] Crear migración: `npx prisma migrate dev --name add-user-slug`
+  - [x] Script de backfill: generar slugs para usuarios existentes (iniciales + 3 hex random)
+  - [x] Cambiar campo a `slug String @unique` (not null) después del backfill
+  - [x] Regenerar Prisma client
 
-- [ ] Task 2: Utilidad de generación de slug (AC: #1)
-  - [ ] Crear helper `generateSlug(displayName: string): string` en UsersService o utils
-  - [ ] Formato: `{iniciales lowercase}-{3 chars hex random}` (ej: "Sebastián Sanhueza" → `ss-a3f`)
-  - [ ] Si displayName tiene una sola palabra, usar las dos primeras letras
-  - [ ] Normalizar caracteres acentuados (é→e, á→a, ñ→n)
-  - [ ] Método `generateUniqueSlug(displayName)` que reintenta si hay colisión (max 10 intentos)
+- [x] Task 2: Utilidad de generación de slug (AC: #1)
+  - [x] Crear helper `generateSlug(displayName: string): string` en UsersService o utils
+  - [x] Formato: `{iniciales lowercase}-{3 chars hex random}` (ej: "Sebastián Sanhueza" → `ss-a3f`)
+  - [x] Si displayName tiene una sola palabra, usar las dos primeras letras
+  - [x] Normalizar caracteres acentuados (é→e, á→a, ñ→n)
+  - [x] Método `generateUniqueSlug(displayName)` que reintenta si hay colisión (max 10 intentos)
 
-- [ ] Task 3: Backend — auto-generación al crear usuario (AC: #1)
-  - [ ] Modificar `UsersService.create()` para llamar `generateUniqueSlug(displayName)` y asignar al campo slug
-  - [ ] Tests: crear usuario genera slug con formato correcto, colisiones se resuelven
+- [x] Task 3: Backend — auto-generación al crear usuario (AC: #1)
+  - [x] Modificar `UsersService.create()` para llamar `generateUniqueSlug(displayName)` y asignar al campo slug
+  - [x] Tests: crear usuario genera slug con formato correcto, colisiones se resuelven
 
-- [ ] Task 4: Backend — endpoint check-slug (AC: #3)
-  - [ ] Agregar `@Get('check-slug/:slug')` en UsersController (SIN guard, público)
-  - [ ] Normalizar slug a lowercase antes de buscar
-  - [ ] Retornar `{ available: boolean }`
-  - [ ] Tests: slug libre → true, slug tomado → true, normalización case
+- [x] Task 4: Backend — endpoint check-slug (AC: #3)
+  - [x] Agregar `@Get('check-slug/:slug')` en UsersController (SIN guard, público)
+  - [x] Normalizar slug a lowercase antes de buscar
+  - [x] Retornar `{ available: boolean }`
+  - [x] Tests: slug libre → true, slug tomado → true, normalización case
 
-- [ ] Task 5: Backend — endpoint perfil público by-slug (AC: #4)
-  - [ ] Agregar `@Get('by-slug/:slug')` en UsersController (SIN guard, público)
-  - [ ] Query: `prisma.user.findUnique({ where: { slug } })` con select explícito (sin email, provider, providerId)
-  - [ ] Retornar `{ id, displayName, avatarUrl, countryCode, slug, createdAt }` o 404
-  - [ ] Tests: slug válido → perfil sin email, slug inexistente → 404
+- [x] Task 5: Backend — endpoint perfil público by-slug (AC: #4)
+  - [x] Agregar `@Get('by-slug/:slug')` en UsersController (SIN guard, público)
+  - [x] Query: `prisma.user.findUnique({ where: { slug } })` con select explícito (sin email, provider, providerId)
+  - [x] Retornar `{ id, displayName, avatarUrl, countryCode, slug, createdAt }` o 404
+  - [x] Tests: slug válido → perfil sin email, slug inexistente → 404
 
-- [ ] Task 6: Backend — endpoints públicos de matches y stats de otro usuario (AC: #4)
-  - [ ] Agregar `@Get(':id/matches')` en UsersController (SIN guard, público)
-  - [ ] Agregar `@Get(':id/stats')` en UsersController (SIN guard, público)
-  - [ ] Reutilizar `MatchResultsService.findByUser()` y `MatchResultsService.getStats()` con el userId del param
-  - [ ] Validar que userId existe antes de consultar (404 si no)
-  - [ ] Mismos parámetros opcionales: `level`, `period`, `page`, `limit`
-  - [ ] Tests: matches de usuario válido, stats de usuario válido, userId inexistente → 404
+- [x] Task 6: Backend — endpoints públicos de matches y stats de otro usuario (AC: #4)
+  - [x] Agregar `@Get(':id/matches')` en UsersController (SIN guard, público)
+  - [x] Agregar `@Get(':id/stats')` en UsersController (SIN guard, público)
+  - [x] Reutilizar `MatchResultsService.findByUser()` y `MatchResultsService.getStats()` con el userId del param
+  - [x] Validar que userId existe antes de consultar (404 si no)
+  - [x] Mismos parámetros opcionales: `level`, `period`, `page`, `limit`
+  - [x] Tests: matches de usuario válido, stats de usuario válido, userId inexistente → 404
 
-- [ ] Task 7: Backend — edición de slug en PATCH /users/me (AC: #2)
-  - [ ] Extender `UpdateProfileDto` para aceptar campo opcional `slug`
-  - [ ] Validar formato: regex `/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/`
-  - [ ] Verificar disponibilidad antes de guardar (throw ConflictException si tomado)
-  - [ ] Normalizar a lowercase
-  - [ ] Actualizar `UsersService.updateProfile()` o crear método específico
-  - [ ] Tests: slug válido y libre → actualizado, slug tomado → 409, formato inválido → 400
+- [x] Task 7: Backend — edición de slug en PATCH /users/me (AC: #2)
+  - [x] Extender `UpdateProfileDto` para aceptar campo opcional `slug`
+  - [x] Validar formato: regex `/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/`
+  - [x] Verificar disponibilidad antes de guardar (throw ConflictException si tomado)
+  - [x] Normalizar a lowercase
+  - [x] Actualizar `UsersService.updateProfile()` o crear método específico
+  - [x] Tests: slug válido y libre → actualizado, slug tomado → 409, formato inválido → 400
 
-- [ ] Task 8: Backend — agregar slug a respuestas de match detail y leaderboard (AC: #7)
-  - [ ] Extender `findByMatchCode` en MatchResultsService para incluir `user.slug` en el select/include
-  - [ ] Agregar `slug` al `MatchDetailParticipantDto` en shared
-  - [ ] Extender endpoint de leaderboard para incluir `slug` en cada jugador
-  - [ ] Agregar `slug` al DTO de leaderboard en shared
-  - [ ] Tests: match detail incluye slug por participante, leaderboard incluye slug por jugador
+- [x] Task 8: Backend — agregar slug a respuestas de match detail y leaderboard (AC: #7)
+  - [x] Extender `findByMatchCode` en MatchResultsService para incluir `user.slug` en el select/include
+  - [x] Agregar `slug` al `MatchDetailParticipantDto` en shared
+  - [x] Extender endpoint de leaderboard para incluir `slug` en cada jugador
+  - [x] Agregar `slug` al DTO de leaderboard en shared
+  - [x] Tests: match detail incluye slug por participante, leaderboard incluye slug por jugador
 
-- [ ] Task 9: Backend — hacer match detail público (AC: #8)
-  - [ ] Remover `@UseGuards(JwtAuthGuard)` del endpoint `GET /matches/:matchCode`
-  - [ ] Tests: request sin token a GET /matches/:matchCode → 200 (no 401)
+- [x] Task 9: Backend — hacer match detail público (AC: #8)
+  - [x] Remover `@UseGuards(JwtAuthGuard)` del endpoint `GET /matches/:matchCode`
+  - [x] Tests: request sin token a GET /matches/:matchCode → 200 (no 401)
 
-- [ ] Task 10: Backend — proxy middleware OG meta tags (AC: #9)
-  - [ ] Crear middleware NestJS que intercepte rutas `/u/:slug`
-  - [ ] Detección de bot por User-Agent: `WhatsApp`, `Twitterbot`, `facebookexternalhit`, `Googlebot`, `LinkedInBot`, `Slackbot`
-  - [ ] Si es bot: query user + stats, generar HTML con meta tags OG, servir directamente
-  - [ ] Si no es bot: `next()` para que sirva la SPA
-  - [ ] Template HTML mínimo con og:title, og:description, og:image, og:url, twitter:card
-  - [ ] Tests: request con User-Agent bot → HTML con meta tags, request normal → no interceptado
+- [x] Task 10: Backend — proxy middleware OG meta tags (AC: #9)
+  - [x] Crear middleware NestJS que intercepte rutas `/u/:slug`
+  - [x] Detección de bot por User-Agent: `WhatsApp`, `Twitterbot`, `facebookexternalhit`, `Googlebot`, `LinkedInBot`, `Slackbot`
+  - [x] Si es bot: query user + stats, generar HTML con meta tags OG, servir directamente
+  - [x] Si no es bot: `next()` para que sirva la SPA
+  - [x] Template HTML mínimo con og:title, og:description, og:image, og:url, twitter:card
+  - [x] Tests: request con User-Agent bot → HTML con meta tags, request normal → no interceptado
 
-- [ ] Task 11: DTOs compartidos (AC: #4, #7, #8)
-  - [ ] Agregar `PublicUserProfileDto` en shared: `{ id, displayName, avatarUrl, countryCode, slug, createdAt }`
-  - [ ] Agregar `slug: string` a `MatchDetailParticipantDto`
-  - [ ] Agregar `slug: string` al DTO del leaderboard
-  - [ ] Agregar `CheckSlugResponseDto`: `{ available: boolean }`
-  - [ ] Re-exportar desde `libs/shared/src/index.ts`
+- [x] Task 11: DTOs compartidos (AC: #4, #7, #8)
+  - [x] Agregar `PublicUserProfileDto` en shared: `{ id, displayName, avatarUrl, countryCode, slug, createdAt }`
+  - [x] Agregar `slug: string` a `MatchDetailParticipantDto`
+  - [x] Agregar `slug: string` al DTO del leaderboard
+  - [x] Agregar `CheckSlugResponseDto`: `{ available: boolean }`
+  - [x] Re-exportar desde `libs/shared/src/index.ts`
 
-- [ ] Task 12: Frontend — hook usePublicProfile (AC: #5)
-  - [ ] Crear `apps/web/src/hooks/use-public-profile.ts`
-  - [ ] `usePublicProfile(slug)` → query `GET /api/users/by-slug/:slug`
-  - [ ] No requiere auth token
+- [x] Task 12: Frontend — hook usePublicProfile (AC: #5)
+  - [x] Crear `apps/web/src/hooks/use-public-profile.ts`
+  - [x] `usePublicProfile(slug)` → query `GET /api/users/by-slug/:slug`
+  - [x] No requiere auth token
 
-- [ ] Task 13: Frontend — hooks useUserMatches y useUserStats (AC: #5)
-  - [ ] Crear `apps/web/src/hooks/use-user-matches.ts` → query `GET /api/users/:id/matches`
-  - [ ] Crear `apps/web/src/hooks/use-user-stats.ts` → query `GET /api/users/:id/stats`
-  - [ ] Aceptar parámetros de filtro: `level`, `period`, `page`
-  - [ ] No requieren auth token
+- [x] Task 13: Frontend — hooks useUserMatches y useUserStats (AC: #5)
+  - [x] Crear `apps/web/src/hooks/use-user-matches.ts` → query `GET /api/users/:id/matches`
+  - [x] Crear `apps/web/src/hooks/use-user-stats.ts` → query `GET /api/users/:id/stats`
+  - [x] Aceptar parámetros de filtro: `level`, `period`, `page`
+  - [x] No requieren auth token
 
-- [ ] Task 14: Frontend — componente PublicProfilePage (AC: #5, #6)
-  - [ ] Crear `apps/web/src/components/profile/public-profile-page.tsx`
-  - [ ] Hero: avatar (o iniciales), displayName, bandera país, "Jugador desde [mes] [año]"
-  - [ ] Stats: 3 tarjetas (Mejor Puntaje, Puntaje Promedio, Total Partidas)
-  - [ ] Historial: reutilizar lógica de MatchHistorySection (filtros nivel/período, lista clickeable)
-  - [ ] CTA "Comienza a competir" visible solo para visitantes no autenticados
-  - [ ] Loading, error y empty states
-  - [ ] Español internacional en todos los textos
+- [x] Task 14: Frontend — componente PublicProfilePage (AC: #5, #6)
+  - [x] Crear `apps/web/src/components/profile/public-profile-page.tsx`
+  - [x] Hero: avatar (o iniciales), displayName, bandera país, "Jugador desde [mes] [año]"
+  - [x] Stats: 3 tarjetas (Mejor Puntaje, Puntaje Promedio, Total Partidas)
+  - [x] Historial: reutilizar lógica de MatchHistorySection (filtros nivel/período, lista clickeable)
+  - [x] CTA "Comienza a competir" visible solo para visitantes no autenticados
+  - [x] Loading, error y empty states
+  - [x] Español internacional en todos los textos
 
-- [ ] Task 15: Frontend — edición de slug en ProfilePage (AC: #2)
-  - [ ] Agregar campo de slug en la tarjeta de perfil existente
-  - [ ] Hook `useCheckSlug(slug)` con debounce 400ms → `GET /api/users/check-slug/:slug`
-  - [ ] Indicador visual: verde "Disponible" / rojo "No disponible" / gris "Verificando..."
-  - [ ] Validación cliente: regex, longitud 3-30
-  - [ ] Enviar slug en el `PATCH /users/me` junto con countryCode
-  - [ ] Mostrar link compartible: `ultimatype.com/u/{slug}` (copiable)
+- [x] Task 15: Frontend — edición de slug en ProfilePage (AC: #2)
+  - [x] Agregar campo de slug en la tarjeta de perfil existente
+  - [x] Hook `useCheckSlug(slug)` con debounce 400ms → `GET /api/users/check-slug/:slug`
+  - [x] Indicador visual: verde "Disponible" / rojo "No disponible" / gris "Verificando..."
+  - [x] Validación cliente: regex, longitud 3-30
+  - [x] Enviar slug en el `PATCH /users/me` junto con countryCode
+  - [x] Mostrar link compartible: `ultimatype.com/u/{slug}` (copiable)
 
-- [ ] Task 16: Frontend — nombres clickeables en MatchDetailPage (AC: #7)
-  - [ ] Modificar `match-detail-page.tsx`: envolver displayName + avatar en `<Link to={/u/${slug}}>`
-  - [ ] Actualizar tipo del participante para incluir `slug`
+- [x] Task 16: Frontend — nombres clickeables en MatchDetailPage (AC: #7)
+  - [x] Modificar `match-detail-page.tsx`: envolver displayName + avatar en `<Link to={/u/${slug}}>`
+  - [x] Actualizar tipo del participante para incluir `slug`
 
-- [ ] Task 17: Frontend — nombres clickeables en LeaderboardPage (AC: #7)
-  - [ ] Modificar leaderboard para envolver nombre + avatar en `<Link to={/u/${slug}}>`
-  - [ ] Actualizar tipo del jugador para incluir `slug`
+- [x] Task 17: Frontend — nombres clickeables en LeaderboardPage (AC: #7)
+  - [x] Modificar leaderboard para envolver nombre + avatar en `<Link to={/u/${slug}}>`
+  - [x] Actualizar tipo del jugador para incluir `slug`
 
-- [ ] Task 18: Frontend — rutas (AC: #5, #8)
-  - [ ] Agregar ruta `/u/:slug` → `<PublicProfilePage />` (fuera de ProtectedRoute)
-  - [ ] Mover `/match/:matchCode` fuera de ProtectedRoute (ahora público)
-  - [ ] En `app.tsx` actualizar Routes
+- [x] Task 18: Frontend — rutas (AC: #5, #8)
+  - [x] Agregar ruta `/u/:slug` → `<PublicProfilePage />` (fuera de ProtectedRoute)
+  - [x] Mover `/match/:matchCode` fuera de ProtectedRoute (ahora público)
+  - [x] En `app.tsx` actualizar Routes
 
-- [ ] Task 19: Tests frontend (AC: #2, #5, #6, #7)
-  - [ ] Tests de PublicProfilePage: loading, perfil con datos, stats, historial, CTA visible sin auth, CTA oculto con auth, 404
-  - [ ] Tests de slug editing en ProfilePage: campo slug, indicador disponibilidad, validación, guardado
-  - [ ] Tests de links clickeables en MatchDetailPage: click en nombre navega a /u/:slug
-  - [ ] Tests de links clickeables en LeaderboardPage: click en nombre navega a /u/:slug
+- [x] Task 19: Tests frontend (AC: #2, #5, #6, #7)
+  - [x] Tests de PublicProfilePage: loading, perfil con datos, stats, historial, CTA visible sin auth, CTA oculto con auth, 404
+  - [x] Tests de slug editing en ProfilePage: campo slug, indicador disponibilidad, validación, guardado
+  - [x] Tests de links clickeables en MatchDetailPage: click en nombre navega a /u/:slug
+  - [x] Tests de links clickeables en LeaderboardPage: click en nombre navega a /u/:slug
 
-- [ ] Task 20: Tests backend adicionales (AC: #1, #9)
-  - [ ] Tests de generateSlug: formato correcto, caracteres acentuados normalizados, una palabra
-  - [ ] Tests de generateUniqueSlug: resolución de colisiones
-  - [ ] Tests del middleware OG: detección bot, HTML generado con meta tags correctas, bypass para browsers
+- [x] Task 20: Tests backend adicionales (AC: #1, #9)
+  - [x] Tests de generateSlug: formato correcto, caracteres acentuados normalizados, una palabra
+  - [x] Tests de generateUniqueSlug: resolución de colisiones
+  - [x] Tests del middleware OG: detección bot, HTML generado con meta tags correctas, bypass para browsers
+
+### Review Findings
+
+- [x] [Review][Decision] OG middleware registrado en NestJS pero /u/* es ruta de la SPA y nunca llega al servidor NestJS (no hay ServeStatic configurado) — RESUELTO: Opción A aplicada (ServeStaticModule, Dockerfile actualizado, deploy.yml actualizado, helmet configurado)
+- [ ] [Review][Patch] XSS en template HTML del OG proxy — displayName, description, avatarUrl interpolados sin escapar entidades HTML [apps/api/src/middleware/og-proxy.middleware.ts:54-70]
+- [ ] [Review][Patch] Host-header injection — usar FRONTEND_URL de config en lugar de req.get('host') [apps/api/src/middleware/og-proxy.middleware.ts:53]
+- [ ] [Review][Patch] Race condition TOCTOU en slug — check-then-write no atómico; P2002 de Prisma debe capturarse como ConflictException 409 [apps/api/src/modules/users/users.service.ts, users.controller.ts]
+- [ ] [Review][Patch] Migración backfill sin manejo de colisiones — CREATE UNIQUE INDEX puede fallar si dos usuarios con mismas iniciales obtienen el mismo MD5[0:3] [prisma/migrations/20260405000000_add_user_slug/migration.sql]
+- [ ] [Review][Patch] OG description no incluye bestScore/maxLevel/country — viola AC9 (el middleware no consulta MatchResult) [apps/api/src/middleware/og-proxy.middleware.ts:39-54]
+- [ ] [Review][Patch] check-slug sin @Throttle dedicado — permite enumerar el espacio de slugs anónimamente [apps/api/src/modules/users/users.controller.ts:46-51]
+- [ ] [Review][Patch] generateSlug produce slugs inválidos para nombres con caracteres no-latinos (CJK, emoji) — NFD strip no elimina no-ASCII [apps/api/src/modules/users/users.service.ts:19-35]
+- [ ] [Review][Patch] handleSave no bloquea guardado si slug availability aún no verificada o está pendiente [apps/web/src/components/profile/profile-page.tsx]
+- [ ] [Review][Patch] DTO @Matches exige lowercase, rechazando slugs mixtos en vez de normalizarlos — violación AC2 (el toLowerCase del controller es dead code path) [apps/api/src/modules/users/dto/update-profile.dto.ts:11]
+- [ ] [Review][Patch] totalPages = 0 cuando usuario sin partidas muestra "1 / 0" en paginación [apps/web/src/components/profile/public-profile-page.tsx:71]
+- [ ] [Review][Patch] Migración backfill falla para display names de 1 carácter o con espacios iniciales [prisma/migrations/20260405000000_add_user_slug/migration.sql:6-13]
+- [ ] [Review][Patch] useCheckSlug enabled-guard usa regex más permisivo que el DTO — puede mostrar "Disponible" para slugs que el backend rechaza [apps/web/src/hooks/use-check-slug.ts:12]
+- [x] [Review][Defer] usePublicProfile sin staleTime — re-fetches en cada mount [apps/web/src/hooks/use-public-profile.ts] — deferred, pre-existing pattern
+- [x] [Review][Defer] countryPercentile puede ser NaN si globalTotal=0 [apps/api/src/modules/leaderboard/leaderboard.service.ts:190] — deferred, pre-existing
+- [x] [Review][Defer] profile.id stale desde cache puede disparar queries de stats para usuario incorrecto [apps/web/src/components/profile/public-profile-page.tsx] — deferred, React Query behavior, low risk
 
 ---
 

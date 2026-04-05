@@ -5,7 +5,10 @@ import { Helmet } from 'react-helmet-async';
 import { COUNTRIES } from '@ultimatype-monorepo/shared';
 import { useAuth } from '../../hooks/use-auth';
 import { apiClient } from '../../lib/api-client';
+import { useCheckSlug } from '../../hooks/use-check-slug';
 import { MatchHistorySection } from './match-history-section';
+
+const SLUG_REGEX = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
 
 export function ProfilePage() {
   const { user, isFetchingProfile, isAuthenticated } = useAuth();
@@ -13,20 +16,27 @@ export function ProfilePage() {
   const queryClient = useQueryClient();
 
   const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [slugInput, setSlugInput] = useState<string>('');
+  const [slugDirty, setSlugDirty] = useState(false);
+  const [debouncedSlug, setDebouncedSlug] = useState('');
   const [hasChanged, setHasChanged] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { data: slugCheck, isLoading: isCheckingSlug } = useCheckSlug(debouncedSlug);
 
   const mutation = useMutation({
-    mutationFn: (countryCode: string) =>
+    mutationFn: (data: { countryCode?: string; slug?: string }) =>
       apiClient('/users/me', {
         method: 'PATCH',
-        body: JSON.stringify({ countryCode }),
+        body: JSON.stringify(data),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
       setHasChanged(false);
-      setSuccessMessage('¡País actualizado correctamente!');
+      setSlugDirty(false);
+      setSuccessMessage('¡Perfil actualizado correctamente!');
       if (successTimerRef.current) clearTimeout(successTimerRef.current);
       successTimerRef.current = setTimeout(() => setSuccessMessage(''), 3000);
     },
@@ -35,8 +45,15 @@ export function ProfilePage() {
   useEffect(() => {
     return () => {
       if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      if (slugTimerRef.current) clearTimeout(slugTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (user?.slug && !slugDirty) {
+      setSlugInput(user.slug);
+    }
+  }, [user?.slug, slugDirty]);
 
   useEffect(() => {
     if (!isFetchingProfile && (!isAuthenticated || !user)) {
@@ -69,14 +86,49 @@ export function ProfilePage() {
 
   function handleCountryChange(code: string) {
     setSelectedCountry(code);
-    setHasChanged(code !== (user?.countryCode ?? ''));
+    checkHasChanged(code, slugInput);
     setSuccessMessage('');
   }
 
-  function handleSave() {
-    if (!selectedCountry || !hasChanged) return;
-    mutation.mutate(selectedCountry);
+  function handleSlugChange(value: string) {
+    const normalized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setSlugInput(normalized);
+    setSlugDirty(true);
+    checkHasChanged(selectedCountry, normalized);
+    setSuccessMessage('');
+
+    if (slugTimerRef.current) clearTimeout(slugTimerRef.current);
+    slugTimerRef.current = setTimeout(() => {
+      if (normalized !== user?.slug) {
+        setDebouncedSlug(normalized);
+      } else {
+        setDebouncedSlug('');
+      }
+    }, 400);
   }
+
+  function checkHasChanged(country: string, slug: string) {
+    const countryChanged = country !== '' && country !== (user?.countryCode ?? '');
+    const slugChanged = slug !== (user?.slug ?? '') && slug.length >= 3;
+    setHasChanged(countryChanged || slugChanged);
+  }
+
+  function handleSave() {
+    if (!hasChanged || mutation.isPending) return;
+    const data: { countryCode?: string; slug?: string } = {};
+    if (selectedCountry && selectedCountry !== (user?.countryCode ?? '')) {
+      data.countryCode = selectedCountry;
+    }
+    if (slugInput !== (user?.slug ?? '') && slugInput.length >= 3) {
+      data.slug = slugInput;
+    }
+    if (Object.keys(data).length === 0) return;
+    mutation.mutate(data);
+  }
+
+  const slugValid = SLUG_REGEX.test(slugInput);
+  const slugChanged = slugInput !== (user?.slug ?? '');
+  const slugAvailable = slugCheck?.available ?? false;
 
   const effectiveCountry = selectedCountry || user.countryCode || '';
 
@@ -111,6 +163,50 @@ export function ProfilePage() {
               <div className="text-xl font-semibold">{user.displayName}</div>
               <div className="text-sm text-text-muted">{user.email}</div>
             </div>
+          </div>
+
+          {/* Slug editing */}
+          <div className="mb-5">
+            <label htmlFor="slug-input" className="mb-2 block text-xs uppercase tracking-wide text-text-muted">
+              Slug (URL pública)
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-text-muted">ultimatype.com/u/</span>
+              <input
+                id="slug-input"
+                type="text"
+                value={slugInput}
+                onChange={(e) => handleSlugChange(e.target.value)}
+                className="flex-1 rounded-lg bg-surface-base px-3 py-2 text-sm text-text-main"
+                maxLength={30}
+                aria-label="Editar slug"
+                data-testid="slug-input"
+              />
+            </div>
+            {slugDirty && slugChanged && slugInput.length >= 3 && (
+              <div className="mt-1 text-xs" data-testid="slug-status">
+                {!slugValid && (
+                  <span className="text-error">Formato inválido</span>
+                )}
+                {slugValid && isCheckingSlug && (
+                  <span className="text-text-muted">Verificando...</span>
+                )}
+                {slugValid && !isCheckingSlug && slugAvailable && (
+                  <span className="text-success">Disponible</span>
+                )}
+                {slugValid && !isCheckingSlug && !slugAvailable && (
+                  <span className="text-error">No disponible</span>
+                )}
+              </div>
+            )}
+            {user.slug && (
+              <button
+                onClick={() => navigator.clipboard.writeText(`ultimatype.com/u/${user.slug}`)}
+                className="mt-1 text-xs text-primary hover:underline"
+              >
+                Copiar enlace
+              </button>
+            )}
           </div>
 
           <div className="mb-5">

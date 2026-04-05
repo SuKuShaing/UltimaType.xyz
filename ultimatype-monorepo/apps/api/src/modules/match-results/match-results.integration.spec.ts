@@ -22,6 +22,7 @@ describe('MatchResultsService (Integration)', () => {
     email: 'test1@integration.test',
     displayName: 'Test User 1',
     countryCode: 'AR',
+    slug: 'tu-int1',
   };
 
   const TEST_USER_2 = {
@@ -31,6 +32,7 @@ describe('MatchResultsService (Integration)', () => {
     email: 'test2@integration.test',
     displayName: 'Test User 2',
     countryCode: 'CL',
+    slug: 'tu-int2',
   };
 
   beforeAll(async () => {
@@ -47,11 +49,15 @@ describe('MatchResultsService (Integration)', () => {
     prismaService = {
       user: prisma.user,
       matchResult: prisma.matchResult,
-      onModuleInit: async () => {},
-      onModuleDestroy: async () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      onModuleInit: async () => { /* noop */ },
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      onModuleDestroy: async () => { /* noop */ },
     } as unknown as PrismaService;
 
-    service = new MatchResultsService(prismaService);
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    const mockLeaderboardService = { invalidateForLevel: async () => { /* noop */ } } as any;
+    service = new MatchResultsService(prismaService, mockLeaderboardService);
   });
 
   afterAll(async () => {

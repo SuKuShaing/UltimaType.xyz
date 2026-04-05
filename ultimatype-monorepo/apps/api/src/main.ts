@@ -10,7 +10,27 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Security headers
-  app.use(helmet());
+  // crossOriginEmbedderPolicy desactivado: los avatares de Google/GitHub no envían
+  // CORP headers, y COEP "require-corp" los bloquearía en el browser.
+  // imgSrc abierto a HTTPS para permitir avatares de cualquier CDN externa.
+  // connectSrc incluye wss: para WebSocket de Socket.IO.
+  app.use(
+    helmet({
+      crossOriginEmbedderPolicy: false,
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'", 'wss:', 'ws:'],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          frameSrc: ["'none'"],
+        },
+      },
+    }),
+  );
 
   // Trust proxy only when explicitly enabled
   if (configService.get('TRUST_PROXY') === 'true') {

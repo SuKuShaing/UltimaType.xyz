@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/use-auth';
 import { AuthCallback } from '../components/auth/auth-callback';
 import { ProtectedRoute } from '../components/auth/protected-route';
 import { ProfilePage } from '../components/profile/profile-page';
+import { PublicProfilePage } from '../components/profile/public-profile-page';
 import { LobbyPage } from '../components/lobby/lobby-page';
 import { MatchDetailPage } from '../components/match/match-detail-page';
 import { LeaderboardPage } from '../components/leaderboard/leaderboard-page';
@@ -75,14 +76,8 @@ export function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/match/:matchCode"
-          element={
-            <ProtectedRoute>
-              <MatchDetailPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/match/:matchCode" element={<MatchDetailPage />} />
+        <Route path="/u/:slug" element={<PublicProfilePage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/room/:code" element={<LobbyPage />} />
         <Route

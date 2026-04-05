@@ -87,7 +87,6 @@ export class MatchResultsController {
   }
 
   @Get(':matchCode')
-  @UseGuards(JwtAuthGuard)
   async getMatchDetail(
     @Param('matchCode') matchCode: string,
   ): Promise<MatchDetailDto> {
@@ -105,6 +104,7 @@ export class MatchResultsController {
         displayName: r.user.displayName,
         avatarUrl: r.user.avatarUrl,
         countryCode: r.user.countryCode,
+        slug: r.user.slug,
         wpm: r.wpm,
         precision: r.precision,
         score: r.score,
