@@ -26,6 +26,7 @@
 - [ ] Para un futuro que los países se puedan seleccionar por continente y sea vean las banderas de los países
 - [ ] Que la aplicación pregunte sí quieres la revancha y en el tablero aparezca una R si es que la quieren o no
 - [ ] Colocar broadcast en sincronización de pestañas cuando estén en el mismo link, para sincronizar lo que sucede en ambas pantallas
+-
 
 ## Preguntas
 
