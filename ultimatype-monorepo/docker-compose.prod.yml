@@ -47,15 +47,6 @@ services:
       - internal
       - dokploy-network
 
-  web:
-    image: ghcr.io/sukushaing/ultimatype-web:latest
-    pull_policy: always
-    restart: unless-stopped
-    depends_on:
-      - api
-    networks:
-      - internal
-      - dokploy-network
 
 volumes:
   postgres_data:

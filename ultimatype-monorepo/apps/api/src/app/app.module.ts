@@ -85,6 +85,7 @@ const envSchema = z.object({
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(OgProxyMiddleware).forRoutes('/u/*');
+    // path-to-regexp v8 (NestJS 11) requiere wildcard nombrado: *path en vez de *
+    consumer.apply(OgProxyMiddleware).forRoutes('/u/*path');
   }
 }
