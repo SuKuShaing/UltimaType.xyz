@@ -10,6 +10,7 @@ const EXTERNAL_PACKAGES = [
   '@nestjs/platform-express',
   '@nestjs/passport',
   '@nestjs/jwt',
+  '@nestjs/serve-static',
   '@prisma/client',
   '@prisma/engines',
   '@prisma/adapter-pg',
