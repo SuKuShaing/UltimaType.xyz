@@ -17,6 +17,7 @@ interface RawLeaderboardRow {
   countryCode: string | null;
   slug: string;
   bestScore: number;
+  bestScoreLevel: number;
   bestScorePrecision: number;
   bestScoreMatchCode: string;
 }
@@ -84,6 +85,7 @@ export class LeaderboardService {
            u.country_code AS "countryCode",
            u.slug AS "slug",
            mr.score AS "bestScore",
+           mr.level AS "bestScoreLevel",
            mr.precision AS "bestScorePrecision",
            mr.match_code AS "bestScoreMatchCode"
          FROM match_results mr
@@ -113,6 +115,7 @@ export class LeaderboardService {
       countryCode: e.countryCode,
       slug: e.slug,
       bestScore: Number(e.bestScore),
+      bestScoreLevel: Number(e.bestScoreLevel),
       bestScorePrecision: Number(e.bestScorePrecision),
       bestScoreMatchCode: e.bestScoreMatchCode,
     }));

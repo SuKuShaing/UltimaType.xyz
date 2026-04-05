@@ -5,9 +5,9 @@ ALTER TABLE "users" ADD COLUMN "slug" TEXT;
 UPDATE "users"
 SET "slug" = LOWER(
   CASE
-    WHEN POSITION(' ' IN "display_name") > 0
-    THEN SUBSTRING("display_name" FROM 1 FOR 1) || SUBSTRING("display_name" FROM POSITION(' ' IN "display_name") + 1 FOR 1)
-    ELSE SUBSTRING("display_name" FROM 1 FOR 2)
+    WHEN POSITION(' ' IN TRIM("display_name")) > 0
+    THEN SUBSTRING(TRIM("display_name") FROM 1 FOR 1) || SUBSTRING(TRIM("display_name") FROM POSITION(' ' IN TRIM("display_name")) + 1 FOR 1)
+    ELSE SUBSTRING(TRIM("display_name") FROM 1 FOR 1)
   END
 ) || '-' || SUBSTRING(MD5(id) FROM 1 FOR 3)
 WHERE "slug" IS NULL;

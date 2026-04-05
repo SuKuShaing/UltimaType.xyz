@@ -9,6 +9,6 @@ export function useCheckSlug(slug: string) {
       if (!response.ok) throw new Error('Error checking slug');
       return response.json();
     },
-    enabled: slug.length >= 3 && /^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(slug),
+    enabled: /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(slug),
   });
 }

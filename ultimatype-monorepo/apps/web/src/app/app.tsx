@@ -1,10 +1,8 @@
-import { useState, useCallback } from 'react';
-import { Route, Routes, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Route, Routes, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../hooks/use-auth';
 import { AuthCallback } from '../components/auth/auth-callback';
-import { ProtectedRoute } from '../components/auth/protected-route';
-import { ProfilePage } from '../components/profile/profile-page';
 import { PublicProfilePage } from '../components/profile/public-profile-page';
 import { LobbyPage } from '../components/lobby/lobby-page';
 import { MatchDetailPage } from '../components/match/match-detail-page';
@@ -13,6 +11,23 @@ import { CreateRoomButton } from '../components/lobby/create-room-button';
 import { NavBar } from '../components/ui/nav-bar';
 import { Logo } from '../components/ui/logo';
 import { LoginModal } from '../components/ui/login-modal';
+
+function ProfileRedirect() {
+  const { user, isAuthenticated, isFetchingProfile } = useAuth();
+
+  if (isFetchingProfile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface-base font-sans text-text-main">
+        <span className="text-2xl opacity-50">_</span>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+  if (!user?.slug) return <Navigate to="/" replace />;
+
+  return <Navigate to={`/u/${user.slug}`} replace />;
+}
 
 const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
 
@@ -68,14 +83,7 @@ export function App() {
 
       <Routes>
         <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/profile" element={<ProfileRedirect />} />
         <Route path="/match/:matchCode" element={<MatchDetailPage />} />
         <Route path="/u/:slug" element={<PublicProfilePage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />

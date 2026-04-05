@@ -1,6 +1,6 @@
 # Story 4.6: Public User Profiles
 
-Status: review
+Status: done
 
 ## Story
 
@@ -236,18 +236,18 @@ so that I can explore opponents' stats and history, and share my achievements on
 ### Review Findings
 
 - [x] [Review][Decision] OG middleware registrado en NestJS pero /u/* es ruta de la SPA y nunca llega al servidor NestJS (no hay ServeStatic configurado) — RESUELTO: Opción A aplicada (ServeStaticModule, Dockerfile actualizado, deploy.yml actualizado, helmet configurado)
-- [ ] [Review][Patch] XSS en template HTML del OG proxy — displayName, description, avatarUrl interpolados sin escapar entidades HTML [apps/api/src/middleware/og-proxy.middleware.ts:54-70]
-- [ ] [Review][Patch] Host-header injection — usar FRONTEND_URL de config en lugar de req.get('host') [apps/api/src/middleware/og-proxy.middleware.ts:53]
-- [ ] [Review][Patch] Race condition TOCTOU en slug — check-then-write no atómico; P2002 de Prisma debe capturarse como ConflictException 409 [apps/api/src/modules/users/users.service.ts, users.controller.ts]
-- [ ] [Review][Patch] Migración backfill sin manejo de colisiones — CREATE UNIQUE INDEX puede fallar si dos usuarios con mismas iniciales obtienen el mismo MD5[0:3] [prisma/migrations/20260405000000_add_user_slug/migration.sql]
-- [ ] [Review][Patch] OG description no incluye bestScore/maxLevel/country — viola AC9 (el middleware no consulta MatchResult) [apps/api/src/middleware/og-proxy.middleware.ts:39-54]
-- [ ] [Review][Patch] check-slug sin @Throttle dedicado — permite enumerar el espacio de slugs anónimamente [apps/api/src/modules/users/users.controller.ts:46-51]
-- [ ] [Review][Patch] generateSlug produce slugs inválidos para nombres con caracteres no-latinos (CJK, emoji) — NFD strip no elimina no-ASCII [apps/api/src/modules/users/users.service.ts:19-35]
-- [ ] [Review][Patch] handleSave no bloquea guardado si slug availability aún no verificada o está pendiente [apps/web/src/components/profile/profile-page.tsx]
-- [ ] [Review][Patch] DTO @Matches exige lowercase, rechazando slugs mixtos en vez de normalizarlos — violación AC2 (el toLowerCase del controller es dead code path) [apps/api/src/modules/users/dto/update-profile.dto.ts:11]
-- [ ] [Review][Patch] totalPages = 0 cuando usuario sin partidas muestra "1 / 0" en paginación [apps/web/src/components/profile/public-profile-page.tsx:71]
-- [ ] [Review][Patch] Migración backfill falla para display names de 1 carácter o con espacios iniciales [prisma/migrations/20260405000000_add_user_slug/migration.sql:6-13]
-- [ ] [Review][Patch] useCheckSlug enabled-guard usa regex más permisivo que el DTO — puede mostrar "Disponible" para slugs que el backend rechaza [apps/web/src/hooks/use-check-slug.ts:12]
+- [x] [Review][Patch] XSS en template HTML del OG proxy — displayName, description, avatarUrl interpolados sin escapar entidades HTML [apps/api/src/middleware/og-proxy.middleware.ts:54-70]
+- [x] [Review][Patch] Host-header injection — usar FRONTEND_URL de config en lugar de req.get('host') [apps/api/src/middleware/og-proxy.middleware.ts:53]
+- [x] [Review][Patch] Race condition TOCTOU en slug — check-then-write no atómico; P2002 de Prisma debe capturarse como ConflictException 409 [apps/api/src/modules/users/users.service.ts, users.controller.ts]
+- [x] [Review][Patch] Migración backfill sin manejo de colisiones — SKIP: migración ya aplicada en producción sin colisiones
+- [x] [Review][Patch] OG description no incluye bestScore/maxLevel/country — viola AC9 (el middleware no consulta MatchResult) [apps/api/src/middleware/og-proxy.middleware.ts:39-54]
+- [x] [Review][Patch] check-slug sin @Throttle dedicado — permite enumerar el espacio de slugs anónimamente [apps/api/src/modules/users/users.controller.ts:46-51]
+- [x] [Review][Patch] generateSlug produce slugs inválidos para nombres con caracteres no-latinos (CJK, emoji) — NFD strip no elimina no-ASCII [apps/api/src/modules/users/users.service.ts:19-35]
+- [x] [Review][Patch] handleSave no bloquea guardado si slug availability aún no verificada o está pendiente [apps/web/src/components/profile/profile-page.tsx]
+- [x] [Review][Patch] DTO @Matches exige lowercase, rechazando slugs mixtos en vez de normalizarlos — violación AC2 (el toLowerCase del controller es dead code path) [apps/api/src/modules/users/dto/update-profile.dto.ts:11]
+- [x] [Review][Patch] totalPages = 0 cuando usuario sin partidas muestra "1 / 0" en paginación [apps/web/src/components/profile/public-profile-page.tsx:71]
+- [x] [Review][Patch] Migración backfill falla para display names de 1 carácter o con espacios iniciales — TRIM aplicado, 1-char inicial permitida [prisma/migrations/20260405000000_add_user_slug/migration.sql:6-13]
+- [x] [Review][Patch] useCheckSlug enabled-guard usa regex más permisivo que el DTO — puede mostrar "Disponible" para slugs que el backend rechaza [apps/web/src/hooks/use-check-slug.ts:12]
 - [x] [Review][Defer] usePublicProfile sin staleTime — re-fetches en cada mount [apps/web/src/hooks/use-public-profile.ts] — deferred, pre-existing pattern
 - [x] [Review][Defer] countryPercentile puede ser NaN si globalTotal=0 [apps/api/src/modules/leaderboard/leaderboard.service.ts:190] — deferred, pre-existing
 - [x] [Review][Defer] profile.id stale desde cache puede disparar queries de stats para usuario incorrecto [apps/web/src/components/profile/public-profile-page.tsx] — deferred, React Query behavior, low risk

@@ -1,6 +1,6 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AuthProvider } from '@prisma/client';
+import { AuthProvider, Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 
 export interface CreateUserInput {
@@ -17,9 +17,10 @@ export interface CreateUserInput {
  * E.g. "Sebastián Sanhueza" → "ss-a3f"
  */
 export function generateSlug(displayName: string): string {
-  // Normalize accented characters (NFD + strip diacritics)
+  // Normalize accented characters (NFD + strip diacritics), then strip non-ASCII (CJK, emoji, etc.)
   const normalized = displayName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const parts = normalized.trim().split(/\s+/).filter(Boolean);
+  const ascii = normalized.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+  const parts = (ascii || 'u').split(/\s+/).filter(Boolean);
 
   let initials: string;
   if (parts.length >= 2) {
@@ -110,18 +111,16 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, data: { countryCode?: string; slug?: string }) {
-    if (data.slug) {
-      const existing = await this.prisma.user.findUnique({
-        where: { slug: data.slug },
-        select: { id: true },
+    try {
+      return await this.prisma.user.update({
+        where: { id: userId },
+        data,
       });
-      if (existing && existing.id !== userId) {
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
         throw new ConflictException('El slug ya está en uso');
       }
+      throw err;
     }
-    return this.prisma.user.update({
-      where: { id: userId },
-      data,
-    });
   }
 }

@@ -30,6 +30,33 @@ vi.mock('../../hooks/use-user-stats', () => ({
   useUserStats: vi.fn(),
 }));
 
+vi.mock('../../hooks/use-user-position', () => ({
+  useUserPosition: vi.fn(),
+}));
+
+vi.mock('../../hooks/use-check-slug', () => ({
+  useCheckSlug: vi.fn(),
+}));
+
+vi.mock('../../lib/api-client', () => ({
+  apiClient: vi.fn(),
+}));
+
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+  return {
+    ...actual,
+    useMutation: vi.fn().mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+    }),
+    useQueryClient: vi.fn().mockReturnValue({
+      invalidateQueries: vi.fn(),
+    }),
+  };
+});
+
 vi.mock('../ui/country-flag', () => ({
   CountryFlag: ({ countryCode }: { countryCode: string | null }) =>
     countryCode ? <span data-testid="flag">{countryCode}</span> : null,
@@ -39,11 +66,15 @@ import { useAuth } from '../../hooks/use-auth';
 import { usePublicProfile } from '../../hooks/use-public-profile';
 import { useUserMatches } from '../../hooks/use-user-matches';
 import { useUserStats } from '../../hooks/use-user-stats';
+import { useUserPosition } from '../../hooks/use-user-position';
+import { useCheckSlug } from '../../hooks/use-check-slug';
 
 const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
 const mockUsePublicProfile = usePublicProfile as ReturnType<typeof vi.fn>;
 const mockUseUserMatches = useUserMatches as ReturnType<typeof vi.fn>;
 const mockUseUserStats = useUserStats as ReturnType<typeof vi.fn>;
+const mockUseUserPosition = useUserPosition as ReturnType<typeof vi.fn>;
+const mockUseCheckSlug = useCheckSlug as ReturnType<typeof vi.fn>;
 
 const defaultProfile: PublicUserProfileDto = {
   id: 'user-1',
@@ -68,10 +99,12 @@ const emptyMatches: PaginatedResponse<MatchResultDto> = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockUseAuth.mockReturnValue({ isAuthenticated: false });
+  mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
   mockUsePublicProfile.mockReturnValue({ data: defaultProfile, isLoading: false, isError: false });
   mockUseUserStats.mockReturnValue({ data: defaultStats, isLoading: false });
   mockUseUserMatches.mockReturnValue({ data: emptyMatches, isLoading: false });
+  mockUseUserPosition.mockReturnValue({ data: null, isLoading: false });
+  mockUseCheckSlug.mockReturnValue({ data: undefined, isLoading: false });
 });
 
 describe('PublicProfilePage', () => {
@@ -111,7 +144,7 @@ describe('PublicProfilePage', () => {
   });
 
   it('should show CTA for unauthenticated visitors', () => {
-    mockUseAuth.mockReturnValue({ isAuthenticated: false });
+    mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
 
     render(<PublicProfilePage />);
 
@@ -121,7 +154,7 @@ describe('PublicProfilePage', () => {
   });
 
   it('should NOT show CTA for authenticated visitors', () => {
-    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { slug: 'otro-slug' } });
 
     render(<PublicProfilePage />);
 
@@ -144,5 +177,40 @@ describe('PublicProfilePage', () => {
     render(<PublicProfilePage />);
 
     expect(screen.getByText('SS')).toBeTruthy();
+  });
+
+  it('should show edit panel when viewing own profile', () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { slug: 'ss-abc', email: 'seba@example.com', displayName: 'Seba Sanhueza' },
+    });
+
+    render(<PublicProfilePage />);
+
+    expect(screen.getByTestId('slug-input')).toBeTruthy();
+    expect(screen.getByText('Guardar cambios')).toBeTruthy();
+  });
+
+  it('should NOT show edit panel when viewing another user profile', () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { slug: 'otro-slug', email: 'otro@example.com' },
+    });
+
+    render(<PublicProfilePage />);
+
+    expect(screen.queryByTestId('slug-input')).toBeNull();
+    expect(screen.queryByText('Guardar cambios')).toBeNull();
+  });
+
+  it('should NOT show CTA when viewing own profile', () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { slug: 'ss-abc', email: 'seba@example.com' },
+    });
+
+    render(<PublicProfilePage />);
+
+    expect(screen.queryByTestId('cta-login')).toBeNull();
   });
 });

@@ -10,8 +10,10 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { MatchResultsService, MatchResultRecord } from '../match-results/match-results.service';
+import { LeaderboardService } from '../leaderboard/leaderboard.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   isValidCountryCode,
@@ -39,10 +41,12 @@ export class UsersController {
   constructor(
     private usersService: UsersService,
     private matchResultsService: MatchResultsService,
+    private leaderboardService: LeaderboardService,
   ) {}
 
   // Public endpoints — declared BEFORE :id routes to avoid NestJS interpreting slugs as IDs
 
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
   @Get('check-slug/:slug')
   async checkSlug(@Param('slug') slug: string) {
     const normalized = slug.toLowerCase();
@@ -147,6 +151,15 @@ export class UsersController {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  @Get(':id/position')
+  async getUserPosition(
+    @Param('id') userId: string,
+  ) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    return this.leaderboardService.getUserPosition(userId);
   }
 
   @Get(':id/stats')

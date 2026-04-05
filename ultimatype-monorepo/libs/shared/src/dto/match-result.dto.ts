@@ -64,6 +64,7 @@ export type MatchPeriod = '7d' | '30d' | '1y' | 'all';
 export interface MatchStatsDto {
   avgScore: number;
   avgPrecision: number;
+  avgWpm: number;
   bestScore: number;
   totalMatches: number;
 }

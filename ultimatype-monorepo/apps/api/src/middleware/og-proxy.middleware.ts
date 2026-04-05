@@ -2,6 +2,14 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 const BOT_USER_AGENTS = [
   'WhatsApp',
   'Twitterbot',
@@ -39,6 +47,7 @@ export class OgProxyMiddleware implements NestMiddleware {
       const user = await this.prisma.user.findUnique({
         where: { slug },
         select: {
+          id: true,
           displayName: true,
           avatarUrl: true,
           countryCode: true,
@@ -50,19 +59,30 @@ export class OgProxyMiddleware implements NestMiddleware {
         return next();
       }
 
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      const description = `Perfil de ${user.displayName} en UltimaType`;
-      const ogImage = user.avatarUrl ?? '';
+      const stats = await this.prisma.matchResult.aggregate({
+        where: { userId: user.id },
+        _max: { score: true, level: true },
+      });
+
+      const descParts: string[] = [`Perfil de ${user.displayName} en UltimaType`];
+      if (user.countryCode) descParts.push(user.countryCode);
+      if (stats._max.score != null) descParts.push(`Mejor: ${Math.round(stats._max.score)} pts`);
+      if (stats._max.level != null) descParts.push(`Nivel ${stats._max.level}`);
+
+      const baseUrl = process.env.FRONTEND_URL!;
+      const safeName = escapeHtml(user.displayName);
+      const safeDescription = escapeHtml(descParts.join(' · '));
+      const safeImage = escapeHtml(user.avatarUrl ?? '');
 
       const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
-  <title>${user.displayName} — UltimaType</title>
-  <meta name="description" content="${description}">
+  <title>${safeName} — UltimaType</title>
+  <meta name="description" content="${safeDescription}">
   <meta property="og:type" content="profile">
-  <meta property="og:title" content="${user.displayName} — UltimaType">
-  <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${ogImage}">
+  <meta property="og:title" content="${safeName} — UltimaType">
+  <meta property="og:description" content="${safeDescription}">
+  <meta property="og:image" content="${safeImage}">
   <meta property="og:url" content="${baseUrl}/u/${user.slug}">
   <meta name="twitter:card" content="summary">
 </head>

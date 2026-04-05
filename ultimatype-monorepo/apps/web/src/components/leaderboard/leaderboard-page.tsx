@@ -24,6 +24,11 @@ function getCountryName(code: string | null): string {
   return COUNTRIES.find((c) => c.code === code)?.name ?? code;
 }
 
+function getLevelName(level: number | undefined): string {
+  if (level == null || isNaN(level)) return '—';
+  return DIFFICULTY_LEVELS.find((d) => d.level === level)?.name ?? `Nv.${level}`;
+}
+
 const PERIOD_OPTIONS: { label: string; value: MatchPeriod }[] = [
   { label: 'Histórico', value: 'all' },
   { label: 'Último año', value: '1y' },
@@ -237,8 +242,9 @@ export function LeaderboardPage() {
                     <tr className="border-b border-surface-raised text-left text-xs uppercase tracking-wide text-text-muted">
                       <th className="pb-2 pr-4 w-12">#</th>
                       <th className="pb-2 pr-4">Jugador</th>
-                      <th className="pb-2 pr-4 text-right">Mejor Puntaje</th>
-                      <th className="pb-2 text-right">Precisión</th>
+                      <th className="pb-2 pr-4 text-right">Nivel</th>
+                      <th className="pb-2 pr-4 text-right">Precisión</th>
+                      <th className="pb-2 text-right">Mejor Puntaje</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -265,12 +271,13 @@ export function LeaderboardPage() {
                             <span className="text-text-main hover:text-primary">{entry.displayName}</span>
                           </Link>
                         </td>
-                        <td className="py-3 pr-4 text-right font-semibold text-primary">
+                        <td className="py-3 pr-4 text-right text-text-muted">{getLevelName(entry.bestScoreLevel)}</td>
+                        <td className="py-3 pr-4 text-right text-text-muted">{entry.bestScorePrecision}%</td>
+                        <td className="py-3 text-right font-semibold text-primary">
                           <Link to={`/match/${entry.bestScoreMatchCode}`} className="hover:underline">
                             {formatScore(entry.bestScore)}
                           </Link>
                         </td>
-                        <td className="py-3 text-right text-text-muted">{entry.bestScorePrecision}%</td>
                       </tr>
                     ))}
                   </tbody>

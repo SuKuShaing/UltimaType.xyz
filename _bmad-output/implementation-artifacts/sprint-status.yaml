@@ -35,7 +35,8 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-05T00:30:00-03:00
+last_updated: 2026-04-05T12:00:00-03:00
+# 2026-04-05: Story 4-6 code review complete, set to done. 11 patches applied (XSS escaping, host-header injection, TOCTOU race condition, AC9 OG description, check-slug throttle, CJK slug fallback, save button guard, DTO normalization, totalPages, migration TRIM, hook regex). 1 skip (migration collision, already applied). Deploy fixes: ServeStaticModule, Dockerfile web build, Traefik recovery after Docker restart.
 # 2026-04-05: Story 4-6 implementation complete, set to review (330 API + 174 web tests passing). Full-stack: slug field, public profile endpoints, OG proxy, PublicProfilePage, clickable names. 20 tasks.
 # 2026-04-05: Story 4-6 dev started (public-user-profiles), set to in-progress. Full-stack: slug field, public profile endpoints, OG proxy, PublicProfilePage, clickable names.
 # 2026-04-04: Story 4-5 implementation complete, set to review (300 API + 164 web tests passing). Backend-only: invalidateForLevel + checkAndInvalidateLeaderboard + module wiring. 10 new tests.
@@ -119,7 +120,7 @@ development_status:
   4-3-global-leaderboard: done
   4-4-leaderboard-filtering-level-country-period: done
   4-5-automated-leaderboard-updates: done
-  4-6-public-user-profiles: review
+  4-6-public-user-profiles: done
   epic-4-retrospective: optional
   epic-5: backlog
   5-1-design-system-migration: backlog

@@ -6,6 +6,7 @@ export interface LeaderboardEntryDto {
   countryCode: string | null;
   slug: string;
   bestScore: number;
+  bestScoreLevel: number;
   bestScorePrecision: number;
   bestScoreMatchCode: string;
 }

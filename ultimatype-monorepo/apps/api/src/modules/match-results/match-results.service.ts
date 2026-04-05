@@ -235,7 +235,7 @@ export class MatchResultsService {
     const [stats, best] = await Promise.all([
       this.prisma.matchResult.aggregate({
         where: filteredWhere,
-        _avg: { score: true, precision: true },
+        _avg: { score: true, precision: true, wpm: true },
         _count: { id: true },
       }),
       this.prisma.matchResult.findFirst({
@@ -248,6 +248,7 @@ export class MatchResultsService {
     return {
       avgScore: Math.round((stats._avg.score ?? 0) * 10) / 10,
       avgPrecision: Math.round((stats._avg.precision ?? 0) * 10) / 10,
+      avgWpm: Math.round((stats._avg.wpm ?? 0) * 10) / 10,
       bestScore: best?.score ?? 0,
       totalMatches: stats._count.id,
     };

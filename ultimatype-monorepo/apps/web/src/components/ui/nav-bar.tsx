@@ -36,7 +36,7 @@ export function NavBar() {
           <ThemeToggle />
           {isAuthenticated && user ? (
             <Link
-              to="/profile"
+              to={user?.slug ? `/u/${user.slug}` : '/profile'}
               className="flex items-center gap-2 rounded-full bg-surface-raised px-3 py-1.5 no-underline transition-colors hover:bg-surface-raised/80"
             >
               {user.avatarUrl && !imgError ? (
