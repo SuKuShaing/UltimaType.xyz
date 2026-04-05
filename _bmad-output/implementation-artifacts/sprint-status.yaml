@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-04T12:00:00-03:00
+last_updated: 2026-04-04T23:40:00-03:00
 # 2026-04-04: Story 4-5 implementation complete, set to review (300 API + 164 web tests passing). Backend-only: invalidateForLevel + checkAndInvalidateLeaderboard + module wiring. 10 new tests.
 # 2026-04-04: Story 4-5 created (automated-leaderboard-updates), set to ready-for-dev. Backend-only: cache invalidation on new personal best, LeaderboardService.invalidateForLevel + integration in persistResults.
 # 2026-04-03: Story 4-4 code review complete, set to done. 3 patches applied (period-aware empty state messages, triple-filter test, data-testid on position widget). 28 web tests passing (25+3 new).
@@ -116,7 +116,7 @@ development_status:
   4-2-personal-history-progression-dashboard: done
   4-3-global-leaderboard: done
   4-4-leaderboard-filtering-level-country-period: done
-  4-5-automated-leaderboard-updates: review
+  4-5-automated-leaderboard-updates: done
   4-6-public-user-profiles: ready-for-dev
   epic-4-retrospective: optional
   epic-5: backlog

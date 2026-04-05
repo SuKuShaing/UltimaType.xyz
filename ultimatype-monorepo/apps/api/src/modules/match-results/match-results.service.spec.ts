@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MatchResultsService } from './match-results.service';
 import { PlayerResult } from '@ultimatype-monorepo/shared';
 
+const flushPromises = () => new Promise<void>((resolve) => setImmediate(resolve));
+
 const mockPrisma = {
   user: {
     findMany: vi.fn(),
@@ -468,6 +470,7 @@ describe('MatchResultsService', () => {
       await service.persistResults('MATCH1', 3, [
         makeResult({ playerId: 'user-1', score: 900 }),
       ]);
+      await flushPromises();
 
       expect(mockLeaderboardService.invalidateForLevel).toHaveBeenCalledWith(3);
     });
@@ -481,6 +484,7 @@ describe('MatchResultsService', () => {
       await service.persistResults('MATCH1', 3, [
         makeResult({ playerId: 'user-1', score: 700 }),
       ]);
+      await flushPromises();
 
       expect(mockLeaderboardService.invalidateForLevel).not.toHaveBeenCalled();
     });
@@ -493,6 +497,7 @@ describe('MatchResultsService', () => {
       await service.persistResults('MATCH1', 3, [
         makeResult({ playerId: 'user-1', score: 800 }),
       ]);
+      await flushPromises();
 
       expect(mockLeaderboardService.invalidateForLevel).not.toHaveBeenCalled();
     });
@@ -506,6 +511,7 @@ describe('MatchResultsService', () => {
       await service.persistResults('MATCH1', 2, [
         makeResult({ playerId: 'user-new', score: 500 }),
       ]);
+      await flushPromises();
 
       expect(mockLeaderboardService.invalidateForLevel).toHaveBeenCalledWith(2);
     });
@@ -520,25 +526,28 @@ describe('MatchResultsService', () => {
           makeResult({ playerId: 'user-1', score: 900 }),
         ]),
       ).resolves.toBeUndefined();
+      await flushPromises();
 
+      expect(mockPrisma.matchResult.findFirst).toHaveBeenCalled();
       expect(mockLeaderboardService.invalidateForLevel).not.toHaveBeenCalled();
     });
 
-    it('invalida solo 1 vez cuando un jugador de varios supera su marca', async () => {
+    it('invalida solo 1 vez aunque multiples jugadores superen su marca', async () => {
       mockPrisma.user.findMany.mockResolvedValue([
         { id: 'user-1' },
         { id: 'user-2' },
       ]);
       mockPrisma.matchResult.create.mockResolvedValue({ id: 'r1' });
-      // user-1: new PB (prev 500, new 900), user-2: no PB (prev 1000, new 700)
+      // Ambos jugadores baten PB — aun asi se llama invalidateForLevel exactamente 1 vez
       mockPrisma.matchResult.findFirst
-        .mockResolvedValueOnce(null)      // user-1 first query (prev best excl match) → null means first match
-        .mockResolvedValueOnce({ score: 1000 }); // user-2 prev best
+        .mockResolvedValueOnce(null)             // user-1: primera partida → PB
+        .mockResolvedValueOnce({ score: 800 });  // user-2: score previo 800, nuevo 850 → PB
 
       await service.persistResults('MATCH1', 3, [
         makeResult({ playerId: 'user-1', score: 900, rank: 1 }),
-        makeResult({ playerId: 'user-2', score: 700, rank: 2 }),
+        makeResult({ playerId: 'user-2', score: 850, rank: 2 }),
       ]);
+      await flushPromises();
 
       expect(mockLeaderboardService.invalidateForLevel).toHaveBeenCalledTimes(1);
       expect(mockLeaderboardService.invalidateForLevel).toHaveBeenCalledWith(3);

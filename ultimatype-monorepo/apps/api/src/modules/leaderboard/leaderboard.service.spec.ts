@@ -332,19 +332,19 @@ describe('LeaderboardService', () => {
       expect(redis.del).not.toHaveBeenCalled();
     });
 
-    it('should not throw when redis.keys fails', async () => {
+    it('should throw when redis.keys fails', async () => {
       redis.keys.mockRejectedValue(new Error('Redis SCAN failed'));
 
-      await expect(service.invalidateForLevel(2)).resolves.toBeUndefined();
+      await expect(service.invalidateForLevel(2)).rejects.toThrow('Redis SCAN failed');
     });
 
-    it('should not throw when redis.del fails', async () => {
+    it('should throw when redis.del fails', async () => {
       redis.keys
         .mockResolvedValueOnce(['leaderboard:level:1:country:ALL:period:all:page:1:limit:100'])
         .mockResolvedValueOnce([]);
       redis.del.mockRejectedValue(new Error('Redis DEL failed'));
 
-      await expect(service.invalidateForLevel(1)).resolves.toBeUndefined();
+      await expect(service.invalidateForLevel(1)).rejects.toThrow('Redis DEL failed');
     });
   });
 });

@@ -1,6 +1,6 @@
 # Story 4.5: Automated Leaderboard Updates
 
-Status: review
+Status: done
 
 ## Story
 
@@ -76,6 +76,15 @@ So that the rankings are always fresh without manual intervention and without re
   - [x] 7.1 Ejecutar `npx nx test api` — 300 tests passing (290 existentes + 10 nuevos)
   - [x] 7.2 Ejecutar `npx nx test web` — 164 tests passing, cero regresion
   - [x] 7.3 Ejecutar `npx nx lint api` — sin errores nuevos (2 errores pre-existentes en integration.spec.ts)
+
+### Review Findings
+
+- [x] [Review][Patch] `await Promise.allSettled` debe ser `void Promise.allSettled` para cumplir AC2 no-bloqueante [match-results.service.ts:124]
+- [x] [Review][Patch] `invalidateForLevel` warn log no incluye `userId` — AC2 exige "userId, level y razon"; quitar try/catch de `invalidateForLevel` para que los errores suban a `checkAndInvalidateLeaderboard` donde ya se logea con userId [leaderboard.service.ts, leaderboard.service.spec.ts]
+- [x] [Review][Defer] Llamadas redundantes a `invalidateForLevel` cuando N jugadores baten PB en la misma partida — aplicado: refactor a gather-then-invalidate con deduplicación real; `flushPromises` helper agregado a tests [match-results.service.ts, match-results.service.spec.ts]
+- [x] [Review][Defer] Patrón `'leaderboard:level:ALL:*'` hardcodeado en lugar de derivarse de `buildCacheKey` — aplicado: constante `CACHE_PREFIX` extraída, usada en call site y en los dos patterns de `invalidateForLevel` [leaderboard.service.ts]
+- [x] [Review][Defer] Test "no lanza excepcion si query previo falla" no puede distinguir si el IIFE fue alcanzado — aplicado: `expect(mockPrisma.matchResult.findFirst).toHaveBeenCalled()` agregado [match-results.service.spec.ts]
+- [x] [Review][Defer] Spread variádico de `keysToDelete` en `redis.del` sin límite de batch size — aplicado: loop de batches de 1000 keys [leaderboard.service.ts]
 
 ---
 

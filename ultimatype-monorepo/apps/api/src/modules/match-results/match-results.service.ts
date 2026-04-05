@@ -123,11 +123,30 @@ export class MatchResultsService {
 
         // Invalidar cache del leaderboard si algun jugador supero su marca personal
         const persistedRecords = records.filter((_, i) => settled[i].status === 'fulfilled');
-        await Promise.allSettled(
-          persistedRecords.map((record) =>
-            this.checkAndInvalidateLeaderboard(record.userId, level, record.score, matchCode),
-          ),
-        );
+        void (async () => {
+          const pbChecks = await Promise.allSettled(
+            persistedRecords.map((record) =>
+              this.isNewPersonalBest(record.userId, level, record.score, matchCode),
+            ),
+          );
+          pbChecks.forEach((check, i) => {
+            if (check.status === 'rejected') {
+              this.logger.warn(
+                `Failed to check personal best for user ${persistedRecords[i].userId}, level ${level}: ${(check.reason as Error).message}`,
+              );
+            }
+          });
+          const hasNewPB = pbChecks.some((r) => r.status === 'fulfilled' && r.value === true);
+          if (hasNewPB) {
+            try {
+              await this.leaderboardService.invalidateForLevel(level);
+            } catch (error) {
+              this.logger.warn(
+                `Failed to invalidate leaderboard cache for level ${level} (match ${matchCode}): ${(error as Error).message}`,
+              );
+            }
+          }
+        })();
       }
     } catch (error) {
       this.logger.error(
@@ -137,27 +156,18 @@ export class MatchResultsService {
     }
   }
 
-  private async checkAndInvalidateLeaderboard(
+  private async isNewPersonalBest(
     userId: string,
     level: number,
     newScore: number,
     matchCode: string,
-  ): Promise<void> {
-    try {
-      const previousBest = await this.prisma.matchResult.findFirst({
-        where: { userId, level, NOT: { matchCode } },
-        orderBy: { score: 'desc' },
-        select: { score: true },
-      });
-
-      if (previousBest === null || newScore > previousBest.score) {
-        await this.leaderboardService.invalidateForLevel(level);
-      }
-    } catch (error) {
-      this.logger.warn(
-        `Failed to check/invalidate leaderboard for user ${userId}, level ${level}: ${(error as Error).message}`,
-      );
-    }
+  ): Promise<boolean> {
+    const previousBest = await this.prisma.matchResult.findFirst({
+      where: { userId, level, NOT: { matchCode } },
+      orderBy: { score: 'desc' },
+      select: { score: true },
+    });
+    return previousBest === null || newScore > previousBest.score;
   }
 
   /**

@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review de 4-5-automated-leaderboard-updates (2026-04-04)
+
+- **Llamadas redundantes a `invalidateForLevel` cuando N jugadores baten PB** — En una partida donde múltiples jugadores superan su marca personal en el mismo nivel, `invalidateForLevel` se llama N veces ejecutando N×2 SCAN sweeps. La caché queda consistente pero Redis recibe trabajo innecesario. Agregar deduplicación por nivel dentro del loop de `persistResults` si se vuelve un hotspot.
+- **Patrón `'leaderboard:level:ALL:*'` hardcodeado en `invalidateForLevel`** — El string está duplicado manualmente en lugar de derivarse de `buildCacheKey`. Si el prefijo de caché cambia, `invalidateForLevel` dejará de limpiar las keys ALL silenciosamente.
+- **Test "no lanza excepcion si query previo falla" no verifica si `checkAndInvalidateLeaderboard` fue alcanzado** — El test aserta `not.toHaveBeenCalled()` sobre `invalidateForLevel`, que es verdadero tanto si el error fue atrapado dentro del método como si el método nunca fue llamado. Agregar spy o log assertion para distinguir ambos casos.
+- **Spread variádico `redis.del(...keysToDelete)` sin límite de batch** — Teórico para keyspaces grandes. Para esta app el número de keys por nivel está acotado por combinaciones country×period (decenas, no miles). Revisar si el deploy se expone a keyspaces con cientos de keys por nivel.
+
 ## Deferred from: code review de 4-4-leaderboard-filtering-level-country-period (2026-04-03)
 
 *Sin items diferidos — todos los findings fueron patcheados.*

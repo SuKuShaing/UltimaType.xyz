@@ -8,6 +8,7 @@ import {
 } from '@ultimatype-monorepo/shared';
 
 const CACHE_TTL = 43200; // 12 hours in seconds
+const CACHE_PREFIX = 'leaderboard';
 
 interface RawLeaderboardRow {
   userId: string;
@@ -43,7 +44,7 @@ export class LeaderboardService {
     page = 1,
     limit = 100,
   ): Promise<{ data: LeaderboardEntryDto[]; total: number }> {
-    const cacheKey = this.buildCacheKey('leaderboard', level, country, period, page, limit);
+    const cacheKey = this.buildCacheKey(CACHE_PREFIX, level, country, period, page, limit);
 
     try {
       const cached = await this.redis.get(cacheKey);
@@ -246,20 +247,16 @@ export class LeaderboardService {
   }
 
   async invalidateForLevel(level: number): Promise<void> {
-    try {
-      const levelKeys = await this.redis.keys(`leaderboard:level:${level}:*`);
-      const allKeys = await this.redis.keys('leaderboard:level:ALL:*');
-      const keysToDelete = [...levelKeys, ...allKeys];
+    const levelKeys = await this.redis.keys(`${CACHE_PREFIX}:level:${level}:*`);
+    const allKeys = await this.redis.keys(`${CACHE_PREFIX}:level:ALL:*`);
+    const keysToDelete = [...levelKeys, ...allKeys];
 
-      if (keysToDelete.length > 0) {
-        await this.redis.del(...keysToDelete);
-        this.logger.log(
-          `Leaderboard cache invalidated: ${keysToDelete.length} keys deleted for level ${level}`,
-        );
+    if (keysToDelete.length > 0) {
+      for (let i = 0; i < keysToDelete.length; i += 1000) {
+        await this.redis.del(...keysToDelete.slice(i, i + 1000));
       }
-    } catch (error) {
-      this.logger.warn(
-        `Failed to invalidate leaderboard cache for level ${level}: ${(error as Error).message}`,
+      this.logger.log(
+        `Leaderboard cache invalidated: ${keysToDelete.length} keys deleted for level ${level}`,
       );
     }
   }
