@@ -16,6 +16,10 @@ const mockPrisma = {
   },
 };
 
+const mockLeaderboardService = {
+  invalidateForLevel: vi.fn().mockResolvedValue(undefined),
+};
+
 describe('MatchResultsService', () => {
   let service: MatchResultsService;
 
@@ -36,7 +40,8 @@ describe('MatchResultsService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new MatchResultsService(mockPrisma as any);
+    mockPrisma.matchResult.findFirst.mockResolvedValue(null);
+    service = new MatchResultsService(mockPrisma as any, mockLeaderboardService as any);
   });
 
   describe('persistResults', () => {
@@ -450,6 +455,93 @@ describe('MatchResultsService', () => {
 
       expect(result.avgScore).toBe(87.6);
       expect(result.avgPrecision).toBe(94.3);
+    });
+  });
+
+  describe('leaderboard cache invalidation', () => {
+    it('invalida cache cuando jugador supera su marca personal', async () => {
+      mockPrisma.user.findMany.mockResolvedValue([{ id: 'user-1' }]);
+      mockPrisma.matchResult.create.mockResolvedValue({ id: 'r1' });
+      // Previous best was 800, new score is 900
+      mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 800 });
+
+      await service.persistResults('MATCH1', 3, [
+        makeResult({ playerId: 'user-1', score: 900 }),
+      ]);
+
+      expect(mockLeaderboardService.invalidateForLevel).toHaveBeenCalledWith(3);
+    });
+
+    it('no invalida cache cuando score es menor al previo', async () => {
+      mockPrisma.user.findMany.mockResolvedValue([{ id: 'user-1' }]);
+      mockPrisma.matchResult.create.mockResolvedValue({ id: 'r1' });
+      // Previous best was 900, new score is 700
+      mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 900 });
+
+      await service.persistResults('MATCH1', 3, [
+        makeResult({ playerId: 'user-1', score: 700 }),
+      ]);
+
+      expect(mockLeaderboardService.invalidateForLevel).not.toHaveBeenCalled();
+    });
+
+    it('no invalida cache cuando score es igual al previo', async () => {
+      mockPrisma.user.findMany.mockResolvedValue([{ id: 'user-1' }]);
+      mockPrisma.matchResult.create.mockResolvedValue({ id: 'r1' });
+      mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 800 });
+
+      await service.persistResults('MATCH1', 3, [
+        makeResult({ playerId: 'user-1', score: 800 }),
+      ]);
+
+      expect(mockLeaderboardService.invalidateForLevel).not.toHaveBeenCalled();
+    });
+
+    it('invalida cache en primera partida del usuario en ese nivel', async () => {
+      mockPrisma.user.findMany.mockResolvedValue([{ id: 'user-new' }]);
+      mockPrisma.matchResult.create.mockResolvedValue({ id: 'r1' });
+      // No previous score — first match at this level
+      mockPrisma.matchResult.findFirst.mockResolvedValue(null);
+
+      await service.persistResults('MATCH1', 2, [
+        makeResult({ playerId: 'user-new', score: 500 }),
+      ]);
+
+      expect(mockLeaderboardService.invalidateForLevel).toHaveBeenCalledWith(2);
+    });
+
+    it('no lanza excepcion si query de best score previo falla', async () => {
+      mockPrisma.user.findMany.mockResolvedValue([{ id: 'user-1' }]);
+      mockPrisma.matchResult.create.mockResolvedValue({ id: 'r1' });
+      mockPrisma.matchResult.findFirst.mockRejectedValue(new Error('DB error'));
+
+      await expect(
+        service.persistResults('MATCH1', 3, [
+          makeResult({ playerId: 'user-1', score: 900 }),
+        ]),
+      ).resolves.toBeUndefined();
+
+      expect(mockLeaderboardService.invalidateForLevel).not.toHaveBeenCalled();
+    });
+
+    it('invalida solo 1 vez cuando un jugador de varios supera su marca', async () => {
+      mockPrisma.user.findMany.mockResolvedValue([
+        { id: 'user-1' },
+        { id: 'user-2' },
+      ]);
+      mockPrisma.matchResult.create.mockResolvedValue({ id: 'r1' });
+      // user-1: new PB (prev 500, new 900), user-2: no PB (prev 1000, new 700)
+      mockPrisma.matchResult.findFirst
+        .mockResolvedValueOnce(null)      // user-1 first query (prev best excl match) → null means first match
+        .mockResolvedValueOnce({ score: 1000 }); // user-2 prev best
+
+      await service.persistResults('MATCH1', 3, [
+        makeResult({ playerId: 'user-1', score: 900, rank: 1 }),
+        makeResult({ playerId: 'user-2', score: 700, rank: 2 }),
+      ]);
+
+      expect(mockLeaderboardService.invalidateForLevel).toHaveBeenCalledTimes(1);
+      expect(mockLeaderboardService.invalidateForLevel).toHaveBeenCalledWith(3);
     });
   });
 });

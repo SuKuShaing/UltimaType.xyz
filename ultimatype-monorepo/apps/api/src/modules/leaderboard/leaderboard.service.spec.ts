@@ -17,6 +17,8 @@ function createMockRedis() {
   return {
     get: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(undefined),
+    keys: vi.fn().mockResolvedValue([]),
+    del: vi.fn().mockResolvedValue(0),
   };
 }
 
@@ -297,6 +299,52 @@ describe('LeaderboardService', () => {
 
       expect(result!.globalRank).toBe(1);
       expect(result!.globalPercentile).toBe(100);
+    });
+  });
+
+  describe('invalidateForLevel', () => {
+    it('should delete level-specific and ALL keys', async () => {
+      redis.keys
+        .mockResolvedValueOnce([
+          'leaderboard:level:3:country:ALL:period:all:page:1:limit:100',
+          'leaderboard:level:3:country:AR:period:7d:page:1:limit:100',
+        ])
+        .mockResolvedValueOnce([
+          'leaderboard:level:ALL:country:ALL:period:all:page:1:limit:100',
+        ]);
+
+      await service.invalidateForLevel(3);
+
+      expect(redis.keys).toHaveBeenCalledWith('leaderboard:level:3:*');
+      expect(redis.keys).toHaveBeenCalledWith('leaderboard:level:ALL:*');
+      expect(redis.del).toHaveBeenCalledWith(
+        'leaderboard:level:3:country:ALL:period:all:page:1:limit:100',
+        'leaderboard:level:3:country:AR:period:7d:page:1:limit:100',
+        'leaderboard:level:ALL:country:ALL:period:all:page:1:limit:100',
+      );
+    });
+
+    it('should not call del when no keys match', async () => {
+      redis.keys.mockResolvedValue([]);
+
+      await service.invalidateForLevel(5);
+
+      expect(redis.del).not.toHaveBeenCalled();
+    });
+
+    it('should not throw when redis.keys fails', async () => {
+      redis.keys.mockRejectedValue(new Error('Redis SCAN failed'));
+
+      await expect(service.invalidateForLevel(2)).resolves.toBeUndefined();
+    });
+
+    it('should not throw when redis.del fails', async () => {
+      redis.keys
+        .mockResolvedValueOnce(['leaderboard:level:1:country:ALL:period:all:page:1:limit:100'])
+        .mockResolvedValueOnce([]);
+      redis.del.mockRejectedValue(new Error('Redis DEL failed'));
+
+      await expect(service.invalidateForLevel(1)).resolves.toBeUndefined();
     });
   });
 });

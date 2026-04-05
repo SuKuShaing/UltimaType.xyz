@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { LeaderboardService } from '../leaderboard/leaderboard.service';
 import { PlayerResult, MatchPeriod, MatchStatsDto } from '@ultimatype-monorepo/shared';
 
 export interface MatchResultRecord {
@@ -20,7 +21,10 @@ export interface MatchResultRecord {
 export class MatchResultsService {
   private readonly logger = new Logger(MatchResultsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly leaderboardService: LeaderboardService,
+  ) {}
 
   /**
    * Persiste los resultados de una partida finalizada.
@@ -116,11 +120,42 @@ export class MatchResultsService {
         this.logger.log(
           `Persistidos ${persisted}/${records.length} resultados para partida ${matchCode}`,
         );
+
+        // Invalidar cache del leaderboard si algun jugador supero su marca personal
+        const persistedRecords = records.filter((_, i) => settled[i].status === 'fulfilled');
+        await Promise.allSettled(
+          persistedRecords.map((record) =>
+            this.checkAndInvalidateLeaderboard(record.userId, level, record.score, matchCode),
+          ),
+        );
       }
     } catch (error) {
       this.logger.error(
         `Error persistiendo resultados para partida ${matchCode}: ${(error as Error).message}`,
         (error as Error).stack,
+      );
+    }
+  }
+
+  private async checkAndInvalidateLeaderboard(
+    userId: string,
+    level: number,
+    newScore: number,
+    matchCode: string,
+  ): Promise<void> {
+    try {
+      const previousBest = await this.prisma.matchResult.findFirst({
+        where: { userId, level, NOT: { matchCode } },
+        orderBy: { score: 'desc' },
+        select: { score: true },
+      });
+
+      if (previousBest === null || newScore > previousBest.score) {
+        await this.leaderboardService.invalidateForLevel(level);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to check/invalidate leaderboard for user ${userId}, level ${level}: ${(error as Error).message}`,
       );
     }
   }

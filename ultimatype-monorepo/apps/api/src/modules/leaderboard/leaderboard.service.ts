@@ -245,6 +245,25 @@ export class LeaderboardService {
     };
   }
 
+  async invalidateForLevel(level: number): Promise<void> {
+    try {
+      const levelKeys = await this.redis.keys(`leaderboard:level:${level}:*`);
+      const allKeys = await this.redis.keys('leaderboard:level:ALL:*');
+      const keysToDelete = [...levelKeys, ...allKeys];
+
+      if (keysToDelete.length > 0) {
+        await this.redis.del(...keysToDelete);
+        this.logger.log(
+          `Leaderboard cache invalidated: ${keysToDelete.length} keys deleted for level ${level}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to invalidate leaderboard cache for level ${level}: ${(error as Error).message}`,
+      );
+    }
+  }
+
   private buildCacheKey(
     prefix: string,
     level?: number,

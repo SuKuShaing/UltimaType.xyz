@@ -4,6 +4,7 @@
 
 - [ ] Espacio insuficiente en el timer para más de 60 seg ![img](/Fix%20pendientes/espacio%20insuficiente%20en%20el%20timer%20para%20más%20de%2060%20seg.jpeg)
 - [ ] Cuando alguien se une a la sala, que haga un sonido
+- [ ] Revisar que el código sea código moderno y usen context7, dejar esto en Claude
 - [ ] Que el nivel de dificultad diga en el 1. Solo minúsculas, 2. Minúsculas y mayúsculas, 3. Minúsculas, mayúsculas, acentos y puntuación, 4. Minúsculas, mayúsculas, acentos, puntuación y números, 5. Todo lo anterior más símbolos
 - [ ] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
 - [ ] En el botón de revancha o en la pantalla de resultados debiese estar revancha con subir el nivel de dificultad
@@ -15,6 +16,7 @@
 - [ ] que claudflare redirija www a apex
 - [ ] Que en una feature futura, se vean las salas jugando en este momento, y listar las salas y poder ingresar como espectador a esas salas
 - [ ] Instalar traqueo
+- [ ] sí soy invitado y me registro, cuándo estoy viendo los datos de una partida, esos datos de esa partida se guardan sí me acabo de registrar, ¿los demás jugadores en sus registros verán invitado o mi nombre?
 - [ ] Añadir un registro manual de sesión de nombre, usuario y contraseña
 - [ ] Al terminar la Epic 4, solucionar todos los errores y warnings del servidor local
 - [ ] Darle a la IA lso mensajes de la consola de los logs del servidor VPS para solucionar los warnings
@@ -22,9 +24,12 @@
 - [ ] felicitar al jugador por entrar en los top 1000 mundial o top 1000 de su país
 - [ ] pedirle a la ia que me actualice la arquitectura de la página y me dé la arquitectura de la db
 - [ ] Para un futuro que los países se puedan seleccionar por continente y sea vean las banderas de los países
+- [ ] Que la aplicación pregunte sí quieres la revancha y en el tablero aparezca una R si es que la quieren o no
+- [ ] Colocar broadcast en sincronización de pestañas cuando estén en el mismo link, para sincronizar lo que sucede en ambas pantallas
 
 ## Preguntas
 
+- [ ] Veríficar que los invitados no sean clickeables cuando haya invitados, ver el tema de qué es más ligero para el servidor, sí que diga simplemente invitado en el historial o sí sale el invitado exacto, con su número de invitado
 - [ ] Cuando volvamos al lobby usa el mismo código de sala, es decir la partida nueva reescribe la anterior?, sí jugué 3 partidas con mis amigos se guarda la última?
 - [x] Preguntar que son las spec AC y PRD en bmad
 - [ ] qué es este fallo "Los tests existentes siguen pasando (el fallo en game.gateway.spec.ts es
