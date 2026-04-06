@@ -1,5 +1,15 @@
 # Deferred Work
 
+## Deferred from: code review de 5-3-homepage-layout-extraction (2026-04-06)
+
+- **`<main>` landmark faltante en `LeaderboardPage` y `PublicProfilePage`** — Aplicar el mismo cambio `<div>` → `<main>` que se hizo en `HomePage`. Mejora accesibilidad (screen reader shortcut "saltar al contenido principal"). Bajo riesgo, 1 línea por página.
+
+- **No hay ruta 404** — `app.tsx`. `path="*"` devuelve `HomePage` para cualquier URL desconocida (`/gibberish`, etc.). Pre-existing behavior intencional per spec; agregar página 404 dedicada en story de polish futura.
+- **Charset del regex de sala ambiguo + display del código en lobby** — `game-actions-section.tsx:7`. El regex `/^[A-Z2-9]{6}$/` incluye O, I visualmente ambiguos con 0, 1. Parcialmente mitigado: el input de código ya usa `font-mono` (IBM Plex Mono) que disambigua 0/O/1/I visualmente. Pendiente: (1) confirmar charset real del servidor y ajustar regex si excluye O/I; (2) aplicar `font-mono` al display del código de sala en `lobby-page` (donde se muestra el código para compartir). Revisar en code review de la story de visual polish del lobby.
+- **Sin breakpoint intermedio `md:` en el grid** — `home-page.tsx`. Layout salta de mobile full-width a desktop 8+4 sin paso tablet (768–1023px). Decisión de diseño fuera del scope de 5-3.
+- **`HelmetProvider` no verificado en árbol de componentes** — Si el ancestro no tiene `<HelmetProvider>`, Helmet silently no-ops. Concern de setup de app, no de esta story.
+- **Sin auth guard en ruta `/room/:code`** — `app.tsx`. Usuario no autenticado puede navegar directamente a una sala por URL sin ser redirigido a login. Pre-existing design decision.
+
 ## Deferred from: code review de 5-2-navbar-redesign (2026-04-06)
 
 - **`tabClass`/`isActive` como funciones en el render body** — Micro-optimización; nuevas referencias de función en cada render, sin `useCallback`. Pre-existente como pattern en el proyecto. Revisar si se nota en profiling.

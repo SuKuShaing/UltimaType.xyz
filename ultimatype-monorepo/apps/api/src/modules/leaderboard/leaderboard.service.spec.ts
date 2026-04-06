@@ -37,8 +37,8 @@ describe('LeaderboardService', () => {
     it('should return leaderboard entries without filters', async () => {
       prisma.$queryRawUnsafe
         .mockResolvedValueOnce([
-          { userId: 'user-alice', displayName: 'Alice', avatarUrl: 'http://a.com/1.jpg', countryCode: 'AR', bestScore: 1200, bestScorePrecision: 98.5, bestScoreMatchCode: 'ABC123' },
-          { userId: 'user-bob', displayName: 'Bob', avatarUrl: null, countryCode: 'CL', bestScore: 1100, bestScorePrecision: 95.0, bestScoreMatchCode: 'DEF456' },
+          { userId: 'user-alice', displayName: 'Alice', avatarUrl: 'http://a.com/1.jpg', countryCode: 'AR', slug: 'alice', bestScore: 1200, bestScoreLevel: 3, bestScorePrecision: 98.5, bestScoreMatchCode: 'ABC123' },
+          { userId: 'user-bob', displayName: 'Bob', avatarUrl: null, countryCode: 'CL', slug: 'bob', bestScore: 1100, bestScoreLevel: 2, bestScorePrecision: 95.0, bestScoreMatchCode: 'DEF456' },
         ])
         .mockResolvedValueOnce([{ total: BigInt(2) }]);
 
@@ -51,7 +51,9 @@ describe('LeaderboardService', () => {
         displayName: 'Alice',
         avatarUrl: 'http://a.com/1.jpg',
         countryCode: 'AR',
+        slug: 'alice',
         bestScore: 1200,
+        bestScoreLevel: 3,
         bestScorePrecision: 98.5,
         bestScoreMatchCode: 'ABC123',
       });

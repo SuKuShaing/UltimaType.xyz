@@ -265,7 +265,8 @@ describe('UsersService', () => {
     });
 
     it('should throw ConflictException when slug taken by another user', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'other-user' });
+      const error = Object.assign(new Error('Unique constraint failed on slug'), { code: 'P2002' });
+      mockPrisma.user.update.mockRejectedValueOnce(error);
 
       await expect(
         usersService.updateProfile('user-uuid-123', { slug: 'taken-slug' }),

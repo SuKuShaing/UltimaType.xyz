@@ -120,7 +120,13 @@ export function NavBar() {
         <div className="flex items-center justify-between px-4 py-2">
           {/* Left: Logo + tabs */}
           <div className="flex items-center gap-6">
-            <Logo />
+            {location.pathname === '/' ? (
+              <h1 className="m-0 p-0 leading-none font-bold">
+                <Logo />
+              </h1>
+            ) : (
+              <Logo />
+            )}
             <div className="hidden items-center gap-4 md:flex">
               {NAV_TABS.map((tab) => (
                 <Link key={tab.to} to={tab.to} className={tabClass(location.pathname, tab.to)}>

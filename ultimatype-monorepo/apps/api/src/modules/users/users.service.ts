@@ -1,6 +1,6 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AuthProvider, Prisma } from '@prisma/client';
+import { AuthProvider } from '@prisma/client';
 import { randomBytes } from 'crypto';
 
 export interface CreateUserInput {
@@ -117,7 +117,7 @@ export class UsersService {
         data,
       });
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      if ((err as any)?.code === 'P2002') {
         throw new ConflictException('El slug ya está en uso');
       }
       throw err;

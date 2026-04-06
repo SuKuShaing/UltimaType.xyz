@@ -35,7 +35,11 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-06T17:45:00-03:00
+last_updated: 2026-04-06T20:15:00-03:00
+# 2026-04-06: Story 5-3 code review complete, set to done. 6 patches applied (h1 condicional en NavBar, isFetchingProfile guard, aria-describedby tooltip, paste slice, <main> en HomePage, empty-code guard). font-mono en input de código. 277 web tests passing.
+# 2026-04-06: Story 5-3 implementation complete, set to review (278 web tests passing). Frontend-only: extracted inline home page from app.tsx, 12-column grid layout, 4 section components (GameActions + 3 placeholder shells). 24 new tests.
+# 2026-04-06: Story 5-3 dev started (homepage-layout-extraction), set to in-progress. Frontend-only: extract inline home page from app.tsx, 12-column grid, 4 section components.
+# 2026-04-06: Story 5-3 created (homepage-layout-extraction), set to ready-for-dev. Frontend-only: extract inline home page from app.tsx, 12-column grid layout, 4 section components (GameActions real, 3 placeholder shells).
 # 2026-04-06: Story 5-2 code review complete, set to done. 12 patches applied (imgError reset, same-route dropdown close, useRef type, bg-surface-base dropdown, font-sans login btn, type=button, onError test, isActive/tabClass extracted, aria-label nav, setup() typing, initials emoji fix, Escape focus restore). 2 defers. 254 web tests passing.
 # 2026-04-06: Story 5-2 implementation complete, set to review (252 web tests passing). Frontend-only: tabs ("Principal" + "Leaderboard"), simplified avatar, mobile hamburger, Focus Fade preserved. 17 new tests.
 # 2026-04-06: Story 5-2 dev started (navbar-redesign), set to in-progress. Frontend-only: tabs, avatar, mobile hamburger, Focus Fade preserved.
@@ -133,7 +137,7 @@ development_status:
   epic-5: in-progress
   5-1-design-system-migration: done
   5-2-navbar-redesign: done
-  5-3-homepage-layout-extraction: backlog
+  5-3-homepage-layout-extraction: done
   5-4-game-mode-selector: backlog
   5-5-partidas-en-vivo: backlog
   5-6-global-leaderboard-preview: backlog

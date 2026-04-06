@@ -390,19 +390,19 @@ describe('MatchResultsService', () => {
   describe('getStats', () => {
     it('retorna 0s cuando no hay partidas', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { score: null, precision: null },
+        _avg: { score: null, precision: null, wpm: null },
         _count: { id: 0 },
       });
       mockPrisma.matchResult.findFirst.mockResolvedValue(null);
 
       const result = await service.getStats('user-1');
 
-      expect(result).toEqual({ avgScore: 0, avgPrecision: 0, bestScore: 0, totalMatches: 0 });
+      expect(result).toEqual({ avgScore: 0, avgPrecision: 0, avgWpm: 0, bestScore: 0, totalMatches: 0 });
     });
 
     it('retorna stats correctas con partidas', async () => {
       mockPrisma.matchResult.aggregate.mockResolvedValue({
-        _avg: { score: 87.567, precision: 96.4 },
+        _avg: { score: 87.567, precision: 96.4, wpm: 72.6 },
         _count: { id: 15 },
       });
       mockPrisma.matchResult.findFirst.mockResolvedValue({ score: 120.3 });
@@ -411,6 +411,7 @@ describe('MatchResultsService', () => {
 
       expect(result.avgScore).toBe(87.6);
       expect(result.avgPrecision).toBe(96.4);
+      expect(result.avgWpm).toBe(72.6);
       expect(result.bestScore).toBe(120.3);
       expect(result.totalMatches).toBe(15);
     });

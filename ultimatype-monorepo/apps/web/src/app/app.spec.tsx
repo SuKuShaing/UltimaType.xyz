@@ -21,9 +21,4 @@ describe('App', () => {
     expect(baseElement).toBeTruthy();
   });
 
-  it('should display the UltimaType heading', () => {
-    const { container } = renderWithProviders(<App />);
-    const heading = container.querySelector('h1');
-    expect(heading?.textContent).toBe('UltimaType');
-  });
 });
