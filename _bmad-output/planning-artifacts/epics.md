@@ -741,6 +741,15 @@ So that I have a consistent experience regardless of screen size.
 **When** it renders
 **Then** the layout uses the full 12-column grid.
 
+**Given** the app on large screens (> 1536px, e.g. 1920px o 4K)
+**When** any page renders
+**Then** the content does NOT stay confined to a narrow centered column — instead the layout expands to fill the available width meaningfully
+**And** the homepage grid stretches its columns wider so cards, the leaderboard preview, and the profile card occupy the full visual space
+**And** the leaderboard page (`/leaderboard`) expands the table and position widget to use the extra width rather than leaving empty margins
+**And** the profile page (`/u/:slug`) expands to a two-column layout: left column for hero + edit panel, right column for stats + match history
+**And** the arena and lobby pages scale their central content area to feel appropriately large, not like a narrow column in the middle of a vast screen
+**And** in all cases the maximum readable line length for text content is respected (no lines wider than ~90ch), but layout containers and cards use the full width
+
 **Given** any interactive element
 **When** the user hovers or focuses
 **Then** smooth transitions and hover animations are applied (scale, shadow, color shifts)
