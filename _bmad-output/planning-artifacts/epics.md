@@ -550,17 +550,29 @@ Transformar la pantalla principal de un placeholder minimalista a un dashboard d
 
 As a developer,
 I want to migrate and extend the CSS tokens to align with the "Kinetic Monospace" Design System,
-So that all new and existing components share a consistent visual language across light and dark modes.
+So that all new and existing components — including those built in Epic 4 — share a consistent visual language across light and dark modes.
 
 **Acceptance Criteria:**
 
 **Given** the existing Tailwind theme in `styles.css`
 **When** the design system migration is applied
 **Then** color tokens are extended/mapped to include `surface-container-low`, `surface-container-lowest`, `on-surface-variant`, `outline` and their dark-mode counterparts
-**And** typography uses Space Grotesk for headlines/body and IBM Plex Mono for typing areas
+**And** all existing Epic 4 tokens (`surface-base`, `surface-sunken`, `surface-raised`, `text-text-main`, `text-text-muted`, `text-primary`, `text-success`, `text-error`) remain functional — new tokens are added alongside, not replacements, to avoid breaking existing components
+**And** typography uses Space Grotesk for headlines/body and IBM Plex Mono for typing areas and data values (WPM, scores, stats)
 **And** border-radius uses `2rem`/`2.5rem` for cards and `full` (pill) for buttons
 **And** the "No-Line" rule is applied: no 1px borders to separate sections, use tonal shifts instead
 **And** the default theme is `system` (browser preference), persisted when user changes it.
+
+**Given** the components built in Epic 4
+**When** the token audit is completed as part of this story
+**Then** the developer has produced an inventory of every Tailwind class used across these files and verified token coverage:
+  - `apps/web/src/components/leaderboard/leaderboard-page.tsx` — level/period/country pills, position widget, ranking table with `border-b border-surface-raised` rows (to be eliminated)
+  - `apps/web/src/components/profile/public-profile-page.tsx` — hero, edit panel, ranking position cards, 5-stat grid, match history table with `border-b` rows
+  - `apps/web/src/components/profile/match-history-section.tsx` — filter pills, table rows
+  - `apps/web/src/components/match/match-detail-page.tsx` — participant rows, clickable names
+**And** any `border-b border-surface-raised` pattern found in these components is flagged as a violation of the "No-Line" rule to be addressed in the relevant visual polish story (5-12, 5-13)
+**And** the token inventory is documented as a comment block at the top of `styles.css` for reference by subsequent stories
+**And** the inventory is produced as the first task before any CSS token is added or modified — no new token or style change is written until the audit of existing components is complete.
 
 ### Story 5.2: Rediseño del NavBar
 
@@ -574,7 +586,7 @@ So that I can quickly access the main sections of the platform.
 **When** the navbar renders
 **Then** the logo "UltimaType" is displayed on the left (clickable, navigates to home)
 **And** navigation tabs are shown: "Principal" (home), "Leaderboard" (links to Epic 4 leaderboard page)
-**And** for authenticated users: avatar + profile link appears on the right
+**And** for authenticated users: avatar appears on the right as a link to `/u/{user.slug}` (the public profile page, which serves as the own-profile view when the slug matches the logged-in user)
 **And** for unauthenticated users: an "Iniciar sesión" button appears on the right
 **And** on mobile (< 768px) the tabs collapse into a hamburger menu
 **And** the existing "Focus Fade" behavior during arena matches is preserved.
@@ -664,43 +676,50 @@ As a user,
 I want to see a summary of the global leaderboard on the home page,
 So that I'm motivated to compete and improve my ranking.
 
+**Contexto:** Esta story es 100% frontend. El backend `GET /api/leaderboard` con soporte completo de filtros (level, country, period) fue entregado en Epic 4 (Stories 4.3/4.4) y está disponible en producción. No hay trabajo de backend en este story.
+
 **Acceptance Criteria:**
 
 **Given** the home page leaderboard section
-**When** it renders for an authenticated user
-**Then** it shows a compact table with the top 5-10 players (consuming Epic 4 `GET /api/leaderboard`)
-**And** a toggle for "Mundial" / "Local" filtering (if Epic 4 supports country filter)
-**And** a "Ver clasificación completa" link navigating to the full Leaderboard page from Epic 4.
-
-**Given** Epic 4 APIs are not yet available
-**When** the section renders
-**Then** it shows a graceful empty state: "Próximamente" or placeholder content.
+**When** it renders
+**Then** it shows a compact table with the top 5 players consuming `GET /api/leaderboard?limit=5` (no auth required — the endpoint is public)
+**And** each row shows: position, player avatar/initials, display name (as link to `/u/:slug`), country flag, and best score
+**And** a "Mundial" / "Mi país" toggle filters results: "Mundial" shows all countries, "Mi país" passes the authenticated user's `countryCode` as the `country` param (hidden when unauthenticated or user has no country)
+**And** a "Ver clasificación completa →" link navigates to `/leaderboard`
+**And** if no players exist yet, an elegant empty state is shown (not a placeholder — this will never happen in production)
 
 **Given** the home page leaderboard section
 **When** it renders for an unauthenticated user
-**Then** the table is visible with the same data
-**And** a CTA is shown: "Inicia sesión para competir".
+**Then** the table is visible with the same top-5 data (public endpoint, no restriction)
+**And** a CTA "Inicia sesión para competir" is shown below the table.
 
 ### Story 5.7: Player Profile & Ranking Card (Home)
 
 As an authenticated user,
 I want to see my position, score, and ranking on the home page,
-So that I can track my progress at a glance.
+So that I can track my progress at a glance without navigating to my profile.
+
+**Contexto:** Esta story es 100% frontend. Todos los endpoints necesarios están disponibles en producción desde Epic 4:
+- `GET /api/users/:id/stats` → `{ avgScore, bestScore, totalMatches }`
+- `GET /api/leaderboard/position` → `{ globalRank, globalTotal, globalPercentile, countryRank, countryTotal, countryPercentile, bestScore }` (requiere JWT)
+
+El diseño del card debe ser visualmente consistente con los cards de posición que ya existen en `public-profile-page.tsx` (grid de 2 tarjetas: Posición Global / Posición Nacional con valores en `text-2xl font-semibold text-primary`), pero adaptado al contexto compacto de la homepage.
 
 **Acceptance Criteria:**
 
 **Given** an authenticated user on the home page
 **When** the profile card renders
-**Then** it displays: avatar, display name, total score / best WPM, global ranking position ("Top X Mundial"), and country flag
-**And** it consumes Epic 4 APIs (`GET /api/users/:id/matches` for stats, `/api/leaderboard` for position).
+**Then** it displays: avatar (or initials with `primary/10` background), display name as a link to `/u/{user.slug}`, best score, and global ranking position ("Top X% Mundial")
+**And** it consumes `GET /api/leaderboard/position` for ranking data and `GET /api/users/:id/stats` for score data
+**And** a "Ver mi perfil →" link navigates to `/u/{user.slug}`
 
-**Given** Epic 4 APIs are not yet available
-**When** the card renders for an authenticated user
-**Then** it shows: "Juega tu primera partida para ver tus stats".
+**Given** an authenticated user with no match history
+**When** the card renders
+**Then** it shows: avatar, display name, and the message "Juega tu primera partida para aparecer en el ranking" (same copy as the position widget in LeaderboardPage)
 
 **Given** an unauthenticated user on the home page
 **When** the profile card area renders
-**Then** it shows a CTA card: "Inicia sesión para ver tu ranking".
+**Then** it shows a CTA card with the same visual weight as the authenticated card: "Inicia sesión para ver tu ranking" with a Google login button.
 
 ### Story 5.8: Responsive & Polish
 
@@ -829,95 +848,100 @@ As a user viewing the global leaderboard,
 I want the leaderboard page to follow the "Kinetic Monospace" Design System,
 So that it feels visually consistent with the rest of the platform.
 
+**Contexto:** La página `leaderboard-page.tsx` fue completamente construida en Epic 4 (Stories 4.3/4.4) y está en producción. Ya incluye:
+- Widget "Tu posición" (best score, match link, rank global con percentil, rank de país con percentil) — solo visible para usuarios autenticados
+- Pills de nivel (Todos, 1 Minúscula … 5 Símbolos)
+- Pills de período (Histórico, Último año, Último mes, Últimos 7 días)
+- Dropdown de país
+- Tabla con columnas: rank, avatar + nombre (link a `/u/:slug`), bandera, mejor puntaje, precisión, fecha
+- Paginación
+- Estado vacío contextual por filtro
+
+Esta story aplica el Design System encima de todo lo que existe, y agrega el card "Récord de la Semana" como única pieza funcional nueva.
+
 **Acceptance Criteria:**
 
-**Given** the Leaderboard page built by Epic 4 (Stories 4.3/4.4)
+**Given** the existing LeaderboardPage (`leaderboard-page.tsx`)
+**When** the Design System from Story 5.1 is applied
+**Then** the page header is redesigned: label "GLOBAL RANKINGS" (label-md, uppercase, muted) + headline "Puntajes Históricos" (display-lg scale, Space Grotesk)
+**And** filter controls (level pills, period pills, country dropdown) are restyled to use pill-style with `full` border-radius and `surface-container-lowest` background for inactive state
+**And** the table eliminates all `border-b` divider lines, replacing them with tonal row alternation (`surface-container-low` on even rows, transparent on odd)
+**And** each row shows: rank, player avatar/initials, name (link to `/u/:slug`), country flag, best score, precision — columns match the data already available from `GET /api/leaderboard`
+**And** the authenticated user's own row is highlighted with `primary/10` background
+**And** all cards and containers use `2rem`/`2.5rem` border-radius with `surface-container-low` backgrounds
+
+**Given** the existing "Tu posición" widget
 **When** the Design System is applied
-**Then** the page header shows "GLOBAL RANKINGS" label (label-md style) + "Puntajes Históricos" headline (display-lg scale)
-**And** the leaderboard is a single filtrable table (not separate cards per level)
-**And** filter controls (level, country, period) use the Design System's pill-style selectors and dropdowns
-**And** the table follows the "No-Line" rule: tonal row alternation instead of divider lines
-**And** each row shows: rank, player avatar, name, country flag, WPM, and score
-**And** the local player's row is highlighted with `primary/10` background
-**And** cards use `2rem`/`2.5rem` border-radius with `surface-container-low` backgrounds.
+**Then** it is restyled as a "Tu Posición Global" card using display-scale for the rank number, body-md for percentile and country breakdown, consistent with the PlayerRankCard pattern from Story 5.7
+**And** for unauthenticated users, the card is replaced with a CTA: "Inicia sesión para ver tu ranking"
 
 **Given** the leaderboard page
-**When** it renders
-**Then** a "Récord de la Semana" card is displayed prominently
-**And** it shows the #1 player from level 5 in the last 7 days (consuming Epic 4's `GET /api/leaderboard?level=5&period=7d&limit=1`)
-**And** the card displays: player name, WPM achieved, precision, and a brief highlight text
-**And** if no data is available, the card shows a graceful empty state.
-
-**Given** the leaderboard page
-**When** it renders for an authenticated user
-**Then** a "Tu Posición Global" card is shown (reuses the design pattern from Story 5.7's PlayerRankCard)
-**And** it displays the user's global rank, score, and a motivational message.
-
-**Given** the leaderboard page
-**When** it renders for an unauthenticated user
-**Then** the table and "Récord de la Semana" are fully visible
-**And** the "Tu Posición Global" card shows a CTA: "Inicia sesión para ver tu ranking".
+**When** it renders (new feature — does not exist in Epic 4)
+**Then** a "Récord de la Semana" hero card is displayed prominently above the table
+**And** it shows the #1 player from the last 7 days across all levels (consuming `GET /api/leaderboard?period=7d&limit=1`)
+**And** the card displays: player avatar/name (link to `/u/:slug`), their best score, precision, and the level at which it was achieved
+**And** if no data exists for the period, the card shows an elegant empty state with muted text
 
 **Note:** "Ver Repetición" (match replays) is deferred to a future version.
 
 ### Story 5.13: Profile & Public Profile Visual Polish
 
 As a user,
-I want my profile page and any public profile I visit to follow the "Kinetic Monospace" Design System,
-So that the experience feels visually consistent with the rest of the platform.
+I want the profile pages to follow the "Kinetic Monospace" Design System,
+So that the experience feels visually impactante and consistent with the rest of the platform.
+
+**Contexto arquitectónico (crítico para el Dev Agent):**
+- **No existe `/profile` como página separada.** La ruta `/profile` redirige automáticamente a `/u/{user.slug}` via `ProfileRedirect` en `app.tsx`.
+- **Un solo componente maneja todo:** `public-profile-page.tsx` sirve tanto el perfil público como el propio. Cuando `isOwnProfile === true` (usuario autenticado cuyo slug coincide con el param), muestra el panel de edición embebido.
+- **Estructura actual del componente** (a polir en este story):
+  - Hero: avatar (80×80, `rounded-full`, `bg-surface-raised`), displayName, countryCode flag, "Jugador desde [mes] [año]"
+  - Edit panel (solo `isOwnProfile`): slug editor + country select + save button — actualmente en `rounded-xl bg-surface-base p-6`
+  - CTA "Comienza a competir" (solo `!isAuthenticated`) — actualmente `rounded-lg bg-primary`
+  - Ranking cards: grid de 2 tarjetas (Posición Global / Posición Nacional) — actualmente `rounded-xl bg-surface-sunken`
+  - Stats grid: **5 tarjetas** (Mejor Puntaje, Puntaje Promedio, Precisión Prom., WPM, Total Partidas) — actualmente `rounded-xl bg-surface-sunken`
+  - Match history: filtros de período + nivel, tabla con `border-b border-surface-raised` en filas (viola "No-Line")
 
 **Acceptance Criteria:**
 
-**Given** the authenticated user's profile page (`/profile`)
-**When** the Design System tokens from Story 5.1 are applied
-**Then** the profile card uses `surface-container-low` background with `2rem`/`2.5rem` border-radius
-**And** the "No-Line" rule is applied: tonal shifts instead of 1px borders for section separation
-**And** the avatar uses a circular container with `primary/10` background fallback for initials
-**And** typography follows the Design System tokens: display-scale for the username, body-md for secondary info
-**And** the country selector, slug editor, and save button use the Design System's pill and surface styles
-**And** the match history section follows the same tonal surface hierarchy as the rest of the page.
+**Given** the `PublicProfilePage` component (`/u/:slug`)
+**When** the Design System from Story 5.1 is applied
+**Then** the hero section uses a large avatar (100×100 o 120×120) con `primary/10` background fallback para iniciales, display-scale para el displayName, `label-md` para la metadata (bandera + fecha)
+**And** the edit panel (own profile only) is restyled: slug input como campo pill con prefijo `ultimatype.xyz/u/` inline, country select con `surface-container-lowest` background, save button como pill primario full-width
+**And** the "Disponible" indicator usa el token de success del Design System; "No disponible" usa el token de error
+**And** the shareable link se muestra como un campo pill readonly con botón de copiar (icono) a la derecha
 
-**Given** a public profile page (`/u/:slug`)
-**When** it renders
-**Then** the hero section (avatar, name, country flag, registration date) uses a large avatar with `primary/10` fallback, display-scale username, and `label-md` metadata
-**And** the three stat cards (Mejor Puntaje, Puntaje Promedio, Total Partidas) use `surface-container-lowest` background with `2rem` border-radius and display-lg scale values
-**And** the match history section follows the same visual treatment as the authenticated profile's history
-**And** the "Comienza a competir" CTA uses the primary pill style, prominently placed.
+**Given** the ranking position cards (Posición Global / Posición Nacional)
+**When** the Design System is applied
+**Then** each card uses display-lg scale for the rank number (`#N`), body-md for the "de X jugadores" subtitle, and `label-md` for the card heading
+**And** cards use `surface-container-low` background with `2rem` border-radius
+**And** the two-card grid remains: position 1 = Global, position 2 = Nacional (or "—" if no country)
 
-**Given** the slug editor in the authenticated profile
-**When** the availability indicator is shown
-**Then** the "Disponible" state uses the Design System's success color token
-**And** the "No disponible" state uses the error color token
-**And** the shareable link (`ultimatype.com/u/{slug}`) is displayed as a pill-style readonly field with a copy icon button.
+**Given** the stats grid (5 cards)
+**When** the Design System is applied
+**Then** all 5 cards (Mejor Puntaje, Puntaje Promedio, Precisión Prom., WPM, Total Partidas) use display-lg scale for values, `label-md` for labels, `surface-container-lowest` background with `2rem` border-radius
+**And** score/WPM values use IBM Plex Mono font (data values, not labels)
+**And** empty state (`—`) uses muted styling, not broken layout
 
-**Given** the authenticated user's profile page (`/profile`)
-**When** it renders with match history (from Story 4.2) and slug editor (from Story 4.6)
-**Then** the page is divided into two clearly differentiated sections using tonal surface shifts (not divider lines):
-  - **Configuración**: avatar, display name, email, country selector, slug editor, save button
-  - **Historial**: match history list with filters (reuses the HistoryPage component from Story 4.2)
-**And** section headings use `label-md` style (uppercase, muted).
+**Given** the match history section
+**When** the Design System is applied
+**Then** the section eliminates all `border-b border-surface-raised` row dividers, replacing them with tonal row alternation (`surface-container-low` on hover, transparent default)
+**And** filter pills (period + level) use `full` border-radius with `surface-container-lowest` inactive state
+**And** the section heading "Historial de partidas" uses `label-md` style (uppercase, muted)
+**And** the page is visually divided into sections using tonal surface shifts (not lines): hero block, ranking block, stats block, history block — each with distinct surface depth
+
+**Given** the match history table rows
+**When** a player name appears (in match detail linking from this page)
+**Then** the name is styled as an inline link to `/u/:slug` using `text-primary` with underline on hover and `primary/10` background transition
 
 **Given** a user who has never played a match
-**When** the stats section of a profile (own or public `/u/:slug`) renders
-**Then** an elegant empty state is shown with a subtle icon and text: "Aún no hay partidas registradas"
-**And** for the authenticated user's own profile: a CTA "¡Crea una partida y empieza!" that triggers the create-room flow
-**And** stat cards (Mejor Puntaje, Puntaje Promedio, Total Partidas) show `—` or `0` with muted styling, not broken/empty.
+**When** the stats section renders
+**Then** all 5 stat cards show `—` with muted styling
+**And** for the own profile (`isOwnProfile`): a CTA "¡Crea una partida y empieza!" is shown below the stats
 
-**Given** an authenticated user visiting their own public profile (`/u/:slug`)
-**When** the page renders
-**Then** a prominent "Editar perfil" button is shown (secondary pill style) linking to `/profile`
-**And** no "Comienza a competir" CTA is shown (it is reserved for unauthenticated visitors only).
+**Given** the `match-detail-page.tsx` (public, accessible from history rows)
+**When** the Design System is applied
+**Then** the page follows the same visual treatment as the Match Results Overlay (Story 5.11): hero stats for the viewed player, full ranking table with tonal rows, player names as links to `/u/:slug`
+**And** a "← Volver" back button uses tertiary button style
+**And** for unauthenticated visitors, a "Comienza a competir" CTA is shown below the results
 
-**Given** a player's name appearing in match history rows, leaderboard table, or match results overlay
-**When** it renders
-**Then** the name is styled as an inline link to `/u/:slug` using `text-primary` color with underline on hover
-**And** the link hover state uses a subtle `primary/10` background transition consistent with the Design System.
-
-**Given** a match history row clicked by a user (navigating to `/match/:matchCode`)
-**When** the match detail page renders
-**Then** it shows the match results in the same visual treatment as the Match Results Overlay (Story 5.11): hero stats for the viewed player, full ranking table, player names as links to their public profiles
-**And** a "Volver" back button uses tertiary button style
-**And** the page follows the full Design System surface hierarchy and typography tokens
-**And** for unauthenticated visitors, a "Comienza a competir" CTA is shown below the results.
-
-**Note:** Depends on Story 4.6 (Public User Profiles) for the `/u/:slug` and `/match/:matchCode` routes, Story 4.2 (Personal History) for the history component, and Story 5.1 (Design System Migration) for the CSS tokens. The `/match/:matchCode` page is a new route introduced by this story.
+**Note:** Depends on Story 4.6 (Public User Profiles) for `PublicProfilePage`, `match-detail-page.tsx` and routes, Story 4.2 for match history hooks, and Story 5.1 for CSS tokens. No backend work required — all APIs exist from Epic 4.

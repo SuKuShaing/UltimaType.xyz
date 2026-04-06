@@ -35,7 +35,8 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-05T12:00:00-03:00
+last_updated: 2026-04-05T18:00:00-03:00
+# 2026-04-05: Epic 4 retrospective complete. 5/6 action items de retro Epic 3 cumplidos. Key takeaways: seguridad en primer intento (checklist explícito en stories c/endpoints públicos), análisis de impacto de deploy pre-implementación, validación funcional como checklist de tasks. 5 stories de Epic 5 reescritas (5-1, 5-6, 5-7, 5-12, 5-13) + 5-2 parcialmente actualizada para reflejar overlap con lo construido en Epic 4. Epic 4 set to done.
 # 2026-04-05: Story 4-6 code review complete, set to done. 11 patches applied (XSS escaping, host-header injection, TOCTOU race condition, AC9 OG description, check-slug throttle, CJK slug fallback, save button guard, DTO normalization, totalPages, migration TRIM, hook regex). 1 skip (migration collision, already applied). Deploy fixes: ServeStaticModule, Dockerfile web build, Traefik recovery after Docker restart.
 # 2026-04-05: Story 4-6 implementation complete, set to review (330 API + 174 web tests passing). Full-stack: slug field, public profile endpoints, OG proxy, PublicProfilePage, clickable names. 20 tasks.
 # 2026-04-05: Story 4-6 dev started (public-user-profiles), set to in-progress. Full-stack: slug field, public profile endpoints, OG proxy, PublicProfilePage, clickable names.
@@ -114,14 +115,14 @@ development_status:
   3-4-spectator-to-player-transition: done
   3-5-bug-fixes-and-ux-polish: done
   epic-3-retrospective: done
-  epic-4: in-progress
+  epic-4: done
   4-1-match-results-persistence: done
   4-2-personal-history-progression-dashboard: done
   4-3-global-leaderboard: done
   4-4-leaderboard-filtering-level-country-period: done
   4-5-automated-leaderboard-updates: done
   4-6-public-user-profiles: done
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
   epic-5: backlog
   5-1-design-system-migration: backlog
   5-2-navbar-redesign: backlog
