@@ -7,6 +7,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { z } from 'zod';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { SpaFallbackController } from './spa-fallback.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { UsersModule } from '../modules/users/users.module';
@@ -41,7 +42,7 @@ const envSchema = z.object({
           ServeStaticModule.forRoot({
             rootPath: join(__dirname, '..', 'public'),
             // Excluir rutas de la API — las maneja NestJS normalmente
-            exclude: ['/api/*path'],
+            exclude: ['/api/*path', '/u/*path'],
             serveStaticOptions: {
               // Cache agresivo para assets con hash (JS, CSS), no-cache para index.html
               setHeaders: (res: any, filePath: string) => {
@@ -74,7 +75,7 @@ const envSchema = z.object({
     GameModule,
     LeaderboardModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, SpaFallbackController],
   providers: [
     AppService,
     {

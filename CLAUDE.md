@@ -118,3 +118,7 @@ To activate Party Mode, read these files in order:
 5. `_bmad/_config/agent-manifest.csv` — roster completo de agentes con personalidades
 
 Luego ejecutar la activación según las instrucciones del `workflow.md`.
+
+## Check if we are using up-to-date code
+
+Use MCP Context7 to check if the code we are writing or are about to write is up-to-date, with the goal of writing good code that is compatible with the project's version configuration.
