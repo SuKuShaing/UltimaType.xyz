@@ -954,3 +954,56 @@ So that the experience feels visually impactante and consistent with the rest of
 **And** for unauthenticated visitors, a "Comienza a competir" CTA is shown below the results
 
 **Note:** Depends on Story 4.6 (Public User Profiles) for `PublicProfilePage`, `match-detail-page.tsx` and routes, Story 4.2 for match history hooks, and Story 5.1 for CSS tokens. No backend work required — all APIs exist from Epic 4.
+
+### Story 5.14: Dynamic OG Image Generation for Profile Links
+
+As a user sharing my profile link,
+I want social media previews to show a rich card with my name, avatar, and stats — not just my raw profile picture,
+So that the preview communicates UltimaType's brand and makes my achievement feel impactante.
+
+**Contexto:** Cuando se comparte `/u/:slug` en WhatsApp, Twitter, Discord, etc., el `OgProxyMiddleware` (implementado en Story 4.6) ya sirve meta tags dinámicos. Actualmente `og:image` apunta al avatar crudo del usuario (`s96-c`, ~96×96px). Esta story reemplaza eso con una imagen generada en el servidor al estilo GitHub: tarjeta 1200×630px con fondo oscuro de la marca, avatar del usuario, nombre, stats destacados, y branding de UltimaType.
+
+**Stack de generación:**
+- `satori` (Vercel) — renderiza JSX/CSS a SVG (no requiere browser headless)
+- `@resvg/resvg-js` — convierte SVG a PNG (usar variante WASM para evitar dependencias nativas en Docker)
+- Caché en memoria con TTL de 1 hora por slug
+- Fuentes: Space Grotesk (headlines) y IBM Plex Mono (valores numéricos) — cargadas desde Google Fonts en la inicialización del módulo y cacheadas en memoria
+
+**Acceptance Criteria:**
+
+**Given** a GET request to `GET /api/og/u/:slug`
+**When** the controller processes the request
+**Then** it returns a PNG image with `Content-Type: image/png` and `Cache-Control: public, max-age=3600`
+**And** the PNG dimensions are 1200×630px
+**And** if the slug does not exist in the DB, returns 404
+
+**Given** the OG card image
+**When** it renders
+**Then** the layout is:
+  - Fondo: color `#0d0d0d` (dark, consistente con el dark theme de la plataforma)
+  - Columna izquierda: avatar circular del usuario (200×200px, `border-radius: 50%`), display name debajo en Space Grotesk bold 48px, country flag + code si existe, texto "ultimatype.xyz/u/:slug" en muted 20px
+  - Columna derecha: 2 stat chips apilados — "MEJOR PUNTAJE" con el valor en IBM Plex Mono 56px color primario (`#7c6af7` o similar), "PARTIDAS JUGADAS" con el valor en IBM Plex Mono 40px
+  - Esquina superior derecha: texto "UltimaType" en Space Grotesk semibold 28px + ícono o logotipo (si existe en `apps/web/public/`)
+  - Si el usuario no tiene historial de partidas, los stat chips muestran "—" en muted
+
+**Given** the image generation process
+**When** the user's avatar URL points to Google (`lh3.googleusercontent.com`) or GitHub (`avatars.githubusercontent.com`)
+**Then** the avatar is fetched as base64 data URL and embedded directamente en el SVG (satori requiere data URLs, no URLs externas)
+**And** if the avatar fetch fails (timeout, 4xx/5xx), a fallback circular element uses `primary/10` background with the user's initials in Space Grotesk
+
+**Given** the image endpoint
+**When** the same slug is requested within 1 hour
+**Then** the cached PNG buffer is returned directly without re-querying the DB or re-generating
+**And** the cache is a simple in-memory `Map<string, { buffer: Buffer; expiresAt: number }>` in the controller/service
+
+**Given** the `OgProxyMiddleware` (`og-proxy.middleware.ts`)
+**When** it builds the OG HTML for a bot request
+**Then** `og:image` is set to `${baseUrl}/api/og/u/${user.slug}` (the new dynamic image endpoint)
+**And** `og:image:width` is `1200` and `og:image:height` is `630`
+**And** the existing `getLargerAvatarUrl` helper introduced as a hotfix is removed (no longer needed)
+
+**Given** a failed image generation (satori/resvg throws)
+**When** the error is caught
+**Then** the error is logged and the endpoint returns 500 — the `OgProxyMiddleware` falls back gracefully because it already has try/catch that calls `next()` on error
+
+**Note:** Implementación es full-stack en el backend únicamente (`apps/api`). No hay cambios en frontend. Dependencias a instalar: `satori`, `@resvg/resvg-js` (WASM variant: `@resvg/resvg-wasm`). La fuente Space Grotesk se puede obtener desde `https://fonts.gstatic.com/s/spacegrotesk/v16/...` — usar el mismo subset que ya se carga en el frontend. No depende de ninguna story de Epic 5 — puede ejecutarse en cualquier momento después de Story 4.6.
