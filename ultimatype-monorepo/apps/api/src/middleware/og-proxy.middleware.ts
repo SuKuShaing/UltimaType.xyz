@@ -2,6 +2,15 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 
+function getLargerAvatarUrl(url: string): string {
+  if (!url) return url;
+  // Google avatars: =s96-c → =s400-c
+  if (url.includes('googleusercontent.com')) {
+    return url.replace(/=s\d+(-c)?$/, '=s400$1');
+  }
+  return url;
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -72,7 +81,7 @@ export class OgProxyMiddleware implements NestMiddleware {
       const baseUrl = process.env.FRONTEND_URL!;
       const safeName = escapeHtml(user.displayName);
       const safeDescription = escapeHtml(descParts.join(' · '));
-      const safeImage = escapeHtml(user.avatarUrl ?? '');
+      const safeImage = escapeHtml(getLargerAvatarUrl(user.avatarUrl ?? ''));
 
       const html = `<!DOCTYPE html>
 <html lang="es">
@@ -83,6 +92,8 @@ export class OgProxyMiddleware implements NestMiddleware {
   <meta property="og:title" content="${safeName} — UltimaType">
   <meta property="og:description" content="${safeDescription}">
   <meta property="og:image" content="${safeImage}">
+  <meta property="og:image:width" content="400">
+  <meta property="og:image:height" content="400">
   <meta property="og:url" content="${baseUrl}/u/${user.slug}">
   <meta name="twitter:card" content="summary">
 </head>
