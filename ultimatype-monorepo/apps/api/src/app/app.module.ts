@@ -41,7 +41,7 @@ const envSchema = z.object({
           ServeStaticModule.forRoot({
             rootPath: join(__dirname, '..', 'public'),
             // Excluir rutas de la API — las maneja NestJS normalmente
-            exclude: ['/api/(.*)'],
+            exclude: ['/api/*path'],
             serveStaticOptions: {
               // Cache agresivo para assets con hash (JS, CSS), no-cache para index.html
               setHeaders: (res: any, filePath: string) => {
