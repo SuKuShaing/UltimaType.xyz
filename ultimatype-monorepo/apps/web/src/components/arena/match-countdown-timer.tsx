@@ -71,7 +71,7 @@ export function MatchCountdownTimer({ matchStatus }: MatchCountdownTimerProps) {
       className="flex flex-col items-center"
       style={{ opacity, transition: 'opacity 0.5s ease' }}
     >
-      <div className="relative h-[4.5rem] w-16 overflow-hidden">
+      <div className="relative h-[4.5rem] w-28 overflow-hidden">
         {/* Outgoing number — slides down and fades out */}
         {prev !== null && (
           <span
