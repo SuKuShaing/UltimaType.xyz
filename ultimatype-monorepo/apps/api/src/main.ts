@@ -1,4 +1,4 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
@@ -54,7 +54,9 @@ async function bootstrap() {
   );
 
   const globalPrefix = 'api';
-  app.setGlobalPrefix(globalPrefix);
+  app.setGlobalPrefix(globalPrefix, {
+    exclude: [{ path: 'u/:slug', method: RequestMethod.GET }],
+  });
 
   // WebSocket con Redis adapter
   const redisUrl = configService.get('REDIS_URL', 'redis://localhost:6379');

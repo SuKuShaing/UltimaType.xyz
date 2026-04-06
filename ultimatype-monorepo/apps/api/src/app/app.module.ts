@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -87,6 +87,6 @@ const envSchema = z.object({
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // path-to-regexp v8 (NestJS 11) requiere wildcard nombrado: *path en vez de *
-    consumer.apply(OgProxyMiddleware).forRoutes('/u/*path');
+    consumer.apply(OgProxyMiddleware).forRoutes({ path: 'u/:slug', method: RequestMethod.GET });
   }
 }
