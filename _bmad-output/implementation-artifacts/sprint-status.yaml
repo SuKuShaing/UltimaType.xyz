@@ -35,7 +35,14 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-05T18:00:00-03:00
+last_updated: 2026-04-06T17:45:00-03:00
+# 2026-04-06: Story 5-2 code review complete, set to done. 12 patches applied (imgError reset, same-route dropdown close, useRef type, bg-surface-base dropdown, font-sans login btn, type=button, onError test, isActive/tabClass extracted, aria-label nav, setup() typing, initials emoji fix, Escape focus restore). 2 defers. 254 web tests passing.
+# 2026-04-06: Story 5-2 implementation complete, set to review (252 web tests passing). Frontend-only: tabs ("Principal" + "Leaderboard"), simplified avatar, mobile hamburger, Focus Fade preserved. 17 new tests.
+# 2026-04-06: Story 5-2 dev started (navbar-redesign), set to in-progress. Frontend-only: tabs, avatar, mobile hamburger, Focus Fade preserved.
+# 2026-04-06: Story 5-2 created (navbar-redesign), set to ready-for-dev. Frontend-only: tabs, avatar, mobile hamburger, Focus Fade preserved.
+# 2026-04-06: Story 5-1 implementation complete, set to review (234 web tests passing). CSS-only: token audit, 9 new color tokens, typography (Space Grotesk + IBM Plex Mono), radius tokens, @custom-variant dark, No-Line documentation. 60 new tests.
+# 2026-04-06: Story 5-1 dev started (design-system-migration), set to in-progress. CSS-only changes: styles.css + index.html font loading.
+# 2026-04-06: Story 5-1 created (design-system-migration), set to ready-for-dev. Epic 5 set to in-progress.
 # 2026-04-05: Epic 4 retrospective complete. 5/6 action items de retro Epic 3 cumplidos. Key takeaways: seguridad en primer intento (checklist explícito en stories c/endpoints públicos), análisis de impacto de deploy pre-implementación, validación funcional como checklist de tasks. 5 stories de Epic 5 reescritas (5-1, 5-6, 5-7, 5-12, 5-13) + 5-2 parcialmente actualizada para reflejar overlap con lo construido en Epic 4. Epic 4 set to done.
 # 2026-04-05: Story 4-6 code review complete, set to done. 11 patches applied (XSS escaping, host-header injection, TOCTOU race condition, AC9 OG description, check-slug throttle, CJK slug fallback, save button guard, DTO normalization, totalPages, migration TRIM, hook regex). 1 skip (migration collision, already applied). Deploy fixes: ServeStaticModule, Dockerfile web build, Traefik recovery after Docker restart.
 # 2026-04-05: Story 4-6 implementation complete, set to review (330 API + 174 web tests passing). Full-stack: slug field, public profile endpoints, OG proxy, PublicProfilePage, clickable names. 20 tasks.
@@ -123,9 +130,9 @@ development_status:
   4-5-automated-leaderboard-updates: done
   4-6-public-user-profiles: done
   epic-4-retrospective: done
-  epic-5: backlog
-  5-1-design-system-migration: backlog
-  5-2-navbar-redesign: backlog
+  epic-5: in-progress
+  5-1-design-system-migration: done
+  5-2-navbar-redesign: done
   5-3-homepage-layout-extraction: backlog
   5-4-game-mode-selector: backlog
   5-5-partidas-en-vivo: backlog

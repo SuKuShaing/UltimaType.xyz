@@ -1,5 +1,23 @@
 # Deferred Work
 
+## Deferred from: code review de 5-2-navbar-redesign (2026-04-06)
+
+- **`tabClass`/`isActive` como funciones en el render body** — Micro-optimización; nuevas referencias de función en cada render, sin `useCallback`. Pre-existente como pattern en el proyecto. Revisar si se nota en profiling.
+- **`<nav>` sin `aria-label`** — WCAG 2.1: si hay múltiples landmarks `<nav>` en la página (e.g., footer), los lectores de pantalla no pueden distinguirlos. Preocupación a nivel de proyecto; agregar en una story de accesibilidad futura.
+- **`setup()` override type `Record<string, unknown>`** — Usar `Partial<ReturnType<typeof useAuth>>` para tipado seguro de los overrides. Patrón pre-existente en los tests del proyecto.
+- **Sin `role="menu"` / `role="menuitem"` en dropdown móvil** — El disclosure navigation pattern requiere ARIA roles para screen readers. Fuera del alcance de 5-2; agregar en story de accesibilidad futura.
+- **Initials con display names que contienen palabras solo de espacios o caracteres emoji/CJK** — `w[0]` para emoji devuelve el primer UTF-16 code unit (surrogate pair roto). Problema de calidad de datos a nivel OAuth/perfil.
+- **Retorno de foco al botón hamburger al cerrar con Escape** — `setMenuOpen(false)` no restaura el foco al botón trigger. WCAG 2.1 §2.4.3. Agregar `hamburgerButtonRef.current?.focus()` en una story de a11y.
+- **Sin `touchstart` listener para click-outside** — Solo `mousedown`. El `mousedown` synthesizado cubre la mayoría de los navegadores móviles pero no todos. Revisar si se reportan issues en producción mobile.
+
+## Deferred from: code review de 5-1-design-system-migration (2026-04-06)
+
+- **Guards SSR/localStorage en `use-theme.ts`** — `getSystemTheme()` llama `window.matchMedia` sin verificar si `window` existe; `localStorage.getItem` en el initializer puede lanzar SecurityError. Pre-existente; agregar guards si se agrega SSR o renderizado en entorno sin navegador.
+- **`useTheme` fuera de ThemeProvider** — Retorna valores por defecto del contexto sin señalar el error. Pre-existente; agregar throw en producción si se detecta uso incorrecto.
+- **Race condition en cleanup del mediaQuery listener** — Si el componente se desmonta mientras un evento de cambio está en cola, el handler puede dispararse post-cleanup. Pre-existente; verificar en React StrictMode.
+- **Google Fonts stylesheet es render-blocking** — El patrón `<link rel="stylesheet">` bloquea el render. Pattern definido por spec. Para optimizar, considerar `media="print" onload` trick o font-display swap en una story de performance futura.
+- **`removeEventListener` no validado en tests** — El mock de `vi.fn()` para `removeEventListener` no verifica que el cleanup del effect remueva el handler correcto. Cobertura menor; revisar en un ciclo de testing exhaustivo.
+
 ## Deferred from: code review de 4-6-public-user-profiles (2026-04-05)
 
 - **usePublicProfile sin staleTime** — El hook no tiene `staleTime` configurado, lo que provoca un re-fetch en cada mount. El perfil público es relativamente estático. Agregar `staleTime: 60_000` para reducir carga en rutas populares.
