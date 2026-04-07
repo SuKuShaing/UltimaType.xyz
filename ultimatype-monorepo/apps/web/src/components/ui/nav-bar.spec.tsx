@@ -99,13 +99,69 @@ describe('NavBar', () => {
   });
 
   describe('authenticated user', () => {
-    it('renders avatar link to /u/{slug}', () => {
+    it('renders avatar button that opens user menu', () => {
       setup({ user: authenticatedUser, isAuthenticated: true });
       render(<NavBar />);
 
       const avatar = screen.getByAltText('Seba Dev');
       expect(avatar).toBeTruthy();
-      expect(avatar.closest('a')?.getAttribute('href')).toBe('/u/seba-dev');
+      expect(avatar.closest('button')).toBeTruthy();
+    });
+
+    it('opens dropdown with "Perfil" and "Cerrar sesión" on avatar click', () => {
+      setup({ user: authenticatedUser, isAuthenticated: true });
+      render(<NavBar />);
+
+      expect(screen.queryByText('Perfil')).toBeNull();
+      expect(screen.queryByText('Cerrar sesión')).toBeNull();
+
+      fireEvent.click(screen.getByLabelText('Abrir menú de usuario'));
+
+      expect(screen.getByText('Perfil')).toBeTruthy();
+      expect(screen.getByText('Cerrar sesión')).toBeTruthy();
+    });
+
+    it('"Perfil" links to /u/{slug}', () => {
+      setup({ user: authenticatedUser, isAuthenticated: true });
+      render(<NavBar />);
+
+      fireEvent.click(screen.getByLabelText('Abrir menú de usuario'));
+
+      const profileLink = screen.getByRole('menuitem', { name: 'Perfil' });
+      expect(profileLink.closest('a')?.getAttribute('href')).toBe('/u/seba-dev');
+    });
+
+    it('"Cerrar sesión" calls logout', () => {
+      const logoutFn = vi.fn();
+      setup({ user: authenticatedUser, isAuthenticated: true, logout: logoutFn });
+      render(<NavBar />);
+
+      fireEvent.click(screen.getByLabelText('Abrir menú de usuario'));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Cerrar sesión' }));
+
+      expect(logoutFn).toHaveBeenCalledOnce();
+    });
+
+    it('closes dropdown on Escape key', () => {
+      setup({ user: authenticatedUser, isAuthenticated: true });
+      render(<NavBar />);
+
+      fireEvent.click(screen.getByLabelText('Abrir menú de usuario'));
+      expect(screen.getByText('Perfil')).toBeTruthy();
+
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(screen.queryByRole('menu')).toBeNull();
+    });
+
+    it('closes dropdown on second avatar click', () => {
+      setup({ user: authenticatedUser, isAuthenticated: true });
+      render(<NavBar />);
+
+      fireEvent.click(screen.getByLabelText('Abrir menú de usuario'));
+      expect(screen.getByText('Perfil')).toBeTruthy();
+
+      fireEvent.click(screen.getByLabelText('Cerrar menú de usuario'));
+      expect(screen.queryByRole('menu')).toBeNull();
     });
 
     it('shows initials fallback when avatarUrl is null', () => {
@@ -276,6 +332,44 @@ describe('NavBar', () => {
       const allPrincipal = screen.getAllByText('Principal');
       const mobileMenu = allPrincipal[1].parentElement!;
       expect(mobileMenu.classList.contains('md:hidden')).toBe(true);
+    });
+
+    it('shows "Perfil" and "Cerrar sesión" in mobile menu when authenticated', () => {
+      setup({ user: authenticatedUser, isAuthenticated: true });
+      render(<NavBar />);
+
+      fireEvent.click(screen.getByLabelText('Abrir menú'));
+
+      const allPerfil = screen.getAllByText('Perfil');
+      // At least one "Perfil" in mobile menu
+      expect(allPerfil.length).toBeGreaterThanOrEqual(1);
+
+      const allCerrar = screen.getAllByText('Cerrar sesión');
+      expect(allCerrar.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('does not show "Perfil" or "Cerrar sesión" in mobile menu when not authenticated', () => {
+      setup();
+      render(<NavBar />);
+
+      fireEvent.click(screen.getByLabelText('Abrir menú'));
+
+      expect(screen.queryByText('Perfil')).toBeNull();
+      expect(screen.queryByText('Cerrar sesión')).toBeNull();
+    });
+
+    it('calls logout from mobile menu "Cerrar sesión"', () => {
+      const logoutFn = vi.fn();
+      setup({ user: authenticatedUser, isAuthenticated: true, logout: logoutFn });
+      render(<NavBar />);
+
+      fireEvent.click(screen.getByLabelText('Abrir menú'));
+
+      const allCerrar = screen.getAllByText('Cerrar sesión');
+      // Click the one in the mobile menu (last one if avatar menu is not open)
+      fireEvent.click(allCerrar[0]);
+
+      expect(logoutFn).toHaveBeenCalledOnce();
     });
   });
 });

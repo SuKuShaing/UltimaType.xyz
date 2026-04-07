@@ -35,7 +35,11 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-07T14:00:00-03:00
+last_updated: 2026-04-07T18:45:00-03:00
+# 2026-04-07: Story 5-6 implementation complete, set to review (348 web tests passing). Frontend-only: useLeaderboardPreview hook (limit=5), LeaderboardPreviewSection con tabla top-5, toggle Mundial/Mi país, CountryFlag, CTA unauthenticated. 31 nuevos tests (+23 spec + 8 home-page updates).
+# 2026-04-07: Hotfix 5-hotfix-restore-logout-button complete, set to done. Botón "Cerrar sesión" perdido en refactor 5-3 restaurado como avatar dropdown en NavBar. Dropdown con "Perfil" + "Cerrar sesión" (text-error, divider). Cierre con Escape/click outside. Mobile hamburger también incluye ambas opciones. 7 tests nuevos, 27 total. Fixes visuales: overflow-hidden, avatar alignment, mobile spacing.
+# 2026-04-07: Story 5-6 dev started (global-leaderboard-preview), set to in-progress. Frontend-only: useLeaderboardPreview hook, LeaderboardPreviewSection con tabla top-5, toggle Mundial/Mi país, CTA unauthenticated.
+# 2026-04-07: Story 5-6 created (global-leaderboard-preview), set to ready-for-dev. Frontend-only: tabla top 5 de GET /api/leaderboard?limit=5, toggle Mundial/Mi país, link a /leaderboard, CTA unauthenticated.
 # 2026-04-07: Story 5-5 code review complete, set to done. 8 patches applied (setRoomStatusAtomically srem, handleRematch sadd, player filtering dedup, colorIndex composite key, controller try/catch, clock skew guard, null meta skip, 5 controller tests). 5 dismissed (N+1 Redis, elapsed tick, silent error, Set TTL, error state). 7 noise dismissed.
 # 2026-04-07: Story 5-5 implementation complete, set to review (317 web tests passing). Full-stack: GET /rooms/active endpoint, Redis Set active:rooms, ActiveRoomDto, LiveMatchesSection con polling React Query 4s, mini-leaderboard, WPM client-side, empty state. 14 nuevos tests.
 # 2026-04-07: Story 5-5 dev started (partidas-en-vivo), set to in-progress. Full-stack: GET /rooms/active, Redis Set, ActiveRoomDto, LiveMatchesSection con polling, mini-leaderboard, empty state.
@@ -148,7 +152,8 @@ development_status:
   5-3-homepage-layout-extraction: done
   5-4-game-mode-selector: done
   5-5-partidas-en-vivo: done
-  5-6-global-leaderboard-preview: backlog
+  5-hotfix-restore-logout-button: done
+  5-6-global-leaderboard-preview: review
   5-7-player-profile-ranking-card: backlog
   5-8-responsive-and-polish: backlog
   5-9-lobby-visual-restyling: backlog

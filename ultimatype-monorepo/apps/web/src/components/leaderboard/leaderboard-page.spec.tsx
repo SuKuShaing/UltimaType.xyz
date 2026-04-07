@@ -189,7 +189,7 @@ describe('LeaderboardPage', () => {
     expect(link.closest('a')?.getAttribute('href')).toBe('/match/ABC123');
   });
 
-  it('should link player name to public profile', () => {
+  it('should NOT link player name to public profile (profile accessible from match detail)', () => {
     const data: PaginatedResponse<LeaderboardEntryDto> = {
       data: [makeEntry({ slug: 'al-abc' })],
       meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
@@ -198,12 +198,11 @@ describe('LeaderboardPage', () => {
 
     renderPage();
 
-    const link = screen.getByText('Alice').closest('a');
-    expect(link).toBeTruthy();
-    expect(link?.getAttribute('href')).toBe('/u/al-abc');
+    const nameEl = screen.getByText('Alice');
+    expect(nameEl.closest('a')).toBeNull();
   });
 
-  it('should link best score to match detail', () => {
+  it('should make rows clickable (cursor-pointer) to navigate to match detail', () => {
     const data: PaginatedResponse<LeaderboardEntryDto> = {
       data: [makeEntry({ bestScoreMatchCode: 'XYZ789', bestScore: 1200 })],
       meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
@@ -212,9 +211,8 @@ describe('LeaderboardPage', () => {
 
     renderPage();
 
-    // The score is formatted via toLocaleString and wrapped in a Link
-    const matchLink = document.querySelector('a[href="/match/XYZ789"]');
-    expect(matchLink).toBeTruthy();
+    const row = screen.getByText('Alice').closest('tr');
+    expect(row?.classList.contains('cursor-pointer')).toBe(true);
   });
 
   it('should show pagination when multiple pages exist', () => {

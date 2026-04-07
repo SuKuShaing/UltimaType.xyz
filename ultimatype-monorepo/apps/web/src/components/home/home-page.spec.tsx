@@ -34,6 +34,14 @@ vi.mock('../../hooks/use-active-rooms', () => ({
   useActiveRooms: vi.fn(() => ({ data: { rooms: [] }, isLoading: false })),
 }));
 
+vi.mock('../../hooks/use-leaderboard-preview', () => ({
+  useLeaderboardPreview: vi.fn(() => ({ data: { data: [], meta: { total: 0, page: 1, limit: 5, totalPages: 0 } }, isLoading: false })),
+}));
+
+vi.mock('../ui/country-flag', () => ({
+  CountryFlag: () => null,
+}));
+
 vi.mock('react-helmet-async', () => ({
   Helmet: ({ children }: { children: React.ReactNode }) => {
     const extractTitle = (nodes: React.ReactNode): string => {
@@ -301,12 +309,12 @@ describe('HomePage', () => {
       expect(section!.textContent).toContain('No hay partidas en vivo');
     });
 
-    it('LeaderboardPreviewSection shows placeholder text', () => {
+    it('LeaderboardPreviewSection shows navigation link to leaderboard', () => {
       setup();
       const section = screen
         .getByText('Clasificación Global')
         .closest('section');
-      expect(section!.textContent).toContain('Próximamente');
+      expect(section!.textContent).toContain('Ver clasificación completa');
     });
 
     it('PlayerProfileSection shows placeholder text', () => {

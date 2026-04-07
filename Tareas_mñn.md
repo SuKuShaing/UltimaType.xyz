@@ -2,8 +2,6 @@
 
 ## To Fix
 
-- [ ] Falta cerrar sesión
-- [ ] Al menú en mobile le falta padding
 - [ ] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
 - [ ] El menú es más ancho que el contenido
 
@@ -38,7 +36,6 @@
 
 - [ ] Veríficar que los invitados no sean clickeables cuando haya invitados, ver el tema de qué es más ligero para el servidor, sí que diga simplemente invitado en el historial o sí sale el invitado exacto, con su número de invitado
 - [ ] Cuando volvamos al lobby usa el mismo código de sala, es decir la partida nueva reescribe la anterior?, sí jugué 3 partidas con mis amigos se guarda la última?
-- [x] Preguntar que son las spec AC y PRD en bmad
 - [ ] qué es este fallo "Los tests existentes siguen pasando (el fallo en game.gateway.spec.ts es
       pre-existente)"
 - [ ] Debo hacer algo con estos warning: "Build: exitoso. Los warnings son de source-maps de @nestjs/throttler,
@@ -48,6 +45,8 @@
 
 ### FiXs
 
+- [x] Falta cerrar sesión
+- [x] Al menú en mobile le falta padding
 - [x] Espacio insuficiente en el timer para más de 60 seg ![img](/Fix%20pendientes/espacio%20insuficiente%20en%20el%20timer%20para%20más%20de%2060%20seg.jpeg)
 
 ### Tareas
@@ -79,6 +78,7 @@
 
 ### Preguntas
 
+- [x] Preguntar que son las spec AC y PRD en bmad
 - [x] Sí elijo la revancha, es el mismo texto o puede ser cualquier otro
 - [x] Seguridad de la bases de datos, cómo es el tema de las claves, que no las veo, la seguridad en la plataforma
 - [x] Seguridad del sistema en general, sí no van a hackear mi vps y consumir mis recursos

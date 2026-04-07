@@ -58,17 +58,21 @@ function CloseIcon() {
 }
 
 export function NavBar() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const [imgError, setImgError] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+  const avatarButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Close hamburger menu on route change
+  // Close menus on route change
   useEffect(() => {
     setMenuOpen(false);
+    setAvatarMenuOpen(false);
   }, [location.pathname]);
 
   // Reset avatar error state when avatar URL changes
@@ -100,6 +104,36 @@ export function NavBar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [menuOpen]);
+
+  // Close avatar menu on Escape key or click outside
+  useEffect(() => {
+    if (!avatarMenuOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setAvatarMenuOpen(false);
+        avatarButtonRef.current?.focus();
+      }
+    }
+
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        avatarMenuRef.current &&
+        !avatarMenuRef.current.contains(e.target as Node) &&
+        avatarButtonRef.current &&
+        !avatarButtonRef.current.contains(e.target as Node)
+      ) {
+        setAvatarMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [avatarMenuOpen]);
 
   const initials =
     user?.displayName
@@ -150,23 +184,58 @@ export function NavBar() {
             </button>
             <ThemeToggle />
             {isAuthenticated && user ? (
-              <Link
-                to={`/u/${user.slug}`}
-                className="no-underline"
-              >
-                {user.avatarUrl && !imgError ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.displayName}
-                    className="h-8 w-8 rounded-full object-cover transition-opacity hover:opacity-80"
-                    onError={() => setImgError(true)}
-                  />
-                ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-surface-base">
-                    {initials}
-                  </span>
+              <div className="relative">
+                <button
+                  ref={avatarButtonRef}
+                  type="button"
+                  onClick={() => setAvatarMenuOpen((prev) => !prev)}
+                  className="flex cursor-pointer items-center rounded-full leading-none"
+                  aria-label={avatarMenuOpen ? 'Cerrar menú de usuario' : 'Abrir menú de usuario'}
+                  aria-expanded={avatarMenuOpen}
+                  aria-haspopup="true"
+                >
+                  {user.avatarUrl && !imgError ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.displayName}
+                      className="h-8 w-8 rounded-full object-cover transition-opacity hover:opacity-80"
+                      onError={() => setImgError(true)}
+                    />
+                  ) : (
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-surface-base">
+                      {initials}
+                    </span>
+                  )}
+                </button>
+
+                {avatarMenuOpen && (
+                  <div
+                    ref={avatarMenuRef}
+                    className="absolute right-0 top-full mt-2 min-w-[180px] overflow-hidden rounded-card bg-surface-sunken py-1 shadow-lg"
+                    role="menu"
+                  >
+                    <Link
+                      to={`/u/${user.slug}`}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm font-sans text-text-main no-underline transition-colors hover:bg-surface-container"
+                      role="menuitem"
+                      onClick={() => setAvatarMenuOpen(false)}
+                    >
+                      <span className="material-symbols-outlined text-base" aria-hidden="true">person</span>
+                      Perfil
+                    </Link>
+                    <div className="my-1 border-t border-surface-raised" role="separator" />
+                    <button
+                      type="button"
+                      onClick={() => { logout(); setAvatarMenuOpen(false); }}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm font-sans text-error transition-colors hover:bg-surface-container"
+                      role="menuitem"
+                    >
+                      <span className="material-symbols-outlined text-base" aria-hidden="true">logout</span>
+                      Cerrar sesión
+                    </button>
+                  </div>
                 )}
-              </Link>
+              </div>
             ) : (
               <button
                 type="button"
@@ -181,17 +250,36 @@ export function NavBar() {
 
         {/* Mobile dropdown menu */}
         {menuOpen && (
-          <div className="flex flex-col gap-2 bg-surface-base px-4 pb-3 md:hidden">
+          <div className="flex flex-col gap-3 bg-surface-base px-4 pt-2 pb-4 shadow-lg md:hidden">
             {NAV_TABS.map((tab) => (
               <Link
                 key={tab.to}
                 to={tab.to}
-                className={tabClass(location.pathname, tab.to)}
+                className={`py-1 ${tabClass(location.pathname, tab.to)}`}
                 onClick={() => setMenuOpen(false)}
               >
                 {tab.label}
               </Link>
             ))}
+            {isAuthenticated && user && (
+              <>
+                <div className="my-2 border-t border-surface-raised" role="separator" />
+                <Link
+                  to={`/u/${user.slug}`}
+                  className="py-1 text-sm font-sans text-text-muted no-underline transition-colors hover:text-text-main"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Perfil
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => { logout(); setMenuOpen(false); }}
+                  className="py-1 text-left text-sm font-sans text-error transition-colors hover:opacity-80"
+                >
+                  Cerrar sesión
+                </button>
+              </>
+            )}
           </div>
         )}
       </nav>
