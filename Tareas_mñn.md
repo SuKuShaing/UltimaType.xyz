@@ -10,7 +10,6 @@
 - [ ] Cuando alguien se une a la sala, que haga un sonido
 - [ ] Revisar que el código sea código moderno y usen context7, dejar esto en Claude
 - [ ] Para un futuro que los países se puedan seleccionar por continente y sea vean las banderas de los países
-- [ ] Que el nivel de dificultad diga en el 1. Solo minúsculas, 2. Minúsculas y mayúsculas, 3. Minúsculas, mayúsculas, acentos y puntuación, 4. Minúsculas, mayúsculas, acentos, puntuación y números, 5. Todo lo anterior más símbolos
 - [ ] En el botón de revancha o en la pantalla de resultados debiese estar revancha con subir el nivel de dificultad
 - [ ] Colocar un footer donde diga el autor
 - [ ] Que se pueda ceder el host a otro jugador
@@ -52,6 +51,7 @@
 
 ### Tareas
 
+- [x] Que el nivel de dificultad diga en el 1. Solo minúsculas, 2. Minúsculas y mayúsculas, 3. Minúsculas, mayúsculas, acentos y puntuación, 4. Minúsculas, mayúsculas, acentos, puntuación y números, 5. Todo lo anterior más símbolos
 - [x] Tener un perfil, que sea visible públicamente y muestre las estadísticas de las partidas jugadas
 - [x] Hacer al retrospectiva Epic 3
 - [x] El logo del main del home debiese ser el logo de la web

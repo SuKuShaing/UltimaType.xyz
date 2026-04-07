@@ -35,7 +35,8 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-07T22:30:00-03:00
+last_updated: 2026-04-08T00:00:00-03:00
+# 2026-04-08: Story 5-7 code review complete, set to done. 1 decision resolved (AC3 LoginModal aceptado, spec corregida). 3 patches applied (test score assertion fortalecido, error state con mensaje de reintento, aria-haspopup/expanded en botón login). 0 defers. 10 dismissed. 383 web tests passing.
 # 2026-04-07: Story 5-7 implementation complete, set to review (380 web tests passing). Frontend-only: PlayerProfileSection con 4 estados (skeleton/CTA/sin-historial/tarjeta-completa), useLeaderboardPosition reutilizado, avatar bg-primary/10, bestScore+globalPercentile. 31 nuevos tests + home-page.spec actualizado.
 # 2026-04-07: Story 5-7 dev started (player-profile-ranking-card), set to in-progress. Frontend-only: PlayerProfileSection implementando 4 estados (skeleton/CTA/sin-historial/tarjeta-completa), useLeaderboardPosition({level:null,period:'all'}).
 # 2026-04-07: Story 5-7 created (player-profile-ranking-card), set to ready-for-dev. Frontend-only: PlayerProfileSection reemplaza placeholder, usa useLeaderboardPosition({level:null,period:'all'}), 4 estados (skeleton/CTA/sin-historial/tarjeta-completa), avatar con bg-primary/10, bestScore+globalPercentile de UserLeaderboardPositionDto.
@@ -158,7 +159,7 @@ development_status:
   5-5-partidas-en-vivo: done
   5-hotfix-restore-logout-button: done
   5-6-global-leaderboard-preview: done
-  5-7-player-profile-ranking-card: review
+  5-7-player-profile-ranking-card: done
   5-8-responsive-and-polish: backlog
   5-9-lobby-visual-restyling: backlog
   5-10-arena-visual-restyling: backlog

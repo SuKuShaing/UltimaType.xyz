@@ -65,6 +65,7 @@ function setup(
   authOverrides: Partial<ReturnType<typeof useAuth>> = {},
   positionData: any = undefined,
   positionLoading = false,
+  positionError = false,
 ) {
   mockUseAuth.mockReturnValue({
     user: undefined,
@@ -78,6 +79,7 @@ function setup(
   mockUseLeaderboardPosition.mockReturnValue({
     data: positionData,
     isLoading: positionLoading,
+    isError: positionError,
   });
   return render(<PlayerProfileSection />);
 }
@@ -146,6 +148,21 @@ describe('PlayerProfileSection', () => {
     });
   });
 
+  describe('Estado de error', () => {
+    it('muestra mensaje de error cuando la query falla', () => {
+      setup({ isAuthenticated: true, user: mockUser }, undefined, false, true);
+      expect(
+        screen.getByText('Error al cargar tus datos, estamos reintentando…'),
+      ).toBeTruthy();
+    });
+
+    it('no muestra skeleton ni tarjeta cuando hay error', () => {
+      setup({ isAuthenticated: true, user: mockUser }, undefined, false, true);
+      expect(document.querySelector('.animate-pulse')).toBeNull();
+      expect(screen.queryByText('Mejor Puntaje')).toBeNull();
+    });
+  });
+
   describe('CTA para no autenticados (AC3)', () => {
     it('muestra texto "Inicia sesión para ver tu ranking"', () => {
       setup();
@@ -169,6 +186,15 @@ describe('PlayerProfileSection', () => {
       setup();
       const btn = screen.getByRole('button', { name: 'Iniciar sesión' });
       expect((btn as HTMLButtonElement).type).toBe('button');
+    });
+
+    it('el botón tiene aria-haspopup="dialog" y aria-expanded', () => {
+      setup();
+      const btn = screen.getByRole('button', { name: 'Iniciar sesión' });
+      expect(btn.getAttribute('aria-haspopup')).toBe('dialog');
+      expect(btn.getAttribute('aria-expanded')).toBe('false');
+      fireEvent.click(btn);
+      expect(btn.getAttribute('aria-expanded')).toBe('true');
     });
 
     it('no muestra el mensaje de sin historial', () => {
@@ -231,7 +257,7 @@ describe('PlayerProfileSection', () => {
       setup({ isAuthenticated: true, user: mockUser }, mockPosition);
       const monoEls = document.querySelectorAll('.font-mono');
       const hasPuntaje = Array.from(monoEls).some((el) =>
-        el.textContent!.includes('1'),
+        el.textContent!.includes('1234'),
       );
       expect(hasPuntaje).toBe(true);
     });

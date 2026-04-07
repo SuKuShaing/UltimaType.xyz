@@ -1,6 +1,6 @@
 # Story 5.7: Player Profile & Ranking Card (Home)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -14,7 +14,7 @@ para hacer seguimiento de mi progreso sin navegar a mi perfil.
 
 2. **AC2 — Sin historial de partidas**: Para usuarios autenticados donde `GET /api/leaderboard/position` retorna `null` (cero partidas jugadas), mostrar: avatar, nombre, y el mensaje "Juega tu primera partida para aparecer en el ranking" (misma copy que el widget de posición en `LeaderboardPage`).
 
-3. **AC3 — CTA para no autenticados**: Para usuarios no autenticados (y sin carga pendiente), renderizar una tarjeta CTA con el mismo peso visual que la tarjeta autenticada: texto "Inicia sesión para ver tu ranking" y un botón "Ingresar con Google" que llama a `loginWithGoogle()` de `useAuth()`.
+3. **AC3 — CTA para no autenticados**: Para usuarios no autenticados (y sin carga pendiente), renderizar una tarjeta CTA con el mismo peso visual que la tarjeta autenticada: texto "Inicia sesión para ver tu ranking" y un botón "Iniciar sesión" que abre `LoginModal` (ofreciendo todos los proveedores OAuth disponibles). Corregido en review: el spec original pedía `loginWithGoogle()` directo, pero LoginModal es el patrón establecido en la app y no discrimina proveedores.
 
 4. **AC4 — Estado de carga**: Durante la carga inicial del perfil (`isFetchingProfile`) o del ranking (`isPositionLoading`), mostrar un skeleton animado: círculo de avatar + línea de nombre + bloque de estadísticas (`animate-pulse rounded bg-surface-raised`).
 
@@ -424,6 +424,13 @@ Claude Sonnet 4.6
 - Task 1: `PlayerProfileSection` completamente reemplazado. 4 estados mutuamente excluyentes: skeleton (auth+position loading), CTA con botón Google (`loginWithGoogle()`), sin historial (avatar+nombre+mensaje), tarjeta completa (avatar+nombre+bestScore+globalPercentile+Ver mi perfil). Avatar con `bg-primary/10` (propio perfil, no externo). `UserAvatar` extraído como función helper interna. `useLeaderboardPosition({level:null, period:'all'})` — reusa hook existente sin modificarlo.
 - Task 2: 31 tests en `player-profile-section.spec.tsx` — todos los ACs cubiertos. `home-page.spec.tsx` actualizado: mock `useLeaderboardPosition` agregado, test placeholder reemplazado por verificación de CTA. home-page ahora tiene 24 tests (era 23 con el test de "Próximamente", se actualizó 1 test).
 - Task 3: 380 tests pasando (+31). 0 nuevos errores de lint (warnings pre-existentes: `any` en mocks de test, non-null assertions en componente). Build limpio.
+
+### Review Findings
+
+- [x] [Review][Decision] AC3 — CTA usa LoginModal en vez de `loginWithGoogle()` directo. Decisión: mantener LoginModal (spec corregida). LoginModal es el patrón establecido y no discrimina proveedores OAuth. [player-profile-section.tsx:35-42]
+- [x] [Review][Patch] Test débil para puntaje — `.includes('1')` → `.includes('1234')`. Aplicado. [player-profile-section.spec.tsx:234]
+- [x] [Review][Patch] Sin estado de error — agregado 5to estado: "Error al cargar tus datos, estamos reintentando…" cuando `isError=true`. +2 tests. [player-profile-section.tsx:53-57]
+- [x] [Review][Patch] Agregado `aria-haspopup="dialog"` y `aria-expanded` en botón de login. +1 test. [player-profile-section.tsx:43-44]
 
 ### File List
 

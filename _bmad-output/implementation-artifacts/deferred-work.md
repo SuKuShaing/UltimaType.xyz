@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review de 5-7-player-profile-ranking-card (2026-04-07)
+
+*Sin items diferidos — todos los findings fueron patcheados o resueltos en review.*
+
 ## Deferred from: code review de 5-6-global-leaderboard-preview (2026-04-07)
 
 - **`formatScore` duplicado** — Función `formatScore(score: number): string` existe idéntica en `leaderboard-page.tsx` y `leaderboard-preview-section.tsx`. Extraer a utilidad compartida cuando se toque el módulo de leaderboard.

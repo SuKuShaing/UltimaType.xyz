@@ -7,7 +7,7 @@ import { LoginModal } from '../ui/login-modal';
 export function PlayerProfileSection() {
   const { user, isAuthenticated, isFetchingProfile } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
-  const { data: position, isLoading: isPositionLoading } = useLeaderboardPosition({
+  const { data: position, isLoading: isPositionLoading, isError } = useLeaderboardPosition({
     level: null,
     period: 'all',
   });
@@ -40,6 +40,8 @@ export function PlayerProfileSection() {
           </p>
           <button
             type="button"
+            aria-haspopup="dialog"
+            aria-expanded={showLogin}
             onClick={() => setShowLogin(true)}
             className="rounded-lg bg-primary px-6 py-2 text-sm font-semibold text-surface-base font-sans"
           >
@@ -47,6 +49,13 @@ export function PlayerProfileSection() {
           </button>
           {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
         </div>
+      )}
+
+      {/* Error al cargar datos */}
+      {isAuthenticated && !isLoading && isError && (
+        <p className="text-sm text-text-muted font-sans">
+          Error al cargar tus datos, estamos reintentando…
+        </p>
       )}
 
       {/* Sin historial de partidas */}
