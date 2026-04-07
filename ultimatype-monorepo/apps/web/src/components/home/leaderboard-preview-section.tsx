@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { DIFFICULTY_LEVELS } from '@ultimatype-monorepo/shared';
 import { useAuth } from '../../hooks/use-auth';
 import { useLeaderboardPreview } from '../../hooks/use-leaderboard-preview';
 import { CountryFlag } from '../ui/country-flag';
@@ -7,6 +8,11 @@ import { LoginModal } from '../ui/login-modal';
 
 function formatScore(score: number): string {
   return score.toLocaleString('es', { maximumFractionDigits: 1 });
+}
+
+function getLevelName(level: number | undefined): string {
+  if (level == null || isNaN(level)) return '';
+  return DIFFICULTY_LEVELS.find((d) => d.level === level)?.name ?? `Nv.${level}`;
 }
 
 export function LeaderboardPreviewSection() {
@@ -115,8 +121,9 @@ export function LeaderboardPreviewSection() {
                       <span className="text-text-main">{entry.displayName}</span>
                     </div>
                   </td>
-                  <td className="rounded-r-lg py-2 text-right font-semibold font-mono text-primary group-hover:bg-surface-raised/50">
-                    {formatScore(entry.bestScore)}
+                  <td className="rounded-r-lg py-2 text-right group-hover:bg-surface-raised/50">
+                    <span className="text-xs text-text-muted font-sans">{getLevelName(entry.bestScoreLevel)}</span>
+                    <span className="ml-6 font-semibold font-mono text-primary">{formatScore(entry.bestScore)}</span>
                   </td>
                 </tr>
               ))}
