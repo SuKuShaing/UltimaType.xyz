@@ -38,6 +38,10 @@ vi.mock('../../hooks/use-leaderboard-preview', () => ({
   useLeaderboardPreview: vi.fn(() => ({ data: { data: [], meta: { total: 0, page: 1, limit: 5, totalPages: 0 } }, isLoading: false })),
 }));
 
+vi.mock('../../hooks/use-leaderboard-position', () => ({
+  useLeaderboardPosition: vi.fn(() => ({ data: undefined, isLoading: false })),
+}));
+
 vi.mock('../ui/country-flag', () => ({
   CountryFlag: () => null,
 }));
@@ -317,10 +321,10 @@ describe('HomePage', () => {
       expect(section!.textContent).toContain('Ver clasificación completa');
     });
 
-    it('PlayerProfileSection shows placeholder text', () => {
+    it('PlayerProfileSection shows login CTA for unauthenticated user', () => {
       setup();
       const section = screen.getByText('Tu Perfil').closest('section');
-      expect(section!.textContent).toContain('Próximamente');
+      expect(section!.textContent).toContain('Inicia sesión para ver tu ranking');
     });
   });
 });
