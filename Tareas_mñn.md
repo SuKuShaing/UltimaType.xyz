@@ -3,6 +3,7 @@
 ## To Fix
 
 - [ ] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
+- [ ] Falta cerrar sesión
 
 ## Tareas
 

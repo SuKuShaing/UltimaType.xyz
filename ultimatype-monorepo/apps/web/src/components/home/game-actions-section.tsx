@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/use-auth';
-import { CreateRoomButton } from '../lobby/create-room-button';
 import { LoginModal } from '../ui/login-modal';
+import { apiClient } from '../../lib/api-client';
+import { CreateRoomResponse } from '@ultimatype-monorepo/shared';
 
 const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
 
@@ -26,7 +27,7 @@ function JoinRoomInput() {
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col gap-2">
       <div className="flex gap-2">
         <input
           type="text"
@@ -38,13 +39,13 @@ function JoinRoomInput() {
           onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
           placeholder="Código de partida"
           maxLength={6}
-          className="w-36 rounded-lg bg-surface-raised px-4 py-2 text-center text-sm uppercase tracking-widest text-text-main font-mono"
+          className="min-w-0 flex-1 rounded-full bg-surface-raised px-4 py-2 text-center text-sm uppercase tracking-widest text-text-main font-mono focus:outline-none"
           aria-label="Código de partida para unirse"
         />
         <button
           type="button"
           onClick={handleJoin}
-          className="rounded-lg bg-primary px-6 py-2 text-sm font-semibold text-surface-base font-sans"
+          className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-surface-base font-sans"
         >
           Unirse
         </button>
@@ -56,42 +57,78 @@ function JoinRoomInput() {
 
 export function GameActionsSection() {
   const { isAuthenticated, isFetchingProfile } = useAuth();
+  const navigate = useNavigate();
+  const [isCreating, setIsCreating] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+
+  const handleCreateRoom = async () => {
+    if (isFetchingProfile) return;
+    if (!isAuthenticated) {
+      localStorage.setItem('returnAfterLogin', window.location.pathname);
+      setShowLogin(true);
+      return;
+    }
+    if (isCreating) return;
+    setIsCreating(true);
+    try {
+      const { code } = await apiClient<CreateRoomResponse>('/rooms', {
+        method: 'POST',
+      });
+      navigate(`/room/${code}`);
+    } catch {
+      setIsCreating(false);
+    }
+  };
 
   return (
     <section className="col-span-12 lg:col-span-8 rounded-card bg-surface-sunken p-6">
-      <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-text-muted">
+      <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted">
         Modo de juego
       </h2>
+      <p className="mt-1 text-sm text-text-muted font-sans">
+        Elige cómo quieres competir hoy
+      </p>
 
-      <div className="flex flex-col items-center gap-4">
-        <div className="flex justify-center gap-3">
-          {isFetchingProfile ? (
-            <span className="opacity-50">_</span>
-          ) : isAuthenticated ? (
-            <CreateRoomButton />
-          ) : (
-            <div className="group relative">
-              <button
-                type="button"
-                onClick={() => setShowLogin(true)}
-                aria-describedby="create-room-tooltip"
-                className="rounded-lg bg-primary/40 px-6 py-2 text-sm font-semibold text-surface-base/60 font-sans transition-colors hover:bg-primary/60 hover:text-surface-base/80"
-              >
-                Crear Partida
-              </button>
-              <span
-                id="create-room-tooltip"
-                role="tooltip"
-                className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-surface-raised px-3 py-1 text-xs text-text-muted opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
-              >
-                Inicia sesión para crear partidas
-              </span>
-            </div>
-          )}
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        {/* Card 1: Crear partida */}
+        <button
+          type="button"
+          onClick={handleCreateRoom}
+          disabled={isCreating || isFetchingProfile}
+          className={`group flex w-full items-center gap-4 rounded-card bg-surface-container-low p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:bg-surface-container hover:shadow-md disabled:cursor-wait disabled:opacity-50${isFetchingProfile ? ' opacity-50 pointer-events-none' : ''}`}
+          aria-label="Crear una nueva partida"
+        >
+          <span className="material-symbols-outlined text-3xl text-primary" aria-hidden="true">
+            keyboard
+          </span>
+          <div className="flex-1">
+            <p className="font-semibold text-text-main font-sans">
+              Crear partida
+            </p>
+            <p className="text-sm text-text-muted font-sans">
+              {isCreating ? 'Creando sala...' : 'Sé el anfitrión de una nueva sala'}
+            </p>
+          </div>
+          <span className="material-symbols-outlined text-text-muted transition-colors group-hover:text-primary" aria-hidden="true">
+            arrow_forward
+          </span>
+        </button>
+
+        {/* Card 2: Unirse a una partida */}
+        <div className="group rounded-card bg-surface-container-low p-5 transition-all duration-200 hover:scale-[1.02] hover:shadow-md">
+          <div className="mb-3 flex items-center gap-4">
+            <span className="material-symbols-outlined text-3xl text-primary" aria-hidden="true">
+              login
+            </span>
+            <p className="flex-1 font-semibold text-text-main font-sans">
+              Unirse a una partida
+            </p>
+            <span className="material-symbols-outlined text-text-muted transition-colors group-hover:text-primary" aria-hidden="true">
+              arrow_forward
+            </span>
+          </div>
+          <JoinRoomInput />
         </div>
-
-        <JoinRoomInput />
       </div>
 
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}

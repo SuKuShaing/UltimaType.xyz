@@ -18,10 +18,8 @@ vi.mock('../../hooks/use-auth', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('../lobby/create-room-button', () => ({
-  CreateRoomButton: () => (
-    <button data-testid="create-room-button">Crear Partida</button>
-  ),
+vi.mock('../../lib/api-client', () => ({
+  apiClient: vi.fn().mockResolvedValue({ code: 'TESTCD' }),
 }));
 
 vi.mock('../ui/login-modal', () => ({
@@ -79,6 +77,12 @@ function setup(overrides?: Partial<ReturnType<typeof useAuth>>) {
 describe('HomePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
   });
 
   describe('Grid layout', () => {
@@ -174,9 +178,9 @@ describe('HomePage', () => {
   });
 
   describe('Authenticated user', () => {
-    it('renders CreateRoomButton', () => {
+    it('renders "Crear partida" card', () => {
       setup({ isAuthenticated: true, user: authenticatedUser });
-      expect(screen.getByTestId('create-room-button')).toBeTruthy();
+      expect(screen.getByText('Crear partida')).toBeTruthy();
     });
 
     it('renders JoinRoomInput', () => {
@@ -194,11 +198,9 @@ describe('HomePage', () => {
   });
 
   describe('Unauthenticated user', () => {
-    it('renders dimmed "Crear Partida" button', () => {
+    it('renders "Crear partida" card (not dimmed)', () => {
       setup();
-      const button = screen.getByText('Crear Partida');
-      expect(button).toBeTruthy();
-      expect(button.classList.contains('bg-primary/40')).toBe(true);
+      expect(screen.getByText('Crear partida')).toBeTruthy();
     });
 
     it('renders JoinRoomInput', () => {
@@ -208,10 +210,10 @@ describe('HomePage', () => {
       ).toBeTruthy();
     });
 
-    it('shows LoginModal when clicking "Crear Partida"', () => {
+    it('shows LoginModal when clicking "Crear partida"', () => {
       setup();
       expect(screen.queryByTestId('login-modal')).toBeNull();
-      fireEvent.click(screen.getByText('Crear Partida'));
+      fireEvent.click(screen.getByRole('button', { name: 'Crear una nueva partida' }));
       expect(screen.getByTestId('login-modal')).toBeTruthy();
     });
   });

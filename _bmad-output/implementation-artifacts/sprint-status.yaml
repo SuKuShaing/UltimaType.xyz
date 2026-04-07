@@ -35,7 +35,11 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-06T20:15:00-03:00
+last_updated: 2026-04-06T23:15:00-03:00
+# 2026-04-06: Story 5-4 code review complete, set to done. 5 patches applied (isFetchingProfile guard, aria-hidden icons, Card 2 hover:scale, Card 2 arrow group-hover, 2 new tests). 1 defer (silent error handling). 303 web tests passing.
+# 2026-04-06: Story 5-4 implementation complete, set to review (301 web tests passing). Frontend-only: dos tarjetas GameModeSelector con Material Symbols icons, hover animations, create-room inlinado, JoinRoomInput pill styles. 23 nuevos tests.
+# 2026-04-06: Story 5-4 dev started (game-mode-selector), set to in-progress. Frontend-only: dos tarjetas con Material Symbols, hover animations, create-room inlinado.
+# 2026-04-06: Story 5-4 created (game-mode-selector), set to ready-for-dev. Frontend-only: dos tarjetas de acción con Material Symbols icons, hover animations, lógica create-room inlinada.
 # 2026-04-06: Story 5-3 code review complete, set to done. 6 patches applied (h1 condicional en NavBar, isFetchingProfile guard, aria-describedby tooltip, paste slice, <main> en HomePage, empty-code guard). font-mono en input de código. 277 web tests passing.
 # 2026-04-06: Story 5-3 implementation complete, set to review (278 web tests passing). Frontend-only: extracted inline home page from app.tsx, 12-column grid layout, 4 section components (GameActions + 3 placeholder shells). 24 new tests.
 # 2026-04-06: Story 5-3 dev started (homepage-layout-extraction), set to in-progress. Frontend-only: extract inline home page from app.tsx, 12-column grid, 4 section components.
@@ -138,7 +142,7 @@ development_status:
   5-1-design-system-migration: done
   5-2-navbar-redesign: done
   5-3-homepage-layout-extraction: done
-  5-4-game-mode-selector: backlog
+  5-4-game-mode-selector: done
   5-5-partidas-en-vivo: backlog
   5-6-global-leaderboard-preview: backlog
   5-7-player-profile-ranking-card: backlog

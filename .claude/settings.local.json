@@ -92,7 +92,8 @@
       "Bash(docker exec ultimatype-redis:*)",
       "Bash(xargs docker:*)",
       "Bash(docker exec ultimatype-postgres:*)",
-      "Bash(npx skills:*)"
+      "Bash(npx skills:*)",
+      "Bash(git:*)"
     ]
   }
 }

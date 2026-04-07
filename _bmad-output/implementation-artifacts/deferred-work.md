@@ -1,5 +1,10 @@
 # Deferred Work
 
+## Deferred from: code review de 5-4-game-mode-selector (2026-04-06)
+
+- **Error silencioso en `handleCreateRoom`** — El `catch` solo resetea `isCreating` sin mostrar feedback al usuario (toast, mensaje de error). Patrón pre-existente del `CreateRoomButton` original. Resolver cuando se implemente sistema global de notificaciones de error.
+- **Tests faltantes: ramas `if (isCreating) return` y guard de `isFetchingProfile`** — No hay cobertura directa para el double-click guard ni para el path de click durante profile fetch. Agregar cuando se amplíe cobertura de edge cases.
+
 ## Deferred from: code review de 5-3-homepage-layout-extraction (2026-04-06)
 
 - **`<main>` landmark faltante en `LeaderboardPage` y `PublicProfilePage`** — Aplicar el mismo cambio `<div>` → `<main>` que se hizo en `HomePage`. Mejora accesibilidad (screen reader shortcut "saltar al contenido principal"). Bajo riesgo, 1 línea por página.
