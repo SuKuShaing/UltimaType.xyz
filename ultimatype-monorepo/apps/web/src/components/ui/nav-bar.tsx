@@ -175,7 +175,7 @@ export function NavBar() {
             <button
               ref={hamburgerRef}
               type="button"
-              onClick={() => setMenuOpen((prev) => !prev)}
+              onClick={() => { setMenuOpen((prev) => !prev); setAvatarMenuOpen(false); }}
               className="text-text-muted transition-colors hover:text-text-main md:hidden"
               aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
               aria-expanded={menuOpen}
@@ -188,7 +188,7 @@ export function NavBar() {
                 <button
                   ref={avatarButtonRef}
                   type="button"
-                  onClick={() => setAvatarMenuOpen((prev) => !prev)}
+                  onClick={() => { setAvatarMenuOpen((prev) => !prev); setMenuOpen(false); }}
                   className="flex cursor-pointer items-center rounded-full leading-none"
                   aria-label={avatarMenuOpen ? 'Cerrar menú de usuario' : 'Abrir menú de usuario'}
                   aria-expanded={avatarMenuOpen}

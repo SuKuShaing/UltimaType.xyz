@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/use-auth';
 import { useLeaderboardPreview } from '../../hooks/use-leaderboard-preview';
 import { CountryFlag } from '../ui/country-flag';
@@ -14,9 +14,12 @@ export function LeaderboardPreviewSection() {
   const [showMyCountry, setShowMyCountry] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (isAuthenticated) setShowLogin(false);
+  }, [isAuthenticated]);
+
   const country = showMyCountry && user?.countryCode ? user.countryCode : null;
-  const { data, isLoading } = useLeaderboardPreview({ country });
+  const { data, isLoading, isError } = useLeaderboardPreview({ country });
   const entries = data?.data ?? [];
 
   const showToggle = isAuthenticated && !!user?.countryCode;
@@ -65,7 +68,11 @@ export function LeaderboardPreviewSection() {
         </div>
       )}
 
-      {!isLoading && entries.length === 0 && (
+      {!isLoading && isError && (
+        <p className="py-8 text-center text-sm text-error font-sans">Error al cargar el ranking</p>
+      )}
+
+      {!isLoading && !isError && entries.length === 0 && (
         <div className="py-8 text-center">
           <span className="material-symbols-outlined text-4xl text-text-muted" aria-hidden="true">
             emoji_events
@@ -81,11 +88,17 @@ export function LeaderboardPreviewSection() {
               {entries.map((entry) => (
                 <tr
                   key={entry.userId}
-                  className="hover:bg-surface-raised/50 cursor-pointer"
-                  onClick={() => navigate(`/match/${entry.bestScoreMatchCode}`)}
+                  className="group relative"
                 >
-                  <td className="py-2 pr-3 w-8 font-semibold text-text-muted">{entry.position}</td>
-                  <td className="py-2 pr-3">
+                  <td className="rounded-l-lg py-2 pr-3 w-8 font-semibold text-text-muted group-hover:bg-surface-raised/50">
+                    <Link
+                      to={`/match/${entry.bestScoreMatchCode}`}
+                      className="absolute inset-0 z-10"
+                      aria-label={`Ver partida de ${entry.displayName}`}
+                    />
+                    {entry.position}
+                  </td>
+                  <td className="py-2 pr-3 group-hover:bg-surface-raised/50">
                     <div className="flex items-center gap-2">
                       <CountryFlag countryCode={entry.countryCode} size={16} />
                       {entry.avatarUrl ? (
@@ -102,7 +115,7 @@ export function LeaderboardPreviewSection() {
                       <span className="text-text-main">{entry.displayName}</span>
                     </div>
                   </td>
-                  <td className="py-2 text-right font-semibold font-mono text-primary">
+                  <td className="rounded-r-lg py-2 text-right font-semibold font-mono text-primary group-hover:bg-surface-raised/50">
                     {formatScore(entry.bestScore)}
                   </td>
                 </tr>

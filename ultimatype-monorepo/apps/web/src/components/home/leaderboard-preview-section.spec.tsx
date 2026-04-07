@@ -149,11 +149,11 @@ describe('LeaderboardPreviewSection', () => {
     expect(nameEl.closest('a')).toBeNull();
   });
 
-  it('al hacer click en una fila navega al match result', () => {
+  it('cada fila tiene un link al match result', () => {
     render(<LeaderboardPreviewSection />);
     const row = screen.getByText('TestPlayer').closest('tr');
-    fireEvent.click(row!);
-    expect(mockNavigate).toHaveBeenCalledWith('/match/ABC123');
+    const link = row?.querySelector('a[href="/match/ABC123"]');
+    expect(link).toBeTruthy();
   });
 
   it('muestra avatar como imagen cuando avatarUrl está presente', () => {

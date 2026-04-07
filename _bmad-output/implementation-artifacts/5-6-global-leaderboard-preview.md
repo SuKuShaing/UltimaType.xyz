@@ -1,6 +1,6 @@
 # Story 5.6: Global Leaderboard Preview
 
-Status: review
+Status: done
 
 ## Story
 
@@ -10,7 +10,7 @@ so that I'm motivated to compete and improve my ranking.
 
 ## Acceptance Criteria
 
-1. **AC1 — Tabla Top 5**: La sección renderiza una tabla compacta con los top 5 jugadores consumiendo `GET /api/leaderboard?limit=5` (endpoint público, sin autenticación). Cada fila muestra: posición, avatar/iniciales, nombre (link a `/u/:slug`), bandera de país, y mejor puntaje.
+1. **AC1 — Tabla Top 10**: La sección renderiza una tabla compacta con los top 10 jugadores consumiendo `GET /api/leaderboard?limit=10` (endpoint público, sin autenticación). Cada fila muestra: posición, avatar/iniciales, nombre, bandera de país, y mejor puntaje. La fila entera es un link a `/match/:bestScoreMatchCode` (stretched `<Link>`) para acceder al detalle de la partida con soporte nativo de nueva pestaña.
 
 2. **AC2 — Toggle "Mundial" / "Mi país"**: Toggle visible solo cuando el usuario está autenticado Y `user.countryCode !== null`. "Mundial" (estado default): llama sin parámetro `country`. "Mi país": agrega `country=user.countryCode` a la query. Oculto cuando no autenticado o sin país.
 
@@ -18,7 +18,7 @@ so that I'm motivated to compete and improve my ranking.
 
 4. **AC4 — CTA para no autenticados**: Si el usuario no está autenticado, mostrar debajo de la tabla un CTA "Inicia sesión para competir" que abre `LoginModal`. No renderizar CTA si ya está autenticado.
 
-5. **AC5 — Estado de carga**: Durante la carga inicial, mostrar 5 filas skeleton animadas (`h-10 animate-pulse rounded-lg bg-surface-raised`).
+5. **AC5 — Estado de carga**: Durante la carga inicial, mostrar 10 filas skeleton animadas (`h-10 animate-pulse rounded-lg bg-surface-raised`).
 
 6. **AC6 — Estado vacío**: Si no hay jugadores, mostrar ícono Material Symbols `emoji_events` (`text-4xl text-text-muted`) + texto "No hay jugadores en el ranking aún". (Nota: nunca ocurrirá en producción.)
 
@@ -282,9 +282,12 @@ hover:bg-surface-raised/50 → hover en filas de tabla (No-Line Rule)
 **Archivos que NO cambian:**
 - `apps/web/src/hooks/use-leaderboard.ts` — NO modificar (sirve la página completa)
 - `apps/web/src/components/home/home-page.tsx` — NO modificar (grid sin cambios)
-- `apps/web/src/components/leaderboard/leaderboard-page.tsx` — solo referencia de patrones
 - `libs/shared/` — ningún cambio
 - Backend — ningún cambio
+
+**Archivos modificados fuera de scope original (aceptado en review):**
+- `apps/web/src/components/leaderboard/leaderboard-page.tsx` — consistencia: mismo patrón stretched `<Link>` fila→match que el preview
+- `apps/web/src/components/leaderboard/leaderboard-page.spec.tsx` — tests actualizados para el nuevo patrón
 
 ### References
 
@@ -315,6 +318,17 @@ Claude Sonnet 4.6
 - Task 2: `LeaderboardPreviewSection` completamente reemplazado. Toggle "Mundial/Mi país" (visible solo con `isAuthenticated && user.countryCode`). Tabla top-5 con avatar/iniciales, `CountryFlag`, link a `/u/:slug`, puntaje `font-mono`. Link "Ver clasificación completa →". CTA "Inicia sesión para competir" con `LoginModal`.
 - Task 3: 23 tests en `leaderboard-preview-section.spec.tsx`. `home-page.spec.tsx` actualizado (mock de `useLeaderboardPreview` + `CountryFlag`, test placeholder obsoleto reemplazado).
 - Task 4: 348 tests pasando (+31 nuevos vs 317 base). 0 nuevos errores de lint en archivos de la story. Build limpio.
+
+### Review Findings
+
+- [x] [Review][Decision] D1: Limit 10 vs spec's limit 5 — RESUELTO: mantener 10, spec AC1/AC5 actualizados
+- [x] [Review][Decision] D2: Nombres no linkeados a `/u/:slug` — RESUELTO: fila→match es intencional, spec AC1 actualizado. Patrón `<tr onClick>` reemplazado por stretched `<Link>` nativo (a11y + nueva pestaña)
+- [x] [Review][Decision] D3: Cambios fuera de scope en `leaderboard-page.tsx` — RESUELTO: aceptado, spec actualizado. Consistencia UX entre preview y leaderboard completo
+- [x] [Review][Patch] P1: Sin estado de error — APLICADO: `isError` chequeado, muestra "Error al cargar el ranking"
+- [x] [Review][Patch] P2: LoginModal stale `showLogin` — APLICADO: useEffect resetea showLogin al autenticarse
+- [x] [Review][Patch] P3: Ambos menús abiertos simultáneamente en mobile — APLICADO: toggles mutuamente excluyentes
+- [x] [Review][Defer] W1: `formatScore` duplicado entre `leaderboard-page.tsx` y `leaderboard-preview-section.tsx` — deferred, pre-existing
+- [x] [Review][Defer] W2: Avatar dropdown sin WAI-ARIA focus management completo — deferred, pre-existing (hotfix scope)
 
 ### File List
 

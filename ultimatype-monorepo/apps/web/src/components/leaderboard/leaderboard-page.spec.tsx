@@ -202,7 +202,7 @@ describe('LeaderboardPage', () => {
     expect(nameEl.closest('a')).toBeNull();
   });
 
-  it('should make rows clickable (cursor-pointer) to navigate to match detail', () => {
+  it('should have link in each row to navigate to match detail', () => {
     const data: PaginatedResponse<LeaderboardEntryDto> = {
       data: [makeEntry({ bestScoreMatchCode: 'XYZ789', bestScore: 1200 })],
       meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
@@ -212,7 +212,8 @@ describe('LeaderboardPage', () => {
     renderPage();
 
     const row = screen.getByText('Alice').closest('tr');
-    expect(row?.classList.contains('cursor-pointer')).toBe(true);
+    const link = row?.querySelector('a[href="/match/XYZ789"]');
+    expect(link).toBeTruthy();
   });
 
   it('should show pagination when multiple pages exist', () => {

@@ -2,11 +2,11 @@
 
 ## To Fix
 
-- [ ] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
 - [ ] El menú es más ancho que el contenido
 
 ## Tareas
 
+- [ ] Verificar que El país se asigna al registrarse
 - [ ] Cuando alguien se une a la sala, que haga un sonido
 - [ ] Revisar que el código sea código moderno y usen context7, dejar esto en Claude
 - [ ] Para un futuro que los países se puedan seleccionar por continente y sea vean las banderas de los países
@@ -45,6 +45,7 @@
 
 ### FiXs
 
+- [x] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
 - [x] Falta cerrar sesión
 - [x] Al menú en mobile le falta padding
 - [x] Espacio insuficiente en el timer para más de 60 seg ![img](/Fix%20pendientes/espacio%20insuficiente%20en%20el%20timer%20para%20más%20de%2060%20seg.jpeg)

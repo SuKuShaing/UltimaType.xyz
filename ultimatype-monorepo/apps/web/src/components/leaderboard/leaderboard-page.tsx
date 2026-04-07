@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { DIFFICULTY_LEVELS, COUNTRIES, MatchPeriod } from '@ultimatype-monorepo/shared';
 import { useAuth } from '../../hooks/use-auth';
@@ -45,7 +45,6 @@ const PERIOD_LABELS: Record<MatchPeriod, string> = {
 
 export function LeaderboardPage() {
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const [level, setLevel] = useState<number | null>(null);
   const [period, setPeriod] = useState<MatchPeriod>('all');
   const [country, setCountry] = useState<string | null>(null);
@@ -252,10 +251,16 @@ export function LeaderboardPage() {
                     {leaderboard.data.map((entry) => (
                       <tr
                         key={entry.userId}
-                        className="border-b border-surface-raised last:border-0 hover:bg-surface-raised/50 cursor-pointer"
-                        onClick={() => navigate(`/match/${entry.bestScoreMatchCode}`)}
+                        className="relative border-b border-surface-raised last:border-0 hover:bg-surface-raised/50"
                       >
-                        <td className="py-3 pr-4 font-semibold text-text-muted">{entry.position}</td>
+                        <td className="py-3 pr-4 font-semibold text-text-muted">
+                          <Link
+                            to={`/match/${entry.bestScoreMatchCode}`}
+                            className="absolute inset-0 z-10"
+                            aria-label={`Ver partida de ${entry.displayName}`}
+                          />
+                          {entry.position}
+                        </td>
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
                             <CountryFlag countryCode={entry.countryCode} size={16} />

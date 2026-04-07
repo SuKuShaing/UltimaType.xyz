@@ -1,5 +1,10 @@
 # Deferred Work
 
+## Deferred from: code review de 5-6-global-leaderboard-preview (2026-04-07)
+
+- **`formatScore` duplicado** — Función `formatScore(score: number): string` existe idéntica en `leaderboard-page.tsx` y `leaderboard-preview-section.tsx`. Extraer a utilidad compartida cuando se toque el módulo de leaderboard.
+- **Avatar dropdown sin WAI-ARIA focus management completo** — `nav-bar.tsx`. El dropdown `role="menu"` no mueve foco al primer `menuitem` al abrirse, y no soporta navegación con arrow keys. Patrón incompleto del hotfix; resolver en story de accesibilidad futura.
+
 ## Deferred from: code review de 5-5-partidas-en-vivo (2026-04-07)
 
 *Sin items diferidos — todos los findings fueron patcheados o descartados.*
