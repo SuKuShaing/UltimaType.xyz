@@ -93,7 +93,8 @@
       "Bash(xargs docker:*)",
       "Bash(docker exec ultimatype-postgres:*)",
       "Bash(npx skills:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Read(//dev/**)"
     ]
   }
 }

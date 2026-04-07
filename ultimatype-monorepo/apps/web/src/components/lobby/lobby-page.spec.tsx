@@ -31,7 +31,7 @@ function renderLobby(code = 'ABC123') {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/room/${code}`]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={[`/room/${code}`]}>
         <Routes>
           <Route path="/room/:code" element={<LobbyPage />} />
         </Routes>

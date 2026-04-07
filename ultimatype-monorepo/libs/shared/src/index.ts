@@ -6,6 +6,7 @@ export * from './dto/caret.dto';
 export * from './dto/match-result.dto';
 export * from './dto/leaderboard.dto';
 export * from './dto/rejoin.dto';
+export * from './dto/active-room.dto';
 export * from './types/user';
 export * from './constants/countries';
 export * from './constants/difficulty-levels';

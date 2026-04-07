@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review de 5-5-partidas-en-vivo (2026-04-07)
+
+*Sin items diferidos — todos los findings fueron patcheados o descartados.*
+
 ## Deferred from: code review de 5-4-game-mode-selector (2026-04-06)
 
 - **Error silencioso en `handleCreateRoom`** — El `catch` solo resetea `isCreating` sin mostrar feedback al usuario (toast, mensaje de error). Patrón pre-existente del `CreateRoomButton` original. Resolver cuando se implemente sistema global de notificaciones de error.

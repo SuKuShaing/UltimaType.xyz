@@ -30,6 +30,10 @@ vi.mock('../ui/login-modal', () => ({
   ),
 }));
 
+vi.mock('../../hooks/use-active-rooms', () => ({
+  useActiveRooms: vi.fn(() => ({ data: { rooms: [] }, isLoading: false })),
+}));
+
 vi.mock('react-helmet-async', () => ({
   Helmet: ({ children }: { children: React.ReactNode }) => {
     const extractTitle = (nodes: React.ReactNode): string => {
@@ -180,7 +184,7 @@ describe('HomePage', () => {
   describe('Authenticated user', () => {
     it('renders "Crear partida" card', () => {
       setup({ isAuthenticated: true, user: authenticatedUser });
-      expect(screen.getByText('Crear partida')).toBeTruthy();
+      expect(screen.getAllByText('Crear partida').length).toBeGreaterThan(0);
     });
 
     it('renders JoinRoomInput', () => {
@@ -200,7 +204,7 @@ describe('HomePage', () => {
   describe('Unauthenticated user', () => {
     it('renders "Crear partida" card (not dimmed)', () => {
       setup();
-      expect(screen.getByText('Crear partida')).toBeTruthy();
+      expect(screen.getAllByText('Crear partida').length).toBeGreaterThan(0);
     });
 
     it('renders JoinRoomInput', () => {
@@ -291,10 +295,10 @@ describe('HomePage', () => {
   });
 
   describe('Placeholder sections', () => {
-    it('LiveMatchesSection shows placeholder text', () => {
+    it('LiveMatchesSection shows empty state when no active rooms', () => {
       setup();
       const section = screen.getByText('Partidas en Vivo').closest('section');
-      expect(section!.textContent).toContain('Próximamente');
+      expect(section!.textContent).toContain('No hay partidas en vivo');
     });
 
     it('LeaderboardPreviewSection shows placeholder text', () => {

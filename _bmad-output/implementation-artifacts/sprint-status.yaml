@@ -35,7 +35,11 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-06T23:15:00-03:00
+last_updated: 2026-04-07T14:00:00-03:00
+# 2026-04-07: Story 5-5 code review complete, set to done. 8 patches applied (setRoomStatusAtomically srem, handleRematch sadd, player filtering dedup, colorIndex composite key, controller try/catch, clock skew guard, null meta skip, 5 controller tests). 5 dismissed (N+1 Redis, elapsed tick, silent error, Set TTL, error state). 7 noise dismissed.
+# 2026-04-07: Story 5-5 implementation complete, set to review (317 web tests passing). Full-stack: GET /rooms/active endpoint, Redis Set active:rooms, ActiveRoomDto, LiveMatchesSection con polling React Query 4s, mini-leaderboard, WPM client-side, empty state. 14 nuevos tests.
+# 2026-04-07: Story 5-5 dev started (partidas-en-vivo), set to in-progress. Full-stack: GET /rooms/active, Redis Set, ActiveRoomDto, LiveMatchesSection con polling, mini-leaderboard, empty state.
+# 2026-04-07: Story 5-5 created (partidas-en-vivo), set to ready-for-dev. Full-stack: GET /rooms/active endpoint público, Redis Set active:rooms, ActiveRoomDto en shared, LiveMatchesSection con polling React Query 4s, mini-leaderboard hasta 4 jugadores, WPM client-side, empty state con CTA.
 # 2026-04-06: Story 5-4 code review complete, set to done. 5 patches applied (isFetchingProfile guard, aria-hidden icons, Card 2 hover:scale, Card 2 arrow group-hover, 2 new tests). 1 defer (silent error handling). 303 web tests passing.
 # 2026-04-06: Story 5-4 implementation complete, set to review (301 web tests passing). Frontend-only: dos tarjetas GameModeSelector con Material Symbols icons, hover animations, create-room inlinado, JoinRoomInput pill styles. 23 nuevos tests.
 # 2026-04-06: Story 5-4 dev started (game-mode-selector), set to in-progress. Frontend-only: dos tarjetas con Material Symbols, hover animations, create-room inlinado.
@@ -143,7 +147,7 @@ development_status:
   5-2-navbar-redesign: done
   5-3-homepage-layout-extraction: done
   5-4-game-mode-selector: done
-  5-5-partidas-en-vivo: backlog
+  5-5-partidas-en-vivo: done
   5-6-global-leaderboard-preview: backlog
   5-7-player-profile-ranking-card: backlog
   5-8-responsive-and-polish: backlog

@@ -696,6 +696,7 @@ export class GameGateway
 
       // Reset room to waiting
       await this.roomsService.setRoomStatus(conn.roomCode, 'waiting');
+      await this.roomsService.addToActiveRooms(conn.roomCode);
       await this.resetAllPlayersReady(conn.roomCode, roomState.players.map((p) => p.id));
 
       const newState = await this.roomsService.getRoomState(conn.roomCode);

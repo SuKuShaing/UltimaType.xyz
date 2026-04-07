@@ -16,6 +16,7 @@ const generateRoomCode = customAlphabet('ABCDEFGHJKMNPQRSTUVWXYZ23456789', 6);
 
 const ROOM_TTL = 86400; // 24 hours
 const MAX_CODE_ATTEMPTS = 5;
+const ACTIVE_ROOMS_KEY = 'active:rooms';
 
 interface UserInfo {
   id: string;
@@ -388,6 +389,7 @@ export class RoomsService {
 
     await this.redis.hset(playersKey, hostId, JSON.stringify(player));
     await this.refreshTTL(code);
+    await this.redis.sadd(ACTIVE_ROOMS_KEY, code);
 
     return {
       code,
@@ -454,6 +456,7 @@ export class RoomsService {
     ) as string;
 
     if (result === 'EMPTY') {
+      await this.redis.srem(ACTIVE_ROOMS_KEY, code);
       return null;
     }
 
@@ -603,6 +606,27 @@ export class RoomsService {
   ): Promise<void> {
     const roomKey = `room:${code}`;
     await this.redis.hset(roomKey, 'status', status);
+    if (status === 'finished') {
+      await this.redis.srem(ACTIVE_ROOMS_KEY, code);
+    }
+  }
+
+  async addToActiveRooms(code: string): Promise<void> {
+    await this.redis.sadd(ACTIVE_ROOMS_KEY, code);
+  }
+
+  async getActiveRoomCodes(): Promise<string[]> {
+    const codes = await this.redis.smembers(ACTIVE_ROOMS_KEY);
+    const valid: string[] = [];
+    for (const code of codes) {
+      const state = await this.getRoomState(code);
+      if (!state || state.status === 'finished') {
+        await this.redis.srem(ACTIVE_ROOMS_KEY, code);
+      } else {
+        valid.push(code);
+      }
+    }
+    return valid.slice(-10);
   }
 
   async setRoomStatusAtomically(
@@ -616,6 +640,9 @@ export class RoomsService {
       roomKey,
       newStatus,
     );
+    if (result === 'ok' && newStatus === 'finished') {
+      await this.redis.srem(ACTIVE_ROOMS_KEY, code);
+    }
     return result === 'ok';
   }
 

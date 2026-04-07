@@ -12,6 +12,9 @@ describe('RoomsService', () => {
     expire: ReturnType<typeof vi.fn>;
     exists: ReturnType<typeof vi.fn>;
     eval: ReturnType<typeof vi.fn>;
+    sadd: ReturnType<typeof vi.fn>;
+    srem: ReturnType<typeof vi.fn>;
+    smembers: ReturnType<typeof vi.fn>;
   };
 
   const hostInfo = {
@@ -30,6 +33,9 @@ describe('RoomsService', () => {
       expire: vi.fn().mockResolvedValue(1),
       exists: vi.fn().mockResolvedValue(0),
       eval: vi.fn().mockResolvedValue('OK'),
+      sadd: vi.fn().mockResolvedValue(1),
+      srem: vi.fn().mockResolvedValue(1),
+      smembers: vi.fn().mockResolvedValue([]),
     };
     service = new RoomsService(mockRedis as any);
   });

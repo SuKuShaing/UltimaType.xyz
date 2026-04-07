@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Logger,
   NotFoundException,
   Param,
   Post,
@@ -11,13 +12,72 @@ import { Throttle } from '@nestjs/throttler';
 import { RoomsService } from './rooms.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from '../users/users.service';
+import { MatchStateService } from '../matches/match-state.service';
+import { ActiveRoomDto, ActiveRoomPlayerDto } from '@ultimatype-monorepo/shared';
 
 @Controller('rooms')
 export class RoomsController {
+  private readonly logger = new Logger(RoomsController.name);
+
   constructor(
     private roomsService: RoomsService,
     private usersService: UsersService,
+    private matchStateService: MatchStateService,
   ) {}
+
+  @Get('active')
+  @Throttle({ default: { ttl: 60_000, limit: 30 } })
+  async getActiveRooms(): Promise<{ rooms: ActiveRoomDto[] }> {
+    const codes = await this.roomsService.getActiveRoomCodes();
+
+    const rooms: ActiveRoomDto[] = [];
+    for (const code of codes) {
+      try {
+        const roomState = await this.roomsService.getRoomState(code);
+        if (!roomState || roomState.status === 'finished') continue;
+
+        const activePlayers = roomState.players.filter((p) => !p.disconnected);
+        const topPlayers = activePlayers.slice(0, 4);
+
+        if (roomState.status === 'playing') {
+          const meta = await this.matchStateService.getMatchMetadata(code);
+          if (!meta) continue;
+          const matchState = await this.matchStateService.getMatchState(code);
+
+          rooms.push({
+            code: roomState.code,
+            status: 'playing',
+            level: roomState.level,
+            playerCount: activePlayers.length,
+            players: topPlayers.map((p) => ({
+              displayName: p.displayName,
+              colorIndex: p.colorIndex,
+              avatarUrl: p.avatarUrl,
+              position: matchState?.[p.id]?.position ?? 0,
+            })),
+            startedAt: meta?.startedAt,
+            textLength: meta?.textContent?.length,
+          });
+        } else {
+          rooms.push({
+            code: roomState.code,
+            status: 'waiting',
+            level: roomState.level,
+            playerCount: activePlayers.length,
+            players: topPlayers.map((p) => ({
+              displayName: p.displayName,
+              colorIndex: p.colorIndex,
+              avatarUrl: p.avatarUrl,
+            })),
+          });
+        }
+      } catch (err) {
+        this.logger.warn(`Skipping room ${code}: ${(err as Error).message}`);
+      }
+    }
+
+    return { rooms };
+  }
 
   @Post()
   @Throttle({ default: { ttl: 60_000, limit: 5 } })

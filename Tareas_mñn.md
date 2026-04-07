@@ -2,8 +2,10 @@
 
 ## To Fix
 
-- [ ] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
 - [ ] Falta cerrar sesión
+- [ ] Al menú en mobile le falta padding
+- [ ] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
+- [ ] El menú es más ancho que el contenido
 
 ## Tareas
 
@@ -12,6 +14,7 @@
 - [ ] Para un futuro que los países se puedan seleccionar por continente y sea vean las banderas de los países
 - [ ] Que el nivel de dificultad diga en el 1. Solo minúsculas, 2. Minúsculas y mayúsculas, 3. Minúsculas, mayúsculas, acentos y puntuación, 4. Minúsculas, mayúsculas, acentos, puntuación y números, 5. Todo lo anterior más símbolos
 - [ ] En el botón de revancha o en la pantalla de resultados debiese estar revancha con subir el nivel de dificultad
+- [ ] Colocar un footer donde diga el autor
 - [ ] Que se pueda ceder el host a otro jugador
 - [ ] Visualizador de ping, en algún lugar visible, <120 ms verde, 120-250 ms amarillo , 250 ms o más ms rojo
 - [ ] Salas publicas y privadas
