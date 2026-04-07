@@ -94,7 +94,8 @@
       "Bash(docker exec ultimatype-postgres:*)",
       "Bash(npx skills:*)",
       "Bash(git:*)",
-      "Read(//dev/**)"
+      "Read(//dev/**)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }

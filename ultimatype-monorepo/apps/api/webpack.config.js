@@ -23,7 +23,6 @@ const EXTERNAL_PACKAGES = [
   'tslib',
   'express',
   'dotenv',
-  'geoip-lite',
   'pg',
 ];
 

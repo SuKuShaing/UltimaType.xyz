@@ -33,17 +33,23 @@ export class AuthService {
     private geoService: GeoService,
   ) {}
 
-  async validateOAuthUser(oauthUser: OAuthUserInput, ip?: string) {
+  async validateOAuthUser(oauthUser: OAuthUserInput, cfIpCountry?: string) {
     const existingUser = await this.usersService.findByProvider(
       oauthUser.provider,
       oauthUser.providerId,
     );
 
     if (existingUser) {
+      if (!existingUser.countryCode) {
+        const countryCode = this.geoService.getCountryCode(cfIpCountry);
+        if (countryCode) {
+          await this.usersService.updateCountryCode(existingUser.id, countryCode);
+        }
+      }
       return this.usersService.updateLastLogin(existingUser.id);
     }
 
-    const countryCode = ip ? this.geoService.getCountryCode(ip) : null;
+    const countryCode = this.geoService.getCountryCode(cfIpCountry);
 
     try {
       return await this.usersService.create({ ...oauthUser, countryCode });

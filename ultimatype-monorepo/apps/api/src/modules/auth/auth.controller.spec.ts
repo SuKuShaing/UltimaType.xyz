@@ -14,8 +14,8 @@ const mockConfigService = {
   getOrThrow: vi.fn().mockReturnValue('http://localhost:4200'),
 };
 
-function makeReq(ip: string | undefined, user = { provider: 'GOOGLE', providerId: '1' }) {
-  return { ip, user };
+function makeReq(headers: Record<string, string> = {}, user = { provider: 'GOOGLE', providerId: '1' }) {
+  return { headers, user };
 }
 
 function makeRes() {
@@ -35,21 +35,21 @@ describe('AuthController', () => {
     mockAuthService.validateOAuthUser.mockResolvedValue({ id: 'u1', email: 'a@b.com', displayName: 'A' });
   });
 
-  describe('handleOAuthCallback — IP extraction', () => {
-    it('pasa req.ip a validateOAuthUser cuando está disponible', async () => {
-      const req = makeReq('200.1.2.3');
+  describe('handleOAuthCallback — CF-IPCountry extraction', () => {
+    it('pasa CF-IPCountry a validateOAuthUser cuando el header está presente', async () => {
+      const req = makeReq({ 'cf-ipcountry': 'CL' });
       const res = makeRes();
 
       await (controller as any).handleOAuthCallback(req, res);
 
       expect(mockAuthService.validateOAuthUser).toHaveBeenCalledWith(
         req.user,
-        '200.1.2.3',
+        'CL',
       );
     });
 
-    it('pasa undefined a validateOAuthUser cuando req.ip no está disponible', async () => {
-      const req = makeReq(undefined);
+    it('pasa undefined a validateOAuthUser cuando CF-IPCountry no está presente', async () => {
+      const req = makeReq({});
       const res = makeRes();
 
       await (controller as any).handleOAuthCallback(req, res);
@@ -61,7 +61,7 @@ describe('AuthController', () => {
     });
 
     it('redirige al frontend callback con el auth code', async () => {
-      const req = makeReq('1.2.3.4');
+      const req = makeReq({ 'cf-ipcountry': 'AR' });
       const res = makeRes();
 
       await (controller as any).handleOAuthCallback(req, res);

@@ -52,7 +52,7 @@ export class AuthController {
   @Get('google/callback')
   @SkipThrottle()
   @UseGuards(GoogleAuthGuard)
-  async googleCallback(@Req() req: Request & { user: OAuthPassportUser; ip: string }, @Res() res: Response) {
+  async googleCallback(@Req() req: Request & { user: OAuthPassportUser }, @Res() res: Response) {
     return this.handleOAuthCallback(req, res);
   }
 
@@ -68,7 +68,7 @@ export class AuthController {
   @Get('github/callback')
   @SkipThrottle()
   @UseGuards(GithubAuthGuard)
-  async githubCallback(@Req() req: Request & { user: OAuthPassportUser; ip: string }, @Res() res: Response) {
+  async githubCallback(@Req() req: Request & { user: OAuthPassportUser }, @Res() res: Response) {
     return this.handleOAuthCallback(req, res);
   }
 
@@ -101,12 +101,12 @@ export class AuthController {
    * This avoids exposing long-lived tokens in the URL / browser history.
    */
   private async handleOAuthCallback(
-    req: Request & { user: OAuthPassportUser; ip: string },
+    req: Request & { user: OAuthPassportUser },
     res: Response,
   ) {
-    const clientIp: string | undefined = req.ip;
+    const cfCountry = req.headers['cf-ipcountry'] as string | undefined;
 
-    const user = await this.authService.validateOAuthUser(req.user, clientIp);
+    const user = await this.authService.validateOAuthUser(req.user, cfCountry);
     const code = await this.authService.generateAuthCode(user);
     const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
     res.redirect(`${frontendUrl}/auth/callback?code=${encodeURIComponent(code)}`);
