@@ -1,9 +1,9 @@
 export const DIFFICULTY_LEVELS = [
-  { level: 1, name: 'Minúscula', description: 'Solo minúsculas y espacios' },
+  { level: 1, name: 'Minúscula', description: 'Solo minúsculas' },
   { level: 2, name: 'Mayúsculas', description: 'Minúsculas y mayúsculas' },
-  { level: 3, name: 'Puntuación', description: 'Incluye signos de puntuación' },
-  { level: 4, name: 'Números', description: 'Incluye números' },
-  { level: 5, name: 'Símbolos', description: 'Incluye símbolos especiales' },
+  { level: 3, name: 'Puntuación', description: 'Minúsculas, mayúsculas, acentos y puntuación' },
+  { level: 4, name: 'Números', description: 'Todo lo anterior más números' },
+  { level: 5, name: 'Símbolos', description: 'Todo lo anterior más símbolos' },
 ] as const;
 
 export type DifficultyLevel = (typeof DIFFICULTY_LEVELS)[number];

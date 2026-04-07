@@ -438,7 +438,7 @@ export function LobbyPage() {
             ))}
           </div>
           <p className="mt-1 text-center text-xs text-text-muted">
-            {DIFFICULTY_LEVELS.find((dl) => dl.level === roomState.level)?.name}
+            {DIFFICULTY_LEVELS.find((dl) => dl.level === roomState.level)?.description}
           </p>
         </div>
       )}
