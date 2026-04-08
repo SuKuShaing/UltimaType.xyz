@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { PlayerResult, PLAYER_COLORS } from '@ultimatype-monorepo/shared';
+import { PlayerResult, PLAYER_COLORS, HypotheticalRankDto, COUNTRIES } from '@ultimatype-monorepo/shared';
 import { CountryFlag } from '../ui/country-flag';
+import { apiClient } from '../../lib/api-client';
 
 const REMATCH_DELAY_SECONDS = 5;
 
@@ -8,6 +9,7 @@ interface MatchResultsOverlayProps {
   results: PlayerResult[];
   localUserId: string;
   reason: 'all_finished' | 'timeout';
+  level?: number;
   isHost?: boolean;
   isGuest?: boolean;
   onRematch: () => void;
@@ -19,6 +21,7 @@ export function MatchResultsOverlay({
   results,
   localUserId,
   reason,
+  level,
   isHost = false,
   isGuest = false,
   onRematch,
@@ -30,6 +33,17 @@ export function MatchResultsOverlay({
   const [rematchCountdown, setRematchCountdown] = useState(REMATCH_DELAY_SECONDS);
   const rematchReady = rematchCountdown <= 0;
   const rematchBtnRef = useRef<HTMLButtonElement>(null);
+  const [hypotheticalRank, setHypotheticalRank] = useState<HypotheticalRankDto | null>(null);
+
+  // Fetch hypothetical rank for guest users
+  useEffect(() => {
+    if (!isGuest || !localResult) return;
+    const params = new URLSearchParams({ score: String(localResult.score) });
+    if (level) params.set('level', String(level));
+    apiClient<HypotheticalRankDto>(`/leaderboard/hypothetical-rank?${params}`)
+      .then(setHypotheticalRank)
+      .catch(() => undefined);
+  }, [isGuest, localResult, level]);
 
   // 5-second countdown before rematch is enabled
   useEffect(() => {
@@ -156,8 +170,15 @@ export function MatchResultsOverlay({
         {/* Guest registration banner */}
         {isGuest && (
           <div className="mb-6 rounded-xl bg-surface-raised/80 px-6 py-4 text-center">
+            {hypotheticalRank && (
+              <p className="mb-2 text-sm font-semibold text-primary">
+                {hypotheticalRank.countryRank != null && hypotheticalRank.countryCode
+                  ? `Hubieras quedado #${hypotheticalRank.countryRank} en ${COUNTRIES.find((c) => c.code === hypotheticalRank.countryCode)?.name ?? hypotheticalRank.countryCode} y #${hypotheticalRank.globalRank} a nivel mundial`
+                  : `Hubieras quedado #${hypotheticalRank.globalRank} a nivel mundial`}
+              </p>
+            )}
             <p className="mb-3 text-sm text-text-main">
-              Registrate para guardar tu progreso y competir en el ranking
+              Registrate para aparecer en la clasificación
             </p>
             <div className="flex justify-center gap-3">
               <a

@@ -22,14 +22,9 @@ vi.mock('../../lib/api-client', () => ({
   apiClient: vi.fn(),
 }));
 
-vi.mock('../ui/login-modal', () => ({
-  LoginModal: ({ onClose }: { onClose: () => void }) => (
-    <div data-testid="login-modal">
-      <button type="button" onClick={onClose}>
-        Cerrar
-      </button>
-    </div>
-  ),
+vi.mock('../../lib/guest', () => ({
+  getGuestId: () => 'guest_test-uuid',
+  getGuestName: () => 'Invitado #1234',
 }));
 
 const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
@@ -131,7 +126,7 @@ describe('GameActionsSection', () => {
       fireEvent.click(btn);
 
       await waitFor(() => {
-        expect(apiClient).toHaveBeenCalledWith('/rooms', { method: 'POST' });
+        expect(apiClient).toHaveBeenCalledWith('/rooms', { method: 'POST', body: undefined });
         expect(mockNavigate).toHaveBeenCalledWith('/room/ABC234');
       });
     });
@@ -179,47 +174,27 @@ describe('GameActionsSection', () => {
   });
 
   describe('Usuario no autenticado — Crear partida', () => {
-    it('guarda returnAfterLogin en localStorage y abre LoginModal', () => {
+    it('llama apiClient con guestId y guestName en el body', async () => {
+      const { apiClient } = await import('../../lib/api-client');
+      vi.mocked(apiClient).mockResolvedValueOnce({ code: 'GHI567' });
+
       setup({ isAuthenticated: false });
       const btn = screen.getByRole('button', { name: 'Crear una nueva partida' });
       fireEvent.click(btn);
 
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'returnAfterLogin',
-        expect.any(String)
-      );
-      expect(screen.getByTestId('login-modal')).toBeTruthy();
-    });
-
-    it('cierra LoginModal al llamar onClose', () => {
-      setup({ isAuthenticated: false });
-      fireEvent.click(screen.getByRole('button', { name: 'Crear una nueva partida' }));
-      expect(screen.getByTestId('login-modal')).toBeTruthy();
-
-      fireEvent.click(screen.getByText('Cerrar'));
-      expect(screen.queryByTestId('login-modal')).toBeNull();
+      await waitFor(() => {
+        expect(apiClient).toHaveBeenCalledWith('/rooms', {
+          method: 'POST',
+          body: JSON.stringify({ guestId: 'guest_test-uuid', guestName: 'Invitado #1234' }),
+        });
+        expect(mockNavigate).toHaveBeenCalledWith('/room/GHI567');
+      });
     });
 
     it('card "Crear partida" NO está dimmed (sin opacity-50 por default)', () => {
       setup({ isAuthenticated: false });
       const btn = screen.getByRole('button', { name: 'Crear una nueva partida' });
       expect(btn.classList.contains('opacity-50')).toBe(false);
-    });
-  });
-
-  describe('Estado isFetchingProfile', () => {
-    it('card "Crear partida" tiene opacity-50 mientras carga el perfil', () => {
-      setup({ isFetchingProfile: true });
-      const btn = screen.getByRole('button', { name: 'Crear una nueva partida' });
-      expect(btn.classList.contains('opacity-50')).toBe(true);
-    });
-
-    it('no llama apiClient ni abre LoginModal al hacer click durante fetch de perfil', async () => {
-      const { apiClient } = await import('../../lib/api-client');
-      setup({ isFetchingProfile: true, isAuthenticated: false });
-      fireEvent.click(screen.getByRole('button', { name: 'Crear una nueva partida' }));
-      expect(apiClient).not.toHaveBeenCalled();
-      expect(screen.queryByTestId('login-modal')).toBeNull();
     });
   });
 

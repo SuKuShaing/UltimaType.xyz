@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Logger,
@@ -10,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { RoomsService } from './rooms.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { UsersService } from '../users/users.service';
 import { MatchStateService } from '../matches/match-state.service';
 import { ActiveRoomDto, ActiveRoomPlayerDto } from '@ultimatype-monorepo/shared';
@@ -81,15 +82,34 @@ export class RoomsController {
 
   @Post()
   @Throttle({ default: { ttl: 60_000, limit: 5 } })
-  @UseGuards(JwtAuthGuard)
-  async createRoom(@Req() req: any) {
-    const userId = req.user.userId;
-    const user = await this.usersService.findById(userId);
-    const room = await this.roomsService.createRoom(userId, {
-      id: userId,
-      displayName: user?.displayName ?? req.user.displayName,
-      avatarUrl: user?.avatarUrl ?? null,
-      countryCode: user?.countryCode ?? null,
+  @UseGuards(OptionalJwtAuthGuard)
+  async createRoom(
+    @Req() req: any,
+    @Body() body?: { guestId?: string; guestName?: string },
+  ) {
+    if (req.user) {
+      const userId = req.user.userId;
+      const user = await this.usersService.findById(userId);
+      const room = await this.roomsService.createRoom(userId, {
+        id: userId,
+        displayName: user?.displayName ?? req.user.displayName,
+        avatarUrl: user?.avatarUrl ?? null,
+        countryCode: user?.countryCode ?? null,
+      });
+      return { code: room.code, link: `/room/${room.code}` };
+    }
+
+    const guestId = body?.guestId;
+    const guestName = body?.guestName;
+    if (!guestId || !guestName) {
+      throw new NotFoundException('Se requiere guestId y guestName');
+    }
+
+    const room = await this.roomsService.createRoom(guestId, {
+      id: guestId,
+      displayName: guestName,
+      avatarUrl: null,
+      countryCode: null,
     });
     return { code: room.code, link: `/room/${room.code}` };
   }

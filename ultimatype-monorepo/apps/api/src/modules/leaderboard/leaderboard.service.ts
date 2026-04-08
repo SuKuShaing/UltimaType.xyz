@@ -5,6 +5,7 @@ import {
   MatchPeriod,
   LeaderboardEntryDto,
   UserLeaderboardPositionDto,
+  HypotheticalRankDto,
 } from '@ultimatype-monorepo/shared';
 
 const CACHE_TTL = 43200; // 12 hours in seconds
@@ -249,6 +250,91 @@ export class LeaderboardService {
       countryTotal,
       countryPercentile,
       countryCode: user?.countryCode ?? null,
+    };
+  }
+
+  async getHypotheticalRank(
+    score: number,
+    level?: number,
+    countryCode?: string,
+  ): Promise<HypotheticalRankDto> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (level !== undefined) {
+      params.push(level);
+      conditions.push(`mr.level = $${params.length}`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const globalRankResult = await this.prisma.$queryRawUnsafe<RawRankRow[]>(
+      `SELECT COUNT(*) + 1 AS rank
+       FROM (
+         SELECT user_id, MAX(score) AS best
+         FROM match_results mr
+         ${whereClause}
+         GROUP BY user_id
+         HAVING MAX(score) > $${params.length + 1}
+       ) sub`,
+      ...params,
+      score,
+    );
+
+    const globalTotalResult = await this.prisma.$queryRawUnsafe<RawCountRow[]>(
+      `SELECT COUNT(DISTINCT mr.user_id) AS total
+       FROM match_results mr
+       ${whereClause}`,
+      ...params,
+    );
+
+    const globalRank = Number(globalRankResult[0]?.rank ?? 1);
+    const globalTotal = Number(globalTotalResult[0]?.total ?? 0) + 1;
+
+    let countryRank: number | null = null;
+    let countryTotal: number | null = null;
+
+    if (countryCode) {
+      const countryConditions = [...conditions];
+      const countryParams = [...params];
+
+      countryParams.push(countryCode);
+      countryConditions.push(`u.country_code = $${countryParams.length}`);
+
+      const countryWhereClause = `WHERE ${countryConditions.join(' AND ')}`;
+
+      const countryRankResult = await this.prisma.$queryRawUnsafe<RawRankRow[]>(
+        `SELECT COUNT(*) + 1 AS rank
+         FROM (
+           SELECT mr.user_id, MAX(mr.score) AS best
+           FROM match_results mr
+           JOIN users u ON mr.user_id = u.id
+           ${countryWhereClause}
+           GROUP BY mr.user_id
+           HAVING MAX(mr.score) > $${countryParams.length + 1}
+         ) sub`,
+        ...countryParams,
+        score,
+      );
+
+      const countryTotalResult = await this.prisma.$queryRawUnsafe<RawCountRow[]>(
+        `SELECT COUNT(DISTINCT mr.user_id) AS total
+         FROM match_results mr
+         JOIN users u ON mr.user_id = u.id
+         ${countryWhereClause}`,
+        ...countryParams,
+      );
+
+      countryRank = Number(countryRankResult[0]?.rank ?? 1);
+      countryTotal = Number(countryTotalResult[0]?.total ?? 0) + 1;
+    }
+
+    return {
+      globalRank,
+      globalTotal,
+      countryRank,
+      countryTotal,
+      countryCode: countryCode ?? null,
     };
   }
 

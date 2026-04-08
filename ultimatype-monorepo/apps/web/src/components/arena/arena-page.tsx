@@ -24,6 +24,7 @@ import {
 interface ArenaPageProps {
   matchData: MatchStartPayload;
   localUserId: string;
+  level?: number;
   isSpectator?: boolean;
   isHost?: boolean;
   isGuest?: boolean;
@@ -38,6 +39,7 @@ interface AbandonedStats {
 export function ArenaPage({
   matchData,
   localUserId,
+  level,
   isSpectator = false,
   isHost = false,
   isGuest = false,
@@ -275,6 +277,7 @@ export function ArenaPage({
             results={matchResults}
             localUserId={localUserId}
             reason={matchEndReason}
+            level={level}
             isHost={isHost}
             isGuest={isGuest}
             onRematch={handleRematch}

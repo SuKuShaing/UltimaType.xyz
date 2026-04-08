@@ -1,10 +1,12 @@
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { LeaderboardService } from './leaderboard.service';
 import {
   PaginatedResponse,
   LeaderboardEntryDto,
   UserLeaderboardPositionDto,
+  HypotheticalRankDto,
   MatchPeriod,
 } from '@ultimatype-monorepo/shared';
 
@@ -76,5 +78,20 @@ export class LeaderboardController {
     const level = parseLevelParam(levelParam);
     const period = parsePeriodParam(periodParam);
     return this.leaderboardService.getUserPosition(req.user.userId, level, period);
+  }
+
+  @Get('hypothetical-rank')
+  @Throttle({ default: { ttl: 60_000, limit: 2 } })
+  async getHypotheticalRank(
+    @Req() req: any,
+    @Query('score') scoreParam?: string,
+    @Query('level') levelParam?: string,
+  ): Promise<HypotheticalRankDto> {
+    const score = parseFloat(scoreParam ?? '0');
+    const level = parseLevelParam(levelParam);
+    const countryCode = parseCountryParam(
+      (req.headers['cf-ipcountry'] as string)?.toUpperCase(),
+    );
+    return this.leaderboardService.getHypotheticalRank(score, level, countryCode);
   }
 }

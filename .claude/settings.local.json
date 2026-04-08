@@ -95,7 +95,9 @@
       "Bash(npx skills:*)",
       "Bash(git:*)",
       "Read(//dev/**)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(ls -d \"D:\\\\Progra\\\\Proyectos_personales\\\\UltimaType\\\\.agent\\\\skills\"/*)",
+      "Bash(xargs ls:*)"
     ]
   }
 }

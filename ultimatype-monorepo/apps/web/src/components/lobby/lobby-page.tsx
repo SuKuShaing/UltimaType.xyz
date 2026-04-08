@@ -173,6 +173,7 @@ export function LobbyPage() {
       <ArenaPage
         matchData={matchData}
         localUserId={localUserId}
+        level={roomState?.level}
         isSpectator={isSpectator}
         isHost={isHost}
         isGuest={!isAuthenticated}

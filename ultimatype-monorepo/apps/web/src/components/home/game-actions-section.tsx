@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/use-auth';
-import { LoginModal } from '../ui/login-modal';
 import { apiClient } from '../../lib/api-client';
 import { CreateRoomResponse } from '@ultimatype-monorepo/shared';
+import { getGuestId, getGuestName } from '../../lib/guest';
 
 const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
 
@@ -56,23 +56,20 @@ function JoinRoomInput() {
 }
 
 export function GameActionsSection() {
-  const { isAuthenticated, isFetchingProfile } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
 
   const handleCreateRoom = async () => {
-    if (isFetchingProfile) return;
-    if (!isAuthenticated) {
-      localStorage.setItem('returnAfterLogin', window.location.pathname);
-      setShowLogin(true);
-      return;
-    }
     if (isCreating) return;
     setIsCreating(true);
     try {
+      const body = isAuthenticated
+        ? undefined
+        : JSON.stringify({ guestId: getGuestId(), guestName: getGuestName() });
       const { code } = await apiClient<CreateRoomResponse>('/rooms', {
         method: 'POST',
+        body,
       });
       navigate(`/room/${code}`);
     } catch {
@@ -94,8 +91,8 @@ export function GameActionsSection() {
         <button
           type="button"
           onClick={handleCreateRoom}
-          disabled={isCreating || isFetchingProfile}
-          className={`group flex w-full items-center gap-4 rounded-card bg-surface-container-low p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:bg-surface-container hover:shadow-md disabled:cursor-wait disabled:opacity-50${isFetchingProfile ? ' opacity-50 pointer-events-none' : ''}`}
+          disabled={isCreating}
+          className="group flex w-full items-center gap-4 rounded-card bg-surface-container-low p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:bg-surface-container hover:shadow-md disabled:cursor-wait disabled:opacity-50"
           aria-label="Crear una nueva partida"
         >
           <span className="material-symbols-outlined text-3xl text-primary" aria-hidden="true">
@@ -130,8 +127,6 @@ export function GameActionsSection() {
           <JoinRoomInput />
         </div>
       </div>
-
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </section>
   );
 }

@@ -23,3 +23,11 @@ export interface UserLeaderboardPositionDto {
   countryPercentile: number | null;
   countryCode: string | null;
 }
+
+export interface HypotheticalRankDto {
+  globalRank: number;
+  globalTotal: number;
+  countryRank: number | null;
+  countryTotal: number | null;
+  countryCode: string | null;
+}

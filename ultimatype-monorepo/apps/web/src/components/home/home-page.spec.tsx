@@ -226,11 +226,11 @@ describe('HomePage', () => {
       ).toBeTruthy();
     });
 
-    it('shows LoginModal when clicking "Crear partida"', () => {
+    it('guests can click "Crear partida" without login modal', async () => {
       setup();
       expect(screen.queryByTestId('login-modal')).toBeNull();
       fireEvent.click(screen.getByRole('button', { name: 'Crear una nueva partida' }));
-      expect(screen.getByTestId('login-modal')).toBeTruthy();
+      expect(screen.queryByTestId('login-modal')).toBeNull();
     });
   });
 
