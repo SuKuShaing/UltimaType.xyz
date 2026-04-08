@@ -78,7 +78,7 @@ export function GameActionsSection() {
   };
 
   return (
-    <section className="col-span-12 lg:col-span-8 rounded-card bg-surface-sunken p-6">
+    <section className="col-span-12 md:col-span-6 lg:col-span-8 rounded-card bg-surface-sunken p-6 transition-shadow duration-200 hover:shadow-sm">
       <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted">
         Modo de juego
       </h2>
@@ -86,7 +86,7 @@ export function GameActionsSection() {
         Elige cómo quieres competir hoy
       </p>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
         {/* Card 1: Crear partida */}
         <button
           type="button"

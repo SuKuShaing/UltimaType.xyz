@@ -20,6 +20,10 @@ vi.mock('../../hooks/use-leaderboard-position', () => ({
   useLeaderboardPosition: vi.fn(),
 }));
 
+vi.mock('../ui/country-flag', () => ({
+  CountryFlag: ({ countryCode }: { countryCode: string }) => <span data-testid="country-flag">{countryCode}</span>,
+}));
+
 vi.mock('../ui/login-modal', () => ({
   LoginModal: ({ onClose }: { onClose: () => void }) => (
     <div data-testid="login-modal">
@@ -90,10 +94,11 @@ describe('PlayerProfileSection', () => {
   });
 
   describe('Estructura base (AC5)', () => {
-    it('mantiene las clases de grid col-span-12 lg:col-span-4', () => {
+    it('mantiene las clases de grid col-span-12 md:col-span-6 lg:col-span-4', () => {
       setup();
       const section = document.querySelector('section');
       expect(section!.classList.contains('col-span-12')).toBe(true);
+      expect(section!.classList.contains('md:col-span-6')).toBe(true);
       expect(section!.classList.contains('lg:col-span-4')).toBe(true);
     });
 
@@ -262,9 +267,44 @@ describe('PlayerProfileSection', () => {
       expect(hasPuntaje).toBe(true);
     });
 
+    it('muestra el ranking por país cuando countryPercentile existe', () => {
+      setup({ isAuthenticated: true, user: mockUser }, mockPosition);
+      expect(screen.getByText('Ranking en tu país')).toBeTruthy();
+      expect(screen.getByText('Top 6%')).toBeTruthy();
+    });
+
+    it('no muestra ranking por país cuando countryPercentile es null', () => {
+      const positionNoCountry = { ...mockPosition, countryPercentile: null, countryRank: null, countryTotal: null, countryCode: null };
+      setup({ isAuthenticated: true, user: mockUser }, positionNoCountry);
+      expect(screen.queryByText('Ranking en tu país')).toBeNull();
+    });
+
     it('muestra el ranking "Top X% Mundial"', () => {
       setup({ isAuthenticated: true, user: mockUser }, mockPosition);
       expect(screen.getByText('Top 8% Mundial')).toBeTruthy();
+    });
+
+    it('muestra las tarjetas en orden: Mejor Puntaje, país, Mundial', () => {
+      setup({ isAuthenticated: true, user: mockUser }, mockPosition);
+      const labels = Array.from(document.querySelectorAll('.rounded-xl .text-xs'))
+        .map((el) => el.textContent);
+      expect(labels[0]).toBe('Mejor Puntaje');
+      expect(labels[1]).toContain('Ranking en tu país');
+      expect(labels[2]).toContain('Ranking Mundial');
+    });
+
+    it('muestra rank absoluto por país cuando countryTotal < 10', () => {
+      const smallCountry = { ...mockPosition, countryRank: 1, countryTotal: 3, countryPercentile: 33 };
+      setup({ isAuthenticated: true, user: mockUser }, smallCountry);
+      expect(screen.getByText('Puesto 1 de 3')).toBeTruthy();
+      expect(screen.queryByText(/Top.*33%/)).toBeNull();
+    });
+
+    it('muestra rank absoluto mundial cuando globalTotal < 10', () => {
+      const smallGlobal = { ...mockPosition, globalRank: 2, globalTotal: 5, globalPercentile: 40 };
+      setup({ isAuthenticated: true, user: mockUser }, smallGlobal);
+      expect(screen.getByText('Puesto 2 de 5')).toBeTruthy();
+      expect(screen.queryByText(/Top.*40%/)).toBeNull();
     });
 
     it('muestra avatar con imagen cuando avatarUrl existe', () => {

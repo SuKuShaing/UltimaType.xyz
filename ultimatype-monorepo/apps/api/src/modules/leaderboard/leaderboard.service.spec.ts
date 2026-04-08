@@ -211,7 +211,7 @@ describe('LeaderboardService', () => {
       expect(result!.bestScoreMatchCode).toBe('ABC123');
       expect(result!.globalRank).toBe(5);
       expect(result!.globalTotal).toBe(100);
-      expect(result!.globalPercentile).toBe(96);
+      expect(result!.globalPercentile).toBe(5);
       expect(result!.countryRank).toBeNull();
       expect(result!.countryTotal).toBeNull();
       expect(result!.countryPercentile).toBeNull();
@@ -235,10 +235,10 @@ describe('LeaderboardService', () => {
 
       expect(result!.globalRank).toBe(3);
       expect(result!.globalTotal).toBe(50);
-      expect(result!.globalPercentile).toBe(96);
+      expect(result!.globalPercentile).toBe(6);
       expect(result!.countryRank).toBe(1);
       expect(result!.countryTotal).toBe(10);
-      expect(result!.countryPercentile).toBe(100);
+      expect(result!.countryPercentile).toBe(10);
       expect(result!.countryCode).toBe('AR');
     });
 
@@ -300,7 +300,7 @@ describe('LeaderboardService', () => {
       const result = await service.getUserPosition('user-top');
 
       expect(result!.globalRank).toBe(1);
-      expect(result!.globalPercentile).toBe(100);
+      expect(result!.globalPercentile).toBe(1);
     });
   });
 

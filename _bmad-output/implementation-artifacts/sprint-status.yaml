@@ -35,7 +35,10 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-08T00:00:00-03:00
+last_updated: 2026-04-08T18:00:00-03:00
+# 2026-04-08: Story 5-8 code review complete, set to done. 2 decisions resolved (max-w-[90rem] aceptado, lg:grid-cols-2 aceptado). 2 patches applied (indentación public-profile-page, indentación nav-bar). 0 defers. 9 dismissed. 387 web tests passing.
+# 2026-04-08: Story 5-8 implementation complete, set to review (382 web tests passing). Frontend-only: md:col-span-6 en 4 secciones home, 2xl:max-w-none en home, 2xl:max-w-5xl en leaderboard/arena, 2-col layout profile 2xl, 2xl:max-w-2xl en lobby. +2 nuevos tests.
+# 2026-04-08: Story 5-8 created (responsive-and-polish), set to ready-for-dev. Frontend-only: tablet breakpoint md:col-span-6 en 4 secciones home, 2xl:max-w-none en home grid, 2xl:max-w-5xl en leaderboard, 2-col layout 2xl en profile, 2xl:max-w-5xl en arena, hover shadow en secciones.
 # 2026-04-08: Story 5-7 code review complete, set to done. 1 decision resolved (AC3 LoginModal aceptado, spec corregida). 3 patches applied (test score assertion fortalecido, error state con mensaje de reintento, aria-haspopup/expanded en botón login). 0 defers. 10 dismissed. 383 web tests passing.
 # 2026-04-07: Story 5-7 implementation complete, set to review (380 web tests passing). Frontend-only: PlayerProfileSection con 4 estados (skeleton/CTA/sin-historial/tarjeta-completa), useLeaderboardPosition reutilizado, avatar bg-primary/10, bestScore+globalPercentile. 31 nuevos tests + home-page.spec actualizado.
 # 2026-04-07: Story 5-7 dev started (player-profile-ranking-card), set to in-progress. Frontend-only: PlayerProfileSection implementando 4 estados (skeleton/CTA/sin-historial/tarjeta-completa), useLeaderboardPosition({level:null,period:'all'}).
@@ -160,7 +163,7 @@ development_status:
   5-hotfix-restore-logout-button: done
   5-6-global-leaderboard-preview: done
   5-7-player-profile-ranking-card: done
-  5-8-responsive-and-polish: backlog
+  5-8-responsive-and-polish: done
   5-9-lobby-visual-restyling: backlog
   5-10-arena-visual-restyling: backlog
   5-11-match-results-overlay-redesign: backlog

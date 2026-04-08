@@ -209,7 +209,7 @@ export function ArenaPage({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base px-4 py-8 font-sans text-text-main">
       {!isSpectator && matchStatus !== 'finished' && (
-        <div className="relative w-full max-w-3xl">
+        <div className="relative w-full max-w-3xl 2xl:max-w-5xl">
           <FocusWPMCounter matchStatus={matchStatus} />
           {matchData.timeLimit > 0 && (
             <div className="absolute right-0 top-0">
@@ -220,14 +220,14 @@ export function ArenaPage({
       )}
 
       {/* Perimeter UI — fades via --focus-fade-opacity during race (players only, not spectators) */}
-      <div className={`w-full max-w-3xl ${isPlaying && !isSpectator && !viewingAsSpectator ? 'focus-faded' : ''}`}>
+      <div className={`w-full max-w-3xl 2xl:max-w-5xl ${isPlaying && !isSpectator && !viewingAsSpectator ? 'focus-faded' : ''}`}>
         {/* Live leaderboard for spectators during race (or finished player watching live) */}
         {(isSpectator || viewingAsSpectator) && matchStatus === 'playing' && <SpectatorLeaderboard />}
         {/* Room header / player list area — populated by future stories */}
       </div>
 
       {/* Canvas area — always full opacity */}
-      <div className="relative w-full max-w-3xl" ref={textContainerRef}>
+      <div className="relative w-full max-w-3xl 2xl:max-w-5xl" ref={textContainerRef}>
         {/* Countdown overlay — shown during countdown phase */}
         {matchStatus === 'countdown' && (
           <CountdownOverlay onCountdownEnd={handleCountdownEnd} />

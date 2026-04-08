@@ -190,7 +190,7 @@ export function LiveMatchesSection() {
   const rooms = data?.rooms ?? [];
 
   return (
-    <section className="col-span-12 lg:col-span-4 rounded-card bg-surface-sunken p-6">
+    <section className="col-span-12 md:col-span-6 lg:col-span-4 rounded-card bg-surface-sunken p-6 transition-shadow duration-200 hover:shadow-sm">
       <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-text-muted">
         Partidas en Vivo
       </h2>

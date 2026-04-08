@@ -131,7 +131,7 @@ describe('LeaderboardController', () => {
         bestScoreDate: '2026-04-01T12:00:00.000Z',
         globalRank: 5,
         globalTotal: 100,
-        globalPercentile: 96,
+        globalPercentile: 5,
         countryRank: null,
         countryTotal: null,
         countryPercentile: null,

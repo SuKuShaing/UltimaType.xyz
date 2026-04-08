@@ -241,7 +241,7 @@ export function LobbyPage() {
       )}
 
       {/* Players list */}
-      <div className="mb-8 w-full max-w-md">
+      <div className="mb-8 w-full max-w-md 2xl:max-w-2xl">
         <h2 className="mb-3 text-sm font-semibold text-text-muted">
           Jugadores ({roomState?.players.length ?? 0}/{roomState?.maxPlayers ?? 20})
           {(roomState?.spectators?.length ?? 0) > 0 && (
@@ -419,7 +419,7 @@ export function LobbyPage() {
 
       {/* Difficulty selector (host only) */}
       {isHost && roomState && (
-        <div className="mb-6 w-full max-w-md">
+        <div className="mb-6 w-full max-w-md 2xl:max-w-2xl">
           <h2 className="mb-3 text-sm font-semibold text-text-muted">
             Nivel de Dificultad
           </h2>
@@ -446,7 +446,7 @@ export function LobbyPage() {
 
       {/* Time limit selector (host only) */}
       {isHost && roomState && (
-        <div className="mb-6 w-full max-w-md">
+        <div className="mb-6 w-full max-w-md 2xl:max-w-2xl">
           <h2 className="mb-3 text-sm font-semibold text-text-muted">
             Límite de Tiempo
           </h2>
@@ -470,7 +470,7 @@ export function LobbyPage() {
 
       {/* Max players selector (host only) */}
       {isHost && roomState && (
-        <div className="mb-6 w-full max-w-md">
+        <div className="mb-6 w-full max-w-md 2xl:max-w-2xl">
           <h2 className="mb-3 text-sm font-semibold text-text-muted">
             Máximo de Jugadores
           </h2>
@@ -508,7 +508,7 @@ export function LobbyPage() {
       )}
 
       {/* Action buttons */}
-      <div className="flex w-full max-w-md gap-3">
+      <div className="flex w-full max-w-md 2xl:max-w-2xl gap-3">
         <button
           onClick={handleLeave}
           className="relative z-[1] flex-1 rounded-lg bg-surface-raised px-4 py-3 text-sm font-semibold text-text-main transition-colors hover:text-text-main hover:bg-surface-raised/80"

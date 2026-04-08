@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/use-auth';
 import { useLeaderboardPosition } from '../../hooks/use-leaderboard-position';
+import { CountryFlag } from '../ui/country-flag';
 import { LoginModal } from '../ui/login-modal';
 
 export function PlayerProfileSection() {
@@ -15,7 +16,7 @@ export function PlayerProfileSection() {
   const isLoading = isFetchingProfile || (isAuthenticated && isPositionLoading);
 
   return (
-    <section className="col-span-12 lg:col-span-4 rounded-card bg-surface-sunken p-6">
+    <section className="col-span-12 md:col-span-6 lg:col-span-4 rounded-card bg-surface-sunken p-6 transition-shadow duration-200 hover:shadow-sm">
       <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-text-muted">
         Tu Perfil
       </h2>
@@ -98,12 +99,28 @@ export function PlayerProfileSection() {
                 {position.bestScore.toLocaleString('es', { maximumFractionDigits: 1 })}
               </div>
             </div>
+            {position.countryTotal != null && position.countryRank != null && (
+              <div className="rounded-xl bg-surface-raised p-3">
+                <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-text-muted font-sans">
+                  {position.countryCode && <CountryFlag countryCode={position.countryCode} size={14} />}
+                  Ranking en tu país
+                </div>
+                <div className="text-xl font-semibold text-primary font-sans">
+                  {position.countryTotal >= 10
+                    ? `Top ${position.countryPercentile}%`
+                    : `Puesto ${position.countryRank} de ${position.countryTotal}`}
+                </div>
+              </div>
+            )}
             <div className="rounded-xl bg-surface-raised p-3">
-              <div className="text-xs uppercase tracking-wide text-text-muted font-sans">
+              <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-text-muted font-sans">
+                <span>🌍</span>
                 Ranking Mundial
               </div>
               <div className="text-xl font-semibold text-primary font-sans">
-                Top {position.globalPercentile}% Mundial
+                {position.globalTotal >= 10
+                  ? `Top ${position.globalPercentile}% Mundial`
+                  : `Puesto ${position.globalRank} de ${position.globalTotal}`}
               </div>
             </div>
           </div>

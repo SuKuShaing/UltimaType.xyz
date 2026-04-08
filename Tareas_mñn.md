@@ -2,8 +2,6 @@
 
 ## To Fix
 
-- [ ] El menú es más ancho que el contenido
-
 ## Tareas
 
 - [ ] Cuando alguien se une a la sala, que haga un sonido
@@ -17,6 +15,7 @@
 - [ ] Tabla de posiciones de la semana en el home
 - [ ] Salas activas en el home, que diga el nivel y la cantidad de jugadores
 - [ ] Que en una feature futura, se vean las salas jugando en este momento, y listar las salas y poder ingresar como espectador a esas salas
+- [ ] Que se pueda jugar desde celulares
 - [ ] Instalar traqueo
 - [ ] sí soy invitado y me registro, cuándo estoy viendo los datos de una partida, esos datos de esa partida se guardan sí me acabo de registrar, ¿los demás jugadores en sus registros verán invitado o mi nombre?
 - [ ] que claudflare redirija www a apex
@@ -39,10 +38,13 @@
 - [ ] Debo hacer algo con estos warning: "Build: exitoso. Los warnings son de source-maps de @nestjs/throttler,
       pre-existentes."
 
+---
+
 # Realizados
 
 ### FiXs
 
+- [x] El menú es más ancho que el contenido
 - [x] Que no se necesite iniciar sesión para crear una partida
 - [x] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo
 - [x] Falta cerrar sesión

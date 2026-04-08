@@ -86,7 +86,7 @@ export function LeaderboardPage() {
         <title>Ranking Global - UltimaType</title>
       </Helmet>
 
-      <div className="w-full max-w-3xl space-y-6">
+      <div className="w-full max-w-3xl 2xl:max-w-5xl space-y-6">
         <h1 className="text-2xl font-semibold">Ranking Global</h1>
 
         {/* Position widget — only for authenticated users */}
@@ -125,14 +125,14 @@ export function LeaderboardPage() {
                 <p>
                   <span className="text-text-muted">Mundial: </span>
                   <span className="font-semibold">#{position.globalRank}</span>
-                  <span className="text-text-muted"> · Top {position.globalPercentile}% del mundo</span>
+                  <span className="text-text-muted"> · {position.globalTotal >= 10 ? `Top ${position.globalPercentile}% del mundo` : `de ${position.globalTotal}`}</span>
                 </p>
                 {position.countryCode && position.countryRank !== null && (
                   <p>
                     <CountryFlag countryCode={position.countryCode} size={14} />{' '}
                     <span className="text-text-muted">{getCountryName(position.countryCode)}: </span>
                     <span className="font-semibold">#{position.countryRank}</span>
-                    <span className="text-text-muted"> · Top {position.countryPercentile}% de {getCountryName(position.countryCode)}</span>
+                    <span className="text-text-muted"> · {position.countryTotal != null && position.countryTotal >= 10 ? `Top ${position.countryPercentile}% de ${getCountryName(position.countryCode)}` : `de ${position.countryTotal}`}</span>
                   </p>
                 )}
               </div>

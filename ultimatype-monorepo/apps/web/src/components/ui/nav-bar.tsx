@@ -151,7 +151,8 @@ export function NavBar() {
         aria-label="Navegación principal"
         className="nav-bar-global fixed left-0 right-0 top-0 z-40 bg-surface-sunken transition-opacity duration-500"
       >
-        <div className="flex items-center justify-between px-4 py-2">
+        <div className="mx-auto w-full max-w-6xl 2xl:max-w-[90rem] px-4">
+          <div className="flex items-center justify-between py-2">
           {/* Left: Logo + tabs */}
           <div className="flex items-center gap-6">
             {location.pathname === '/' ? (
@@ -245,6 +246,7 @@ export function NavBar() {
                 Iniciar sesión
               </button>
             )}
+          </div>
           </div>
         </div>
 

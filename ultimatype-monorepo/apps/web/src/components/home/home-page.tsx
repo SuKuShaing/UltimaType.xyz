@@ -11,7 +11,7 @@ export function HomePage() {
         <title>UltimaType — Competencias de mecanografía en tiempo real</title>
       </Helmet>
 
-      <div className="grid w-full max-w-6xl grid-cols-12 gap-6">
+      <div className="grid w-full max-w-6xl 2xl:max-w-[90rem] grid-cols-12 gap-6">
         <GameActionsSection />
         <LiveMatchesSection />
         <LeaderboardPreviewSection />

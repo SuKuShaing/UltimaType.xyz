@@ -215,8 +215,9 @@ export function PublicProfilePage() {
         <title>{isOwnProfile ? 'Mi perfil' : profile.displayName} — UltimaType</title>
       </Helmet>
 
-      <div className="w-full max-w-2xl space-y-6">
-        {/* Hero */}
+      <div className="w-full max-w-2xl 2xl:max-w-5xl">
+        <div className="flex flex-col gap-6 2xl:grid 2xl:grid-cols-[2fr_3fr] 2xl:items-start">
+          {/* Hero */}
         <div className="rounded-2xl bg-surface-sunken p-8 text-center">
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-surface-raised text-3xl font-semibold text-primary">
             {profile.avatarUrl ? (
@@ -344,6 +345,8 @@ export function PublicProfilePage() {
           )}
         </div>
 
+          {/* Columna derecha: ranking + stats + historia */}
+          <div className="flex flex-col gap-6">
         {/* Ranking positions */}
         {(isPositionLoading || position) && (
           <div className="grid grid-cols-2 gap-4">
@@ -519,6 +522,8 @@ export function PublicProfilePage() {
               )}
             </>
           )}
+        </div>
+          </div>
         </div>
       </div>
     </div>

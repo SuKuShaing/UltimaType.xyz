@@ -31,7 +31,7 @@ export function LeaderboardPreviewSection() {
   const showToggle = isAuthenticated && !!user?.countryCode;
 
   return (
-    <section className="col-span-12 lg:col-span-8 rounded-card bg-surface-sunken p-6">
+    <section className="col-span-12 md:col-span-6 lg:col-span-8 rounded-card bg-surface-sunken p-6 transition-shadow duration-200 hover:shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted">
           Clasificación Global

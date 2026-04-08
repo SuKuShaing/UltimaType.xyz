@@ -191,7 +191,7 @@ export class LeaderboardService {
 
     const globalRank = Number(globalRankResult[0]?.rank ?? 1);
     const globalTotal = Number(globalTotalResult[0]?.total ?? 1);
-    const globalPercentile = Math.round((1 - (globalRank - 1) / globalTotal) * 100);
+    const globalPercentile = Math.max(1, Math.round((globalRank / globalTotal) * 100));
 
     // Country rank (if user has countryCode)
     const user = await this.prisma.user.findUnique({
@@ -236,7 +236,7 @@ export class LeaderboardService {
 
       countryRank = Number(countryRankResult[0]?.rank ?? 1);
       countryTotal = Number(countryTotalResult[0]?.total ?? 1);
-      countryPercentile = Math.round((1 - (countryRank - 1) / countryTotal) * 100);
+      countryPercentile = Math.max(1, Math.round((countryRank / countryTotal) * 100));
     }
 
     return {

@@ -102,6 +102,15 @@ beforeEach(() => {
 });
 
 describe('LiveMatchesSection', () => {
+  it('tiene las clases de grid responsivo correctas (AC: #2 responsive)', () => {
+    mockUseActiveRooms.mockReturnValue({ data: { rooms: [] }, isLoading: false });
+    render(<LiveMatchesSection />);
+    const section = document.querySelector('section');
+    expect(section!.classList.contains('col-span-12')).toBe(true);
+    expect(section!.classList.contains('md:col-span-6')).toBe(true);
+    expect(section!.classList.contains('lg:col-span-4')).toBe(true);
+  });
+
   it('renderiza el header "Partidas en Vivo"', () => {
     mockUseActiveRooms.mockReturnValue({ data: { rooms: [] }, isLoading: false });
     render(<LiveMatchesSection />);

@@ -72,6 +72,7 @@ describe('GameActionsSection', () => {
       const section = document.querySelector('section');
       expect(section).toBeTruthy();
       expect(section!.classList.contains('col-span-12')).toBe(true);
+      expect(section!.classList.contains('md:col-span-6')).toBe(true);
       expect(section!.classList.contains('lg:col-span-8')).toBe(true);
       expect(section!.classList.contains('rounded-card')).toBe(true);
       expect(section!.classList.contains('bg-surface-sunken')).toBe(true);

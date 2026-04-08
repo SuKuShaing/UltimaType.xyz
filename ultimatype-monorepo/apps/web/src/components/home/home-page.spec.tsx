@@ -108,6 +108,7 @@ describe('HomePage', () => {
       expect(grid).toBeTruthy();
       expect(grid!.classList.contains('gap-6')).toBe(true);
       expect(grid!.classList.contains('max-w-6xl')).toBe(true);
+      expect(grid!.classList.contains('2xl:max-w-[90rem]')).toBe(true);
     });
 
     it('renders all 4 sections', () => {
@@ -121,6 +122,7 @@ describe('HomePage', () => {
       const gameActions = screen.getByText('Modo de juego').closest('section');
       expect(gameActions).toBeTruthy();
       expect(gameActions!.classList.contains('col-span-12')).toBe(true);
+      expect(gameActions!.classList.contains('md:col-span-6')).toBe(true);
       expect(gameActions!.classList.contains('lg:col-span-8')).toBe(true);
     });
 
@@ -129,6 +131,7 @@ describe('HomePage', () => {
       const liveMatches = screen.getByText('Partidas en Vivo').closest('section');
       expect(liveMatches).toBeTruthy();
       expect(liveMatches!.classList.contains('col-span-12')).toBe(true);
+      expect(liveMatches!.classList.contains('md:col-span-6')).toBe(true);
       expect(liveMatches!.classList.contains('lg:col-span-4')).toBe(true);
     });
 
@@ -139,6 +142,7 @@ describe('HomePage', () => {
         .closest('section');
       expect(leaderboard).toBeTruthy();
       expect(leaderboard!.classList.contains('col-span-12')).toBe(true);
+      expect(leaderboard!.classList.contains('md:col-span-6')).toBe(true);
       expect(leaderboard!.classList.contains('lg:col-span-8')).toBe(true);
     });
 
@@ -147,6 +151,7 @@ describe('HomePage', () => {
       const profile = screen.getByText('Tu Perfil').closest('section');
       expect(profile).toBeTruthy();
       expect(profile!.classList.contains('col-span-12')).toBe(true);
+      expect(profile!.classList.contains('md:col-span-6')).toBe(true);
       expect(profile!.classList.contains('lg:col-span-4')).toBe(true);
     });
   });

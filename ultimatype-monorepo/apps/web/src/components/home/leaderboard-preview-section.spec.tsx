@@ -107,6 +107,14 @@ beforeEach(() => {
 });
 
 describe('LeaderboardPreviewSection', () => {
+  it('tiene las clases de grid responsivo correctas (AC: #2 responsive)', () => {
+    render(<LeaderboardPreviewSection />);
+    const section = document.querySelector('section');
+    expect(section!.classList.contains('col-span-12')).toBe(true);
+    expect(section!.classList.contains('md:col-span-6')).toBe(true);
+    expect(section!.classList.contains('lg:col-span-8')).toBe(true);
+  });
+
   it('renderiza el header "Clasificación Global"', () => {
     render(<LeaderboardPreviewSection />);
     expect(screen.getByText('Clasificación Global')).toBeTruthy();
