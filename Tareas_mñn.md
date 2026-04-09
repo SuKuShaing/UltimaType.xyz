@@ -4,6 +4,7 @@
 
 ## Tareas
 
+- [ ] ver si el proyecto ultimate se puede pasar a cloudflare
 - [ ] Cuando alguien se une a la sala, que haga un sonido
 - [ ] Revisar que el código sea código moderno y usen context7, dejar esto en Claude
 - [ ] Para un futuro que los países se puedan seleccionar por continente y sea vean las banderas de los países
@@ -17,6 +18,7 @@
 - [ ] Que en una feature futura, se vean las salas jugando en este momento, y listar las salas y poder ingresar como espectador a esas salas
 - [ ] Que se pueda jugar desde celulares
 - [ ] Instalar traqueo
+- [ ] El espectador también debiese poder ver el tiempo regresivo de la partida
 - [ ] sí soy invitado y me registro, cuándo estoy viendo los datos de una partida, esos datos de esa partida se guardan sí me acabo de registrar, ¿los demás jugadores en sus registros verán invitado o mi nombre?
 - [ ] que claudflare redirija www a apex
 - [ ] Añadir un registro manual de sesión de nombre, usuario y contraseña

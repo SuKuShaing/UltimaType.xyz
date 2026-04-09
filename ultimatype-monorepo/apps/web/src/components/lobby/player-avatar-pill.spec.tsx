@@ -73,12 +73,16 @@ describe('PlayerAvatarPill', () => {
     expect(screen.getByText('Esperando')).toBeTruthy();
   });
 
-  it('no tiene bordes (no-line rule)', () => {
+  it('usa border-l como indicador de color de jugador (excepcion no-line rule)', () => {
     render(
       <PlayerAvatarPill player={basePlayer} isHost={false} isLocal={false} />,
     );
     const pill = screen.getByTestId('player-avatar-pill');
-    expect(pill.className).not.toContain('border');
+    expect(pill.classList.contains('border-l-[3px]')).toBe(true);
+    // No debe tener border-b, border-t, border-r (no-line rule)
+    expect(pill.className).not.toContain('border-b');
+    expect(pill.className).not.toContain('border-t');
+    expect(pill.className).not.toContain('border-r');
   });
 
   it('muestra Saliendo y aplica grayscale cuando el jugador esta desconectado', () => {
@@ -100,6 +104,44 @@ describe('PlayerAvatarPill', () => {
     const img = screen.getByAltText('Test Player');
     fireEvent.error(img);
     expect(screen.getByText('TP')).toBeTruthy();
+  });
+
+  it('usa design system tokens: rounded-card y bg-surface-container-lowest', () => {
+    render(
+      <PlayerAvatarPill player={basePlayer} isHost={false} isLocal={false} />,
+    );
+    const pill = screen.getByTestId('player-avatar-pill');
+    expect(pill.classList.contains('rounded-card')).toBe(true);
+    expect(pill.classList.contains('bg-surface-container-lowest')).toBe(true);
+  });
+
+  it('aplica borderLeftColor con el color del jugador', () => {
+    render(
+      <PlayerAvatarPill player={basePlayer} isHost={false} isLocal={false} />,
+    );
+    const pill = screen.getByTestId('player-avatar-pill');
+    expect(pill.style.borderLeftColor).toBeTruthy();
+  });
+
+  it('aplica borderLeftColor distinto cuando esta desconectado', () => {
+    // Connected player uses PLAYER_COLORS[colorIndex] as borderLeftColor
+    const { unmount } = render(
+      <PlayerAvatarPill player={basePlayer} isHost={false} isLocal={false} />,
+    );
+    const connectedPill = screen.getByTestId('player-avatar-pill');
+    const connectedColor = connectedPill.style.borderLeftColor;
+    expect(connectedColor).toBeTruthy();
+    unmount();
+
+    // Disconnected player uses var(--color-text-muted) — jsdom can't resolve
+    // CSS custom properties, so borderLeftColor is empty. We verify it differs
+    // from the connected color (production uses the design token).
+    const disconnectedPlayer = { ...basePlayer, disconnected: true };
+    render(
+      <PlayerAvatarPill player={disconnectedPlayer} isHost={false} isLocal={false} />,
+    );
+    const disconnectedPill = screen.getByTestId('player-avatar-pill');
+    expect(disconnectedPill.style.borderLeftColor).not.toBe(connectedColor);
   });
 
   it('renderiza menuContent cuando se proporciona', () => {

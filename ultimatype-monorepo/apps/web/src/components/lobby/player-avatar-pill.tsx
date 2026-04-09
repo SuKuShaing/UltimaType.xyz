@@ -28,17 +28,12 @@ export function PlayerAvatarPill({
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg bg-surface-raised px-4 py-3 transition-opacity ${
+      className={`flex items-center gap-3 rounded-card bg-surface-container-lowest border-l-[3px] px-4 py-3 transition-opacity ${
         player.disconnected ? 'opacity-50 grayscale' : ''
       }`}
+      style={{ borderLeftColor: player.disconnected ? 'var(--color-text-muted)' : color }}
       data-testid="player-avatar-pill"
     >
-      {/* Color indicator */}
-      <div
-        className="h-3 w-3 shrink-0 rounded-full"
-        style={{ backgroundColor: player.disconnected ? '#64748B' : color }}
-      />
-
       {/* Avatar */}
       {player.avatarUrl && !imgError ? (
         <img

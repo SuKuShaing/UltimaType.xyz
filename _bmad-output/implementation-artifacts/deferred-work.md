@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review de 5-9-lobby-visual-restyling (2026-04-09)
+
+- **`z-[1]` magic number en botón Salir** — `lobby-page.tsx:~524`. El botón "Salir" tiene `relative z-[1]` sin razón documentada. Pre-existente; limpiar cuando se refactorice stacking contexts.
+- **Material Symbols font load failure muestra texto literal** — Concern a nivel de app. Si la font de Google Fonts falla, todos los iconos Material Symbols muestran texto literal (e.g., "more_vert", "close"). Pre-existente desde que se adoptó Material Symbols en el proyecto.
+- **Host solo en sala → `allOthersReady=true`** — `lobby-page.tsx`. `Array.every()` retorna `true` para arrays vacíos, así que el host sin otros jugadores ve "Iniciar Partida" habilitado. Pre-existente; lógica no modificada por este diff.
+
 ## Deferred from: code review de 5-7-player-profile-ranking-card (2026-04-07)
 
 *Sin items diferidos — todos los findings fueron patcheados o resueltos en review.*

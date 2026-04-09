@@ -193,7 +193,7 @@ export function LobbyPage() {
           {toasts.map((toast) => (
             <div
               key={toast.id}
-              className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium shadow-lg ${
+              className={`flex items-center gap-2 rounded-full px-4 py-3 text-sm font-medium shadow-lg ${
                 toast.type === 'error'
                   ? 'bg-error text-white'
                   : toast.type === 'success'
@@ -205,8 +205,9 @@ export function LobbyPage() {
               <button
                 onClick={() => dismissToast(toast.id)}
                 className="ml-2 opacity-70 hover:opacity-100"
+                aria-label="Cerrar"
               >
-                ✕
+                <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">close</span>
               </button>
             </div>
           ))}
@@ -217,12 +218,12 @@ export function LobbyPage() {
       <div className="mb-8 text-center">
         <h1 className="mb-2 text-3xl font-bold">Sala de espera</h1>
         <div className="flex items-center justify-center gap-2">
-          <span className="rounded bg-surface-raised px-3 py-1 font-mono text-lg tracking-wider text-primary">
+          <span className="rounded-full bg-surface-container-lowest px-3 py-1 font-mono text-lg tracking-wider text-primary">
             {code}
           </span>
           <button
             onClick={handleCopyLink}
-            className="rounded bg-surface-raised px-3 py-1 text-sm text-text-muted transition-colors hover:text-text-main"
+            className="rounded-full bg-surface-container-lowest px-4 py-1 text-base font-medium text-text-main transition-colors hover:text-primary"
           >
             {copied ? 'Copiado!' : 'Copiar Link'}
           </button>
@@ -235,13 +236,13 @@ export function LobbyPage() {
 
       {/* Spectator badge */}
       {isSpectator && (
-        <div className="mb-4 rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted">
+        <div className="mb-4 rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted">
           Estás como espectador
         </div>
       )}
 
       {/* Players list */}
-      <div className="mb-8 w-full max-w-md 2xl:max-w-2xl">
+      <div className="mb-8 w-full max-w-md 2xl:max-w-2xl rounded-card bg-surface-container-low p-6">
         <h2 className="mb-3 text-sm font-semibold text-text-muted">
           Jugadores ({roomState?.players.length ?? 0}/{roomState?.maxPlayers ?? 20})
           {(roomState?.spectators?.length ?? 0) > 0 && (
@@ -266,17 +267,17 @@ export function LobbyPage() {
                         setOpenMenuFor(menuOpen ? null : `player-${player.id}`);
                       }}
                       disabled={isSwitchingRole}
-                      className="rounded p-1 text-text-muted hover:bg-surface-base hover:text-text-main disabled:opacity-40"
+                      className="rounded-full p-1 text-text-muted hover:bg-surface-base hover:text-text-main disabled:opacity-40"
                       title="Opciones"
                     >
                       {isSwitchingRole ? (
                         <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                       ) : (
-                        '···'
+                        <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">more_vert</span>
                       )}
                     </button>
                     {menuOpen && (
-                      <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-surface-raised py-1 shadow-lg">
+                      <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-2xl bg-surface-raised py-1 shadow-lg">
                         <button
                           onClick={handleSwitchToSpectator}
                           className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-surface-base"
@@ -298,13 +299,13 @@ export function LobbyPage() {
                         e.stopPropagation();
                         setOpenMenuFor(menuOpen ? null : `player-${player.id}`);
                       }}
-                      className="rounded p-1 text-text-muted hover:bg-surface-base hover:text-text-main"
+                      className="rounded-full p-1 text-text-muted hover:bg-surface-base hover:text-text-main"
                       title="Opciones del host"
                     >
-                      ···
+                      <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">more_vert</span>
                     </button>
                     {menuOpen && (
-                      <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-surface-raised py-1 shadow-lg">
+                      <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-2xl bg-surface-raised py-1 shadow-lg">
                         <button
                           onClick={() => {
                             setOpenMenuFor(null);
@@ -358,7 +359,7 @@ export function LobbyPage() {
                   return (
                     <span
                       key={spec.id}
-                      className="rounded bg-surface-raised px-2 py-1 text-xs text-text-muted"
+                      className="rounded-full bg-surface-container-lowest px-2 py-1 text-xs text-text-muted"
                     >
                       {spec.displayName}
                     </span>
@@ -366,7 +367,7 @@ export function LobbyPage() {
                 }
                 return (
                   <div key={spec.id} className="relative flex items-center gap-1">
-                    <span className="rounded bg-surface-raised px-2 py-1 text-xs text-text-muted">
+                    <span className="rounded-full bg-surface-container-lowest px-2 py-1 text-xs text-text-muted">
                       {spec.displayName}
                     </span>
                     {roomState.status === 'waiting' && (
@@ -377,17 +378,17 @@ export function LobbyPage() {
                             setOpenMenuFor(menuOpen ? null : `spectator-${spec.id}`);
                           }}
                           disabled={isSwitchingRole}
-                          className="rounded px-1 py-0.5 text-xs text-text-muted hover:bg-surface-raised hover:text-text-main disabled:opacity-40"
+                          className="rounded-full px-1 py-0.5 text-xs text-text-muted hover:bg-surface-raised hover:text-text-main disabled:opacity-40"
                           title="Opciones"
                         >
                           {isSwitchingRole ? (
                             <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                           ) : (
-                            '···'
+                            <span className="material-symbols-outlined text-[16px] leading-none" aria-hidden="true">more_vert</span>
                           )}
                         </button>
                         {menuOpen && (
-                          <div className="absolute left-0 top-full z-10 mt-1 w-48 rounded-lg bg-surface-raised py-1 shadow-lg">
+                          <div className="absolute left-0 top-full z-10 mt-1 w-48 rounded-2xl bg-surface-raised py-1 shadow-lg">
                             {isPlayerRoomFull ? (
                               <div className="cursor-not-allowed px-4 py-2 text-sm">
                                 <span className="block text-text-muted opacity-60">
@@ -417,92 +418,105 @@ export function LobbyPage() {
         )}
       </div>
 
-      {/* Difficulty selector (host only) */}
+      {/* Configuration panel (host only) */}
       {isHost && roomState && (
-        <div className="mb-6 w-full max-w-md 2xl:max-w-2xl">
-          <h2 className="mb-3 text-sm font-semibold text-text-muted">
-            Nivel de Dificultad
-          </h2>
-          <div className="flex gap-2">
-            {DIFFICULTY_LEVELS.map((dl) => (
-              <button
-                key={dl.level}
-                onClick={() => selectLevel(dl.level)}
-                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  roomState.level === dl.level
-                    ? 'bg-primary text-surface-base'
-                    : 'bg-surface-raised text-text-muted hover:text-text-main'
-                }`}
-              >
-                {dl.level}
-              </button>
-            ))}
+        <div className="mb-8 w-full max-w-md 2xl:max-w-2xl rounded-card bg-surface-container-low p-6 space-y-6">
+          {/* Difficulty selector */}
+          <div>
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text-muted">
+              <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">settings</span>
+              Nivel de Dificultad
+            </h2>
+            <div className="flex gap-2">
+              {DIFFICULTY_LEVELS.map((dl) => (
+                <button
+                  key={dl.level}
+                  onClick={() => selectLevel(dl.level)}
+                  className={`flex-1 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                    roomState.level === dl.level
+                      ? 'bg-primary text-surface-base'
+                      : 'bg-surface-raised text-text-muted hover:text-text-main'
+                  }`}
+                >
+                  {dl.level}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-center text-sm text-text-muted">
+              {DIFFICULTY_LEVELS.find((dl) => dl.level === roomState.level)?.description}
+            </p>
           </div>
-          <p className="mt-1 text-center text-xs text-text-muted">
-            {DIFFICULTY_LEVELS.find((dl) => dl.level === roomState.level)?.description}
-          </p>
-        </div>
-      )}
 
-      {/* Time limit selector (host only) */}
-      {isHost && roomState && (
-        <div className="mb-6 w-full max-w-md 2xl:max-w-2xl">
-          <h2 className="mb-3 text-sm font-semibold text-text-muted">
-            Límite de Tiempo
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {TIME_LIMIT_OPTIONS.map((opt) => (
-              <button
-                key={opt}
-                onClick={() => setTimeLimit(opt)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  roomState.timeLimit === opt
-                    ? 'bg-primary text-surface-base'
-                    : 'bg-surface-raised text-text-muted hover:text-text-main'
-                }`}
-              >
-                {TIME_LIMIT_LABELS[opt] ?? `${opt / 1000}s`}
-              </button>
-            ))}
+          {/* Time limit selector */}
+          <div>
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text-muted">
+              <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">timer</span>
+              Límite de Tiempo
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {TIME_LIMIT_OPTIONS.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setTimeLimit(opt)}
+                  className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                    roomState.timeLimit === opt
+                      ? 'bg-primary text-surface-base'
+                      : 'bg-surface-raised text-text-muted hover:text-text-main'
+                  }`}
+                >
+                  {TIME_LIMIT_LABELS[opt] ?? `${opt / 1000}s`}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Max players selector (host only) */}
-      {isHost && roomState && (
-        <div className="mb-6 w-full max-w-md 2xl:max-w-2xl">
-          <h2 className="mb-3 text-sm font-semibold text-text-muted">
-            Máximo de Jugadores
-          </h2>
-          <select
-            value={roomState.maxPlayers}
-            onChange={(e) => setMaxPlayers(Number(e.target.value))}
-            className="w-full rounded-lg bg-surface-raised px-3 py-2 text-sm font-medium text-text-main"
-          >
-            {Array.from({ length: 19 }, (_, i) => i + 2).map((n) => (
-              <option key={n} value={n}>
-                {n} jugadores
-              </option>
-            ))}
-          </select>
+          {/* Max players selector */}
+          <div>
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text-muted">
+              <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">groups</span>
+              Máximo de Jugadores
+            </h2>
+            <div className="relative">
+              <select
+                value={roomState.maxPlayers}
+                onChange={(e) => setMaxPlayers(Number(e.target.value))}
+                className="w-full appearance-none rounded-full bg-surface-container-lowest pl-4 pr-10 py-2 text-sm font-medium text-text-main"
+              >
+                {Array.from({ length: 19 }, (_, i) => i + 2).map((n) => (
+                  <option key={n} value={n}>
+                    {n} jugadores
+                  </option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[20px] leading-none text-text-muted" aria-hidden="true">
+                expand_more
+              </span>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Non-host: show selected level, time limit, and max players */}
       {!isHost && roomState && (
-        <div className="mb-6 text-center">
-          <span className="text-sm text-text-muted">Nivel: </span>
-          <span className="font-semibold text-primary">
-            {DIFFICULTY_LEVELS.find((dl) => dl.level === roomState.level)?.name ??
-              roomState.level}
+        <div className="mb-6 w-full max-w-md 2xl:max-w-2xl rounded-card bg-surface-container-low p-4 flex flex-wrap justify-center gap-x-4 gap-y-1">
+          <span className="whitespace-nowrap text-sm">
+            <span className="text-text-muted">Nivel: </span>
+            <span className="font-semibold text-primary">
+              {DIFFICULTY_LEVELS.find((dl) => dl.level === roomState.level)?.name ??
+                roomState.level}
+            </span>
           </span>
-          <span className="ml-4 text-sm text-text-muted">Tiempo: </span>
-          <span className="font-semibold text-primary">
-            {TIME_LIMIT_LABELS[roomState.timeLimit] ?? `${roomState.timeLimit / 1000}s`}
+          <span className="whitespace-nowrap text-sm">
+            <span className="text-text-muted">Tiempo: </span>
+            <span className="font-semibold text-primary">
+              {TIME_LIMIT_LABELS[roomState.timeLimit] ?? `${roomState.timeLimit / 1000}s`}
+            </span>
           </span>
-          <span className="ml-4 text-sm text-text-muted">Máx: </span>
-          <span className="font-semibold text-primary">
-            {roomState.maxPlayers} jugadores
+          <span className="whitespace-nowrap text-sm">
+            <span className="text-text-muted">Máx: </span>
+            <span className="font-semibold text-primary">
+              {roomState.maxPlayers} jugadores
+            </span>
           </span>
         </div>
       )}
@@ -511,7 +525,7 @@ export function LobbyPage() {
       <div className="flex w-full max-w-md 2xl:max-w-2xl gap-3">
         <button
           onClick={handleLeave}
-          className="relative z-[1] flex-1 rounded-lg bg-surface-raised px-4 py-3 text-sm font-semibold text-text-main transition-colors hover:text-text-main hover:bg-surface-raised/80"
+          className="relative z-[1] flex-1 rounded-full bg-surface-raised px-4 py-3 text-sm font-semibold text-text-main transition-colors hover:text-text-main hover:bg-surface-raised/80"
         >
           Salir
         </button>
@@ -519,7 +533,7 @@ export function LobbyPage() {
         {!isSpectator && !isHost && currentPlayer && (
           <button
             onClick={() => toggleReady(!currentPlayer.isReady)}
-            className={`flex-1 rounded-lg px-4 py-3 text-sm font-bold transition-colors ${
+            className={`flex-1 rounded-full px-4 py-3 text-sm font-bold transition-colors ${
               currentPlayer.isReady
                 ? 'bg-success/20 text-success'
                 : 'btn-glow-pulse bg-primary text-surface-base'
@@ -533,13 +547,20 @@ export function LobbyPage() {
           <button
             onClick={startMatch}
             disabled={!allOthersReady}
-            className={`flex-1 rounded-lg px-4 py-3 text-sm font-bold transition-colors ${
+            className={`flex-1 rounded-full px-4 py-3 text-sm font-bold transition-colors ${
               allOthersReady
                 ? 'bg-primary text-surface-base hover:bg-primary/90'
                 : 'cursor-not-allowed bg-surface-raised text-text-muted opacity-50'
             }`}
           >
-            {allOthersReady ? 'Iniciar Partida' : 'Esperando el listo de los Jugadores'}
+            {allOthersReady ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-[20px] leading-none" aria-hidden="true">bolt</span>
+                Iniciar Partida
+              </span>
+            ) : (
+              'Esperando el listo de los Jugadores'
+            )}
           </button>
         )}
       </div>
@@ -548,10 +569,12 @@ export function LobbyPage() {
       {confirmModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          role="dialog"
+          aria-modal="true"
           onClick={() => setConfirmModal(null)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-surface-base px-8 py-8 text-center shadow-xl"
+            className="w-full max-w-sm rounded-card bg-surface-base px-8 py-8 text-center shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="mb-2 text-lg font-bold text-text-main">
@@ -566,7 +589,7 @@ export function LobbyPage() {
               <button
                 type="button"
                 onClick={() => setConfirmModal(null)}
-                className="rounded-lg bg-surface-raised px-6 py-2 text-sm font-medium text-text-muted transition-colors hover:text-text-main"
+                className="rounded-full bg-surface-raised px-6 py-2 text-sm font-medium text-text-muted transition-colors hover:text-text-main"
               >
                 Cancelar
               </button>
@@ -580,7 +603,7 @@ export function LobbyPage() {
                   }
                   setConfirmModal(null);
                 }}
-                className={`rounded-lg px-6 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 ${
+                className={`rounded-full px-6 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 ${
                   confirmModal.action === 'kick' ? 'bg-error' : 'bg-primary'
                 }`}
               >

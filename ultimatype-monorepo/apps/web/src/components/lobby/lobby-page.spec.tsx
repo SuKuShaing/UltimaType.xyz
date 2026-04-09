@@ -273,4 +273,177 @@ describe('LobbyPage', () => {
     renderLobby();
     expect(screen.getByText('Nivel de Dificultad')).toBeTruthy();
   });
+
+  it('usa design system tokens: rounded-card y bg-surface-container-low en secciones', () => {
+    mockUseLobby.mockReturnValue({
+      roomState: {
+        code: 'ABC123',
+        hostId: 'user-1',
+        level: 1,
+        status: 'waiting',
+        timeLimit: 0,
+        players: [
+          {
+            id: 'user-1',
+            displayName: 'Host',
+            avatarUrl: null,
+            colorIndex: 0,
+            isReady: false,
+            disconnected: false,
+          },
+        ],
+        maxPlayers: 20,
+        spectators: [],
+      },
+      error: null,
+      isConnected: true,
+      matchStarted: false,
+      matchData: null,
+      isSpectator: false,
+      isSwitchingRole: false,
+      autoSpectateMessage: null,
+      kickedMessage: null,
+      movedToSpectatorMessage: null,
+      toggleReady: vi.fn(),
+      selectLevel: vi.fn(),
+      setTimeLimit: vi.fn(),
+      setMaxPlayers: vi.fn(),
+      startMatch: vi.fn(),
+      leaveRoom: vi.fn(),
+      resetMatch: vi.fn(),
+      joinAsSpectator: vi.fn(),
+      switchToSpectator: vi.fn(),
+      switchToPlayer: vi.fn(),
+      clearAutoSpectateMessage: vi.fn(),
+      kickPlayer: vi.fn(),
+      moveToSpectator: vi.fn(),
+      clearKickedMessage: vi.fn(),
+      clearMovedToSpectatorMessage: vi.fn(),
+    } as any);
+
+    renderLobby();
+
+    // Players section has surface-container-low and rounded-card
+    const playersSection = screen.getByText('Jugadores (1/20)').closest('div.rounded-card') as HTMLElement;
+    expect(playersSection).toBeTruthy();
+    expect(playersSection.classList.contains('bg-surface-container-low')).toBe(true);
+
+    // Config panel has surface-container-low and rounded-card
+    const configPanel = screen.getByText('Nivel de Dificultad').closest('div.rounded-card') as HTMLElement;
+    expect(configPanel).toBeTruthy();
+    expect(configPanel.classList.contains('bg-surface-container-low')).toBe(true);
+  });
+
+  it('usa Material Symbols icons en headings de configuracion', () => {
+    mockUseLobby.mockReturnValue({
+      roomState: {
+        code: 'ABC123',
+        hostId: 'user-1',
+        level: 1,
+        status: 'waiting',
+        timeLimit: 0,
+        players: [
+          {
+            id: 'user-1',
+            displayName: 'Host',
+            avatarUrl: null,
+            colorIndex: 0,
+            isReady: false,
+            disconnected: false,
+          },
+        ],
+        maxPlayers: 20,
+        spectators: [],
+      },
+      error: null,
+      isConnected: true,
+      matchStarted: false,
+      matchData: null,
+      isSpectator: false,
+      isSwitchingRole: false,
+      autoSpectateMessage: null,
+      kickedMessage: null,
+      movedToSpectatorMessage: null,
+      toggleReady: vi.fn(),
+      selectLevel: vi.fn(),
+      setTimeLimit: vi.fn(),
+      setMaxPlayers: vi.fn(),
+      startMatch: vi.fn(),
+      leaveRoom: vi.fn(),
+      resetMatch: vi.fn(),
+      joinAsSpectator: vi.fn(),
+      switchToSpectator: vi.fn(),
+      switchToPlayer: vi.fn(),
+      clearAutoSpectateMessage: vi.fn(),
+      kickPlayer: vi.fn(),
+      moveToSpectator: vi.fn(),
+      clearKickedMessage: vi.fn(),
+      clearMovedToSpectatorMessage: vi.fn(),
+    } as any);
+
+    renderLobby();
+
+    // Material Symbols icons in config headings
+    expect(screen.getByText('settings')).toBeTruthy();
+    expect(screen.getByText('timer')).toBeTruthy();
+    expect(screen.getByText('groups')).toBeTruthy();
+  });
+
+  it('usa rounded-full en botones de accion', () => {
+    mockUseLobby.mockReturnValue({
+      roomState: {
+        code: 'ABC123',
+        hostId: 'user-1',
+        level: 1,
+        status: 'waiting',
+        timeLimit: 0,
+        players: [
+          {
+            id: 'user-1',
+            displayName: 'Host',
+            avatarUrl: null,
+            colorIndex: 0,
+            isReady: false,
+            disconnected: false,
+          },
+        ],
+        maxPlayers: 20,
+        spectators: [],
+      },
+      error: null,
+      isConnected: true,
+      matchStarted: false,
+      matchData: null,
+      isSpectator: false,
+      isSwitchingRole: false,
+      autoSpectateMessage: null,
+      kickedMessage: null,
+      movedToSpectatorMessage: null,
+      toggleReady: vi.fn(),
+      selectLevel: vi.fn(),
+      setTimeLimit: vi.fn(),
+      setMaxPlayers: vi.fn(),
+      startMatch: vi.fn(),
+      leaveRoom: vi.fn(),
+      resetMatch: vi.fn(),
+      joinAsSpectator: vi.fn(),
+      switchToSpectator: vi.fn(),
+      switchToPlayer: vi.fn(),
+      clearAutoSpectateMessage: vi.fn(),
+      kickPlayer: vi.fn(),
+      moveToSpectator: vi.fn(),
+      clearKickedMessage: vi.fn(),
+      clearMovedToSpectatorMessage: vi.fn(),
+    } as any);
+
+    renderLobby();
+
+    // Leave button uses rounded-full
+    const leaveBtn = screen.getByText('Salir');
+    expect(leaveBtn.classList.contains('rounded-full')).toBe(true);
+
+    // Difficulty pill buttons use rounded-full
+    const difficultyBtn = screen.getByText('1');
+    expect(difficultyBtn.classList.contains('rounded-full')).toBe(true);
+  });
 });
