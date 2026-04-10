@@ -110,3 +110,59 @@ describe('ArenaPage — Focus Fade para espectadores', () => {
     expect(wpmEl).toBeTruthy();
   });
 });
+
+describe('ArenaPage — Botón DETENER', () => {
+  it('muestra botón SALIR con rounded-full y bg-error durante playing', async () => {
+    const { container } = render(
+      <ArenaPage
+        matchData={MATCH_DATA}
+        localUserId={LOCAL_USER_ID}
+        isSpectator={false}
+      />,
+    );
+
+    await act(async () => {
+      arenaStore.getState().setMatchStarted();
+    });
+
+    const btn = container.querySelector('[aria-label="Salir de la partida"]') as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+    expect(btn.classList.contains('rounded-full')).toBe(true);
+    expect(btn.classList.contains('bg-error/15')).toBe(true);
+  });
+
+  it('botón SALIR contiene icono logout de Material Symbols', async () => {
+    const { container } = render(
+      <ArenaPage
+        matchData={MATCH_DATA}
+        localUserId={LOCAL_USER_ID}
+        isSpectator={false}
+      />,
+    );
+
+    await act(async () => {
+      arenaStore.getState().setMatchStarted();
+    });
+
+    const icon = container.querySelector('[aria-label="Salir de la partida"] .material-symbols-outlined') as HTMLElement;
+    expect(icon).toBeTruthy();
+    expect(icon.textContent).toBe('logout');
+  });
+
+  it('NO muestra botón SALIR cuando isSpectator=true', async () => {
+    const { container } = render(
+      <ArenaPage
+        matchData={MATCH_DATA}
+        localUserId={LOCAL_USER_ID}
+        isSpectator={true}
+      />,
+    );
+
+    await act(async () => {
+      arenaStore.getState().setMatchStarted();
+    });
+
+    const btn = container.querySelector('[aria-label="Salir de la partida"]');
+    expect(btn).toBeNull();
+  });
+});

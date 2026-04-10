@@ -223,7 +223,7 @@ export function LiveTextCanvas({
 
   return (
     <div
-      className="relative mx-auto max-w-3xl cursor-text"
+      className="relative w-full cursor-text bg-surface-container-lowest rounded-card-lg p-10"
       onClick={handleContainerClick}
     >
       {/* Hidden input for keyboard capture */}
@@ -244,7 +244,7 @@ export function LiveTextCanvas({
 
       {/* Visual character spans — blur when not active */}
       <div
-        className="relative font-sans text-lg leading-[2.5] tracking-wide text-text-main"
+        className="relative font-mono text-xl leading-[2.5] tracking-wide text-text-main"
         aria-hidden="true"
         style={{
           filter: isActive ? '' : 'blur(8px)',

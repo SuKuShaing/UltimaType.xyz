@@ -13,12 +13,12 @@ describe('FocusWPMCounter', () => {
     vi.useRealTimers();
   });
 
-  it('muestra 0 WPM y 100% precision al montar', () => {
+  it('muestra 0 PPM y 0% error al montar', () => {
     const { container } = render(<FocusWPMCounter matchStatus="countdown" />);
     const wpmEl = container.querySelector('[data-wpm]') as HTMLElement;
-    const precisionEl = container.querySelector('[data-precision]') as HTMLElement;
+    const errorEl = container.querySelector('[data-error]') as HTMLElement;
     expect(wpmEl?.textContent).toBe('0');
-    expect(precisionEl?.textContent).toBe('100%');
+    expect(errorEl?.textContent).toBe('0%');
   });
 
   it('tiene opacidad 1 cuando matchStatus es countdown', () => {
@@ -39,8 +39,8 @@ describe('FocusWPMCounter', () => {
     expect(wrapper?.style.opacity).toBe('1');
   });
 
-  it('actualiza WPM via setInterval cuando matchStatus es playing', () => {
-    // 50 chars / 5 = 10 words, 60s elapsed = 10 WPM
+  it('actualiza PPM via setInterval cuando matchStatus es playing', () => {
+    // 50 chars / 5 = 10 words, 60s elapsed = 10 PPM
     arenaStore.getState().setMatchStarted();
     arenaStore.setState({ matchStartTime: Date.now() - 60000, localPosition: 50 });
 
@@ -52,7 +52,7 @@ describe('FocusWPMCounter', () => {
     expect(wpmEl?.textContent).toBe('10');
   });
 
-  it('calcula precision correctamente', () => {
+  it('calcula porcentaje de error correctamente', () => {
     arenaStore.getState().setMatchStarted();
     arenaStore.setState({
       matchStartTime: Date.now() - 60000,
@@ -62,12 +62,29 @@ describe('FocusWPMCounter', () => {
     });
 
     const { container } = render(<FocusWPMCounter matchStatus="playing" />);
-    const precisionEl = container.querySelector('[data-precision]') as HTMLElement;
+    const errorEl = container.querySelector('[data-error]') as HTMLElement;
 
     act(() => { vi.advanceTimersByTime(200); });
 
-    // (10 - 1) / 10 = 90%
-    expect(precisionEl?.textContent).toBe('90%');
+    // 1/10 = 10% de errores
+    expect(errorEl?.textContent).toBe('10%');
+  });
+
+  it('muestra 0% de error cuando no hay keystrokes', () => {
+    arenaStore.getState().setMatchStarted();
+    arenaStore.setState({
+      matchStartTime: Date.now() - 60000,
+      localPosition: 50,
+      totalKeystrokes: 0,
+      errorKeystrokes: 0,
+    });
+
+    const { container } = render(<FocusWPMCounter matchStatus="playing" />);
+    const errorEl = container.querySelector('[data-error]') as HTMLElement;
+
+    act(() => { vi.advanceTimersByTime(200); });
+
+    expect(errorEl?.textContent).toBe('0%');
   });
 
   it('no actualiza DOM cuando matchStatus no es playing', () => {
@@ -78,7 +95,7 @@ describe('FocusWPMCounter', () => {
 
     act(() => { vi.advanceTimersByTime(200); });
 
-    // WPM should remain 0 since interval doesn't run when not playing
+    // PPM should remain 0 since interval doesn't run when not playing
     expect(wpmEl?.textContent).toBe('0');
   });
 
@@ -87,5 +104,21 @@ describe('FocusWPMCounter', () => {
     const { unmount } = render(<FocusWPMCounter matchStatus="playing" />);
     unmount();
     expect(clearSpy).toHaveBeenCalled();
+  });
+
+  it('badge PPM usa rounded-3xl y bg-surface-container-lowest', () => {
+    const { container } = render(<FocusWPMCounter matchStatus="countdown" />);
+    const badges = container.querySelectorAll('.rounded-3xl');
+    expect(badges.length).toBe(2);
+    expect(badges[0].classList.contains('bg-surface-container-lowest')).toBe(true);
+    expect(badges[1].classList.contains('bg-surface-container-lowest')).toBe(true);
+  });
+
+  it('badge PPM tiene label PPM y badge Error tiene label ERROR', () => {
+    const { container } = render(<FocusWPMCounter matchStatus="countdown" />);
+    const labels = container.querySelectorAll('.uppercase');
+    const texts = Array.from(labels).map((l) => l.textContent);
+    expect(texts).toContain('PPM');
+    expect(texts).toContain('ERROR');
   });
 });

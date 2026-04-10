@@ -94,6 +94,9 @@
  *    - rounded-card (2rem):     Cards, containers
  *    - rounded-card-lg (2.5rem): Hero sections, large cards
  *    - rounded-full (9999px):   Buttons, pills, progress bars (token: --radius-full)
+ *
+ * 6. BACKDROP BLUR
+ *    - backdrop-blur-glass (20px): Glassmorphism overlays (arena overlays, modals)
  * ============================================================
  */
 
@@ -146,6 +149,9 @@
   --radius-card: 2rem;
   --radius-card-lg: 2.5rem;
   --radius-full: 9999px;
+
+  /* ── Backdrop blur ── */
+  --blur-glass: 20px;
 }
 
 :root {

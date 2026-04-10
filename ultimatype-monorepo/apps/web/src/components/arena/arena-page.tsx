@@ -209,7 +209,7 @@ export function ArenaPage({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base px-4 py-8 font-sans text-text-main">
       {!isSpectator && matchStatus !== 'finished' && (
-        <div className="relative w-full max-w-3xl 2xl:max-w-5xl">
+        <div className="relative w-full max-w-5xl">
           <FocusWPMCounter matchStatus={matchStatus} />
           {matchData.timeLimit > 0 && (
             <div className="absolute right-0 top-0">
@@ -220,14 +220,14 @@ export function ArenaPage({
       )}
 
       {/* Perimeter UI — fades via --focus-fade-opacity during race (players only, not spectators) */}
-      <div className={`w-full max-w-3xl 2xl:max-w-5xl ${isPlaying && !isSpectator && !viewingAsSpectator ? 'focus-faded' : ''}`}>
+      <div className={`w-full max-w-5xl ${isPlaying && !isSpectator && !viewingAsSpectator ? 'focus-faded' : ''}`}>
         {/* Live leaderboard for spectators during race (or finished player watching live) */}
         {(isSpectator || viewingAsSpectator) && matchStatus === 'playing' && <SpectatorLeaderboard />}
         {/* Room header / player list area — populated by future stories */}
       </div>
 
       {/* Canvas area — always full opacity */}
-      <div className="relative w-full max-w-3xl 2xl:max-w-5xl" ref={textContainerRef}>
+      <div className="relative w-full max-w-5xl" ref={textContainerRef}>
         {/* Countdown overlay — shown during countdown phase */}
         {matchStatus === 'countdown' && (
           <CountdownOverlay onCountdownEnd={handleCountdownEnd} />
@@ -250,14 +250,16 @@ export function ArenaPage({
           />
         ))}
 
-        {/* Abandon button — visible but subtle, does NOT participate in Focus Fade */}
+        {/* Abandon button — prominent red pill below canvas, does NOT participate in Focus Fade */}
         {!isSpectator && isPlaying && !localFinished && !abandonedStats && (
           <button
+            type="button"
             onClick={() => setShowAbandonModal(true)}
-            className="absolute right-0 top-0 -translate-y-7 text-sm font-semibold text-text-muted transition-opacity hover:opacity-100"
-            style={{ pointerEvents: 'auto', opacity: 0.5 }}
+            className="absolute right-0 -bottom-14 z-10 flex items-center gap-1.5 rounded-full bg-error/15 px-3 py-1.5 text-sm font-bold text-error transition-colors hover:bg-error/30"
+            aria-label="Salir de la partida"
           >
-            Salir
+            <span className="material-symbols-outlined text-[16px] leading-none" aria-hidden="true" style={{ transform: 'scaleX(-1)' }}>logout</span>
+            SALIR
           </button>
         )}
 
@@ -289,10 +291,10 @@ export function ArenaPage({
         {/* Abandoned partial results overlay */}
         {abandonedStats && (
           <div className="absolute inset-0 z-50 flex items-center justify-center">
-            <div className="w-full max-w-sm rounded-2xl bg-surface-base/95 px-8 py-10 text-center backdrop-blur-md">
+            <div className="w-full max-w-sm rounded-card bg-surface-base/60 px-8 py-10 text-center backdrop-blur-glass">
               <p className="mb-2 text-sm text-text-muted">Saliste de la partida</p>
               <p className="text-6xl font-bold text-primary">{abandonedStats.wpm}</p>
-              <p className="text-lg text-text-muted">WPM</p>
+              <p className="text-lg text-text-muted">PPM</p>
               <p className="mt-2 text-2xl font-bold text-text-main">
                 {abandonedStats.precision}% precisión
               </p>
@@ -306,7 +308,7 @@ export function ArenaPage({
                   <button
                     type="button"
                     onClick={() => { setAbandonedStats(null); handleWatchLive(); }}
-                    className="rounded-lg bg-surface-raised px-8 py-3 text-sm font-semibold text-text-main transition-opacity hover:opacity-80"
+                    className="rounded-full bg-surface-raised px-8 py-3 text-sm font-semibold text-text-main transition-opacity hover:opacity-80"
                   >
                     Ver como espectador
                   </button>
@@ -315,7 +317,7 @@ export function ArenaPage({
                   type="button"
                   onClick={handleGoHome}
                   autoFocus
-                  className="rounded-lg bg-primary px-8 py-3 text-lg font-bold text-surface-base transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="rounded-full bg-primary px-8 py-3 text-lg font-bold text-surface-base transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/50"
                 >
                   Ir al inicio
                 </button>
@@ -342,7 +344,7 @@ export function ArenaPage({
           onClick={() => setShowAbandonModal(false)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-surface-base px-8 py-8 text-center shadow-xl"
+            className="w-full max-w-sm rounded-card bg-surface-base/60 px-8 py-8 text-center shadow-xl backdrop-blur-glass"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="mb-2 text-lg font-bold text-text-main">¿Salir de la partida?</p>
@@ -353,14 +355,14 @@ export function ArenaPage({
               <button
                 type="button"
                 onClick={() => setShowAbandonModal(false)}
-                className="rounded-lg bg-surface-raised px-6 py-2 text-sm font-medium text-text-muted transition-colors hover:text-text-main"
+                className="rounded-full bg-surface-raised px-6 py-2 text-sm font-medium text-text-muted transition-colors hover:text-text-main"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleConfirmAbandon}
-                className="rounded-lg bg-error px-6 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90"
+                className="rounded-full bg-error px-6 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90"
               >
                 Salir
               </button>

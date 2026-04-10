@@ -285,4 +285,34 @@ describe('MatchResultsOverlay', () => {
     expect(screen.getByText('Revancha')).toBeDefined();
     vi.useRealTimers();
   });
+
+  it('contenedor usa rounded-card y glassmorphism bg-surface-base/60', () => {
+    const { container } = render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p1"
+        reason="all_finished"
+        onRematch={vi.fn()}
+      />,
+    );
+    const card = container.querySelector('.rounded-card') as HTMLElement;
+    expect(card).toBeTruthy();
+    expect(card.classList.contains('backdrop-blur-glass')).toBe(true);
+  });
+
+  it('botón Salir usa rounded-full', () => {
+    const { container } = render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p1"
+        reason="all_finished"
+        onRematch={vi.fn()}
+      />,
+    );
+    const exitBtn = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Salir',
+    ) as HTMLButtonElement;
+    expect(exitBtn).toBeTruthy();
+    expect(exitBtn.classList.contains('rounded-full')).toBe(true);
+  });
 });

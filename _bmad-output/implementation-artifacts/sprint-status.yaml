@@ -35,7 +35,10 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-09T19:00:00-03:00
+last_updated: 2026-04-10T00:00:00-03:00
+# 2026-04-10: Story 5-10 code review complete, set to done. 6 decisions resolved (SALIR aceptado con icono logout espejado, posición debajo canvas aceptada, badge sizing aceptado, LiveTextCanvas sizing aceptado, max-w-5xl fijo aceptado, WPM→PPM unificado). 3 patches applied (logout icon + scaleX(-1), WPM→PPM en 3 archivos, backdrop-blur-[20px] extraído como token --blur-glass). 1 defer (backdrop-blur token resuelto en review). 10 dismissed. 406 web tests passing.
+# 2026-04-10: Story 5-10 implementation complete, set to review (406 web tests passing). Frontend-only: LiveTextCanvas bg-surface-container-lowest rounded-card-lg font-mono, FocusWPMCounter 2 pill badges PPM+Error, botón DETENER pill rojo stop_circle, overlays glassmorphism bg-surface-base/60 backdrop-blur-[20px], rounded-card en containers, rounded-full en botones. 13 nuevos tests.
+# 2026-04-10: Story 5-10 created (arena-visual-restyling), set to ready-for-dev. Frontend-only: LiveTextCanvas con bg-surface-container-lowest rounded-card-lg font-mono, FocusWPMCounter rediseñado como 2 badges pill PPM+Error, botón DETENER pill rojo con stop_circle icon, overlays con glassmorphism bg-surface-base/60 backdrop-blur-[20px], rounded-card en contenedores, rounded-full en botones.
 # 2026-04-09: Story 5-9 code review complete, set to done. 3 decisions resolved (expand_more aceptado, bolt condicional aceptado, container-lowest en Copy Link aceptado). 4 patches applied (aria-hidden en 9 iconos, aria-label en toast dismiss, var(--color-text-muted) reemplaza #64748B, role="dialog" en modal). 3 defers. 13 dismissed. 393 web tests passing.
 # 2026-04-09: Story 5-9 implementation complete, set to review (393 web tests passing). Frontend-only: surface hierarchy (container-low/container-lowest), rounded-card/rounded-full radius, PlayerAvatarPill con border-l color (dot eliminado), Material Symbols icons (more_vert, close, settings, timer, groups, bolt), config panel envuelto, pill-style buttons. 6 nuevos tests.
 # 2026-04-09: Story 5-9 dev started (lobby-visual-restyling), set to in-progress. Frontend-only: surface hierarchy, border radius, Material Symbols, pill buttons.
@@ -169,7 +172,7 @@ development_status:
   5-7-player-profile-ranking-card: done
   5-8-responsive-and-polish: done
   5-9-lobby-visual-restyling: done
-  5-10-arena-visual-restyling: backlog
+  5-10-arena-visual-restyling: done
   5-11-match-results-overlay-redesign: backlog
   5-12-leaderboard-page-visual-design: backlog
   5-13-profile-and-public-profile-visual-polish: backlog

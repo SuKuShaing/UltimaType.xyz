@@ -87,14 +87,14 @@ export function MatchResultsOverlay({
       role="dialog"
       aria-label="Resultados de la partida"
     >
-      <div className="w-full max-w-xl rounded-2xl bg-surface-base/95 px-8 py-10 shadow-2xl backdrop-blur-md">
+      <div className="w-full max-w-xl rounded-card bg-surface-base/60 px-8 py-10 shadow-2xl backdrop-blur-glass">
         {/* Local player stats */}
         {localResult && (
           <div className="mb-8 text-center">
             <p className="text-7xl font-bold text-primary">
               {localResult.wpm}
             </p>
-            <p className="text-lg text-text-muted">WPM</p>
+            <p className="text-lg text-text-muted">PPM</p>
             <p className="mt-2 text-3xl font-bold text-text-main">
               {localResult.score} pts
             </p>
@@ -125,7 +125,7 @@ export function MatchResultsOverlay({
             <tr className="text-text-muted">
               <th className="pb-2 pr-2">#</th>
               <th className="pb-2 pr-2">Jugador</th>
-              <th className="pb-2 pr-2 text-right">WPM</th>
+              <th className="pb-2 pr-2 text-right">PPM</th>
               <th className="pb-2 pr-2 text-right">Prec.</th>
               <th className="pb-2 pr-2 text-right">Faltantes</th>
               <th className="pb-2 text-right">Puntos</th>
@@ -169,7 +169,7 @@ export function MatchResultsOverlay({
 
         {/* Guest registration banner */}
         {isGuest && (
-          <div className="mb-6 rounded-xl bg-surface-raised/80 px-6 py-4 text-center">
+          <div className="mb-6 rounded-card bg-surface-raised/80 px-6 py-4 text-center">
             {hypotheticalRank && (
               <p className="mb-2 text-sm font-semibold text-primary">
                 {hypotheticalRank.countryRank != null && hypotheticalRank.countryCode
@@ -183,7 +183,7 @@ export function MatchResultsOverlay({
             <div className="flex justify-center gap-3">
               <a
                 href="/api/auth/google"
-                className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-shadow hover:shadow-md"
+                className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-shadow hover:shadow-md"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.76h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -195,7 +195,7 @@ export function MatchResultsOverlay({
               </a>
               <a
                 href="/api/auth/github"
-                className="flex items-center gap-2 rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                className="flex items-center gap-2 rounded-full bg-gray-800 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
@@ -211,7 +211,7 @@ export function MatchResultsOverlay({
           <button
             type="button"
             onClick={onExit}
-            className="rounded-lg bg-surface-raised px-6 py-3 text-lg font-medium text-text-muted transition-colors hover:text-text-main"
+            className="rounded-full bg-surface-raised px-6 py-3 text-lg font-medium text-text-muted transition-colors hover:text-text-main"
           >
             Salir
           </button>
@@ -220,7 +220,7 @@ export function MatchResultsOverlay({
               type="button"
               onClick={handleJoin}
               autoFocus
-              className="rounded-lg bg-surface-raised px-8 py-3 text-lg font-medium text-text-main transition-colors hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="rounded-full bg-surface-raised px-8 py-3 text-lg font-medium text-text-main transition-colors hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               Unirse a la partida
             </button>
@@ -245,7 +245,7 @@ export function MatchResultsOverlay({
                 type="button"
                 onClick={onRematch}
                 disabled={!rematchReady}
-                className={`rounded-lg px-8 py-3 text-xl font-bold transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                className={`rounded-full px-8 py-3 text-xl font-bold transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 ${
                   rematchReady
                     ? 'bg-primary text-surface-base hover:opacity-90'
                     : 'cursor-not-allowed bg-primary/40 text-surface-base/60'

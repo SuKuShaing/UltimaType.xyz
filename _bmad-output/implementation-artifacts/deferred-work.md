@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review de 5-10-arena-visual-restyling (2026-04-10)
+
+- ~~**`backdrop-blur-[20px]` repetido 5 veces sin design token**~~ — RESUELTO en review: extraído como `--blur-glass: 20px` → clase `backdrop-blur-glass` en styles.css. Aplicado en 5 archivos.
+
 ## Deferred from: code review de 5-9-lobby-visual-restyling (2026-04-09)
 
 - **`z-[1]` magic number en botón Salir** — `lobby-page.tsx:~524`. El botón "Salir" tiene `relative z-[1]` sin razón documentada. Pre-existente; limpiar cuando se refactorice stacking contexts.

@@ -344,3 +344,39 @@ describe('LiveTextCanvas', () => {
     });
   });
 });
+
+describe('LiveTextCanvas — Design System tokens (AC1)', () => {
+  const onPositionChange = vi.fn();
+
+  it('contenedor externo usa bg-surface-container-lowest', () => {
+    const { container } = render(
+      <LiveTextCanvas text="Hola" onPositionChange={onPositionChange} />,
+    );
+    const outer = container.firstElementChild as HTMLElement;
+    expect(outer.classList.contains('bg-surface-container-lowest')).toBe(true);
+  });
+
+  it('contenedor externo usa rounded-card-lg', () => {
+    const { container } = render(
+      <LiveTextCanvas text="Hola" onPositionChange={onPositionChange} />,
+    );
+    const outer = container.firstElementChild as HTMLElement;
+    expect(outer.classList.contains('rounded-card-lg')).toBe(true);
+  });
+
+  it('contenedor externo tiene padding p-10', () => {
+    const { container } = render(
+      <LiveTextCanvas text="Hola" onPositionChange={onPositionChange} />,
+    );
+    const outer = container.firstElementChild as HTMLElement;
+    expect(outer.classList.contains('p-10')).toBe(true);
+  });
+
+  it('área de texto usa font-mono (IBM Plex Mono)', () => {
+    const { container } = render(
+      <LiveTextCanvas text="Hola" onPositionChange={onPositionChange} />,
+    );
+    const textArea = container.querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(textArea.classList.contains('font-mono')).toBe(true);
+  });
+});

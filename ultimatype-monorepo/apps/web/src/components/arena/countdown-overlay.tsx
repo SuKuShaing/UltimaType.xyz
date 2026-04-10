@@ -34,7 +34,7 @@ export function CountdownOverlay({ onCountdownEnd }: CountdownOverlayProps) {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-base/80 backdrop-blur-sm">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-base/60 backdrop-blur-glass">
       <span className="text-9xl font-bold text-primary">{LABELS[tick]}</span>
     </div>
   );

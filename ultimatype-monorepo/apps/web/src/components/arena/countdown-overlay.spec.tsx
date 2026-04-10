@@ -64,4 +64,12 @@ describe('CountdownOverlay', () => {
 
     expect(clearIntervalSpy).toHaveBeenCalled();
   });
+
+  it('overlay usa glassmorphism: backdrop-blur-glass y bg-surface-base/60', () => {
+    const onCountdownEnd = vi.fn();
+    const { container } = render(<CountdownOverlay onCountdownEnd={onCountdownEnd} />);
+    const overlay = container.firstElementChild as HTMLElement;
+    expect(overlay.classList.contains('backdrop-blur-glass')).toBe(true);
+    expect(overlay.classList.contains('bg-surface-base/60')).toBe(true);
+  });
 });
