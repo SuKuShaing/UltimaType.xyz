@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MatchResultsOverlay } from './match-results-overlay';
 import { PlayerResult } from '@ultimatype-monorepo/shared';
@@ -8,6 +8,7 @@ const mockResults: PlayerResult[] = [
     playerId: 'p1',
     displayName: 'Martín',
     colorIndex: 1,
+    countryCode: null,
     rank: 1,
     wpm: 67,
     precision: 95,
@@ -20,6 +21,7 @@ const mockResults: PlayerResult[] = [
     playerId: 'p2',
     displayName: 'Camilo',
     colorIndex: 2,
+    countryCode: null,
     rank: 2,
     wpm: 58,
     precision: 94,
@@ -32,6 +34,7 @@ const mockResults: PlayerResult[] = [
     playerId: 'p3',
     displayName: 'Pedro',
     colorIndex: 3,
+    countryCode: null,
     rank: 3,
     wpm: 12,
     precision: 80,
@@ -43,6 +46,10 @@ const mockResults: PlayerResult[] = [
 ];
 
 describe('MatchResultsOverlay', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renderiza tabla con resultados ordenados por rank', () => {
     render(
       <MatchResultsOverlay
@@ -50,6 +57,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="p2"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
 
@@ -58,77 +66,50 @@ describe('MatchResultsOverlay', () => {
     expect(screen.getByText('Pedro')).toBeDefined();
   });
 
-  it('muestra WPM masivo del jugador local con estilo text-7xl', () => {
+  it('muestra stats del jugador local con labels hero', () => {
     render(
       <MatchResultsOverlay
         results={mockResults}
         localUserId="p2"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
 
-    // The massive WPM display uses text-7xl class
-    const allWpmElements = screen.getAllByText('58');
-    const massiveWpm = allWpmElements.find((el) =>
-      el.className.includes('text-7xl'),
-    );
-    expect(massiveWpm).toBeDefined();
+    expect(screen.getByText('VELOCIDAD DE ESCRITURA')).toBeDefined();
+    expect(screen.getByText('PRECISIÓN')).toBeDefined();
+    expect(screen.getByText('PUNTAJE TOTAL')).toBeDefined();
   });
 
-  it('muestra puntuación del jugador local', () => {
+  it('muestra puntaje del jugador local en hero stat', () => {
     render(
       <MatchResultsOverlay
         results={mockResults}
         localUserId="p2"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
 
-    expect(screen.getByText('545 pts')).toBeDefined();
+    expect(screen.getByText('PUNTAJE TOTAL')).toBeDefined();
+    // El valor 545 aparece tanto en el hero card como en la tabla
+    expect(screen.getAllByText('545').length).toBeGreaterThan(0);
   });
 
-  it('muestra columna Faltantes con missingChars para todos los jugadores', () => {
+  it('NO muestra columna Faltantes en la tabla de resultados', () => {
     render(
       <MatchResultsOverlay
         results={mockResults}
         localUserId="p2"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
 
-    // Column header exists
-    expect(screen.getByText('Faltantes')).toBeDefined();
-    // DNF player shows 42 missing chars
-    expect(screen.getByText('42')).toBeDefined();
-  });
-
-  it('muestra caracteres faltantes en stats locales si missingChars > 0', () => {
-    render(
-      <MatchResultsOverlay
-        results={mockResults}
-        localUserId="p3"
-        reason="timeout"
-        onRematch={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText('42 caracteres faltantes')).toBeDefined();
-  });
-
-  it('no muestra caracteres faltantes en stats locales si missingChars es 0', () => {
-    render(
-      <MatchResultsOverlay
-        results={mockResults}
-        localUserId="p1"
-        reason="all_finished"
-        onRematch={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByText(/caracteres faltantes/)).toBeNull();
+    expect(screen.queryByText('Faltantes')).toBeNull();
   });
 
   it('botón Revancha visible para host después del countdown y llama onRematch', () => {
@@ -141,6 +122,7 @@ describe('MatchResultsOverlay', () => {
         reason="all_finished"
         isHost={true}
         onRematch={onRematch}
+        onExit={vi.fn()}
       />,
     );
 
@@ -165,6 +147,7 @@ describe('MatchResultsOverlay', () => {
         reason="all_finished"
         isHost={false}
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
 
@@ -179,6 +162,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="p2"
         reason="timeout"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
 
@@ -192,6 +176,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="p2"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
 
@@ -205,6 +190,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="p2"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
 
@@ -222,6 +208,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="spectator-1"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
         onJoinAsPlayer={vi.fn()}
       />,
     );
@@ -235,6 +222,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="p1"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
     expect(screen.queryByText('Unirse a la partida')).toBeNull();
@@ -247,6 +235,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="spectator-1"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
         onJoinAsPlayer={vi.fn()}
       />,
     );
@@ -261,6 +250,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="spectator-1"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
         onJoinAsPlayer={onJoinAsPlayer}
       />,
     );
@@ -279,6 +269,7 @@ describe('MatchResultsOverlay', () => {
         reason="all_finished"
         isHost={true}
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
     act(() => { vi.advanceTimersByTime(5000); });
@@ -293,6 +284,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="p1"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
     const card = container.querySelector('.rounded-card') as HTMLElement;
@@ -307,6 +299,7 @@ describe('MatchResultsOverlay', () => {
         localUserId="p1"
         reason="all_finished"
         onRematch={vi.fn()}
+        onExit={vi.fn()}
       />,
     );
     const exitBtn = Array.from(container.querySelectorAll('button')).find(
@@ -314,5 +307,76 @@ describe('MatchResultsOverlay', () => {
     ) as HTMLButtonElement;
     expect(exitBtn).toBeTruthy();
     expect(exitBtn.classList.contains('rounded-full')).toBe(true);
+  });
+
+  // ── Nuevos tests Story 5-11 ────────────────────────────────────────
+
+  it('muestra headline "¡Prueba Finalizada!"', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p2"
+        reason="all_finished"
+        onRematch={vi.fn()}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('¡Prueba Finalizada!')).toBeDefined();
+  });
+
+  it('muestra heading "Posición respecto a los competidores"', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p2"
+        reason="all_finished"
+        onRematch={vi.fn()}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Posición respecto a los competidores')).toBeDefined();
+  });
+
+  it('fila del jugador local tiene clase bg-primary/10', () => {
+    const { container } = render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p2"
+        reason="all_finished"
+        onRematch={vi.fn()}
+        onExit={vi.fn()}
+      />,
+    );
+    const localRow = Array.from(container.querySelectorAll('tr')).find(
+      (tr) => tr.className.includes('bg-primary'),
+    );
+    expect(localRow).toBeTruthy();
+  });
+
+  it('botón Compartir visible cuando existe localResult', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="p2"
+        reason="all_finished"
+        onRematch={vi.fn()}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Compartir')).toBeDefined();
+  });
+
+  it('NO muestra botón Compartir para espectador sin resultado propio', () => {
+    render(
+      <MatchResultsOverlay
+        results={mockResults}
+        localUserId="spectator-99"
+        reason="all_finished"
+        onRematch={vi.fn()}
+        onExit={vi.fn()}
+        onJoinAsPlayer={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText('Compartir')).toBeNull();
   });
 });

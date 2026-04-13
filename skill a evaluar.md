@@ -39,3 +39,8 @@ Crea un agente de whatsapp que responde mensajes por ti, mediante 5 pasos crear 
 
 https://github.com/Hainrixz/claude-banana
 Le describes la imagen, te hace preguntas y te dá el prompt para que generes tu imagen
+
+## Seguridad
+
+https://github.com/Hainrixz/cyber-neo
+Revisión de seguridad del proyecto

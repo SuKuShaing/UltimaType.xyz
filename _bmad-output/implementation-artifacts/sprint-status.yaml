@@ -35,7 +35,9 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-10T00:00:00-03:00
+last_updated: 2026-04-13T16:10:00-03:00
+# 2026-04-13: Story 5-11 code review complete, set to done. 5 decisions resolved (text-3xl aceptado, text-6xl aceptado, text-sm aceptado, test duplicado eliminado, handleShare reescrito: solo clipboard + link partida). 2 patches handled (clipboard guard resuelto en D5, setTimeout dismissed). 1 defer (test handleShare behavior). 11 dismissed. 409 web tests passing.
+# 2026-04-13: Story 5-11 implementation complete, set to review (410 web tests passing). Frontend-only: headline "¡Prueba Finalizada!" text-3xl, 3 hero stat cards (PPM primary text-6xl, Precisión, Puntaje Total), tabla sin columna Faltantes con alternación tonal bg-primary/10 fila local, botón Compartir Web Share API + clipboard fallback, max-w-2xl. 6 nuevos tests.
 # 2026-04-10: Story 5-10 code review complete, set to done. 6 decisions resolved (SALIR aceptado con icono logout espejado, posición debajo canvas aceptada, badge sizing aceptado, LiveTextCanvas sizing aceptado, max-w-5xl fijo aceptado, WPM→PPM unificado). 3 patches applied (logout icon + scaleX(-1), WPM→PPM en 3 archivos, backdrop-blur-[20px] extraído como token --blur-glass). 1 defer (backdrop-blur token resuelto en review). 10 dismissed. 406 web tests passing.
 # 2026-04-10: Story 5-10 implementation complete, set to review (406 web tests passing). Frontend-only: LiveTextCanvas bg-surface-container-lowest rounded-card-lg font-mono, FocusWPMCounter 2 pill badges PPM+Error, botón DETENER pill rojo stop_circle, overlays glassmorphism bg-surface-base/60 backdrop-blur-[20px], rounded-card en containers, rounded-full en botones. 13 nuevos tests.
 # 2026-04-10: Story 5-10 created (arena-visual-restyling), set to ready-for-dev. Frontend-only: LiveTextCanvas con bg-surface-container-lowest rounded-card-lg font-mono, FocusWPMCounter rediseñado como 2 badges pill PPM+Error, botón DETENER pill rojo con stop_circle icon, overlays con glassmorphism bg-surface-base/60 backdrop-blur-[20px], rounded-card en contenedores, rounded-full en botones.
@@ -173,7 +175,7 @@ development_status:
   5-8-responsive-and-polish: done
   5-9-lobby-visual-restyling: done
   5-10-arena-visual-restyling: done
-  5-11-match-results-overlay-redesign: backlog
+  5-11-match-results-overlay-redesign: done
   5-12-leaderboard-page-visual-design: backlog
   5-13-profile-and-public-profile-visual-polish: backlog
   5-14-dynamic-og-image-generation: backlog

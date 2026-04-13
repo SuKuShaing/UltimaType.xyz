@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review de 5-11-match-results-overlay-redesign (2026-04-13)
+
+- **Sin test de comportamiento para handleShare** — `match-results-overlay.spec.tsx`. No hay test que simule click en "Compartir", mockee navigator.share/clipboard, o verifique el estado transitorio "¡Copiado!". Los tests de la story solo cubren visibilidad del botón. Agregar cuando se amplíe cobertura de edge cases de UI.
+
 ## Deferred from: code review de 5-10-arena-visual-restyling (2026-04-10)
 
 - ~~**`backdrop-blur-[20px]` repetido 5 veces sin design token**~~ — RESUELTO en review: extraído como `--blur-glass: 20px` → clase `backdrop-blur-glass` en styles.css. Aplicado en 5 archivos.

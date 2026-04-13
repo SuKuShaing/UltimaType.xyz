@@ -30,6 +30,7 @@ export function MatchResultsOverlay({
 }: MatchResultsOverlayProps) {
   const localResult = results.find((r) => r.playerId === localUserId);
   const [joined, setJoined] = useState(false);
+  const [shared, setShared] = useState(false);
   const [rematchCountdown, setRematchCountdown] = useState(REMATCH_DELAY_SECONDS);
   const rematchReady = rematchCountdown <= 0;
   const rematchBtnRef = useRef<HTMLButtonElement>(null);
@@ -81,91 +82,118 @@ export function MatchResultsOverlay({
     setJoined(true);
   };
 
+  const handleShare = useCallback(() => {
+    if (!localResult) return;
+    const roomCode = window.location.pathname.split('/room/')[1];
+    const matchUrl = roomCode ? `${window.location.origin}/match/${roomCode}` : '';
+    const text = `¡Jugué en UltimaType!\n${localResult.wpm} PPM · ${localResult.precision}% precisión · ${localResult.score} pts · Posición #${localResult.rank}${matchUrl ? `\n\n${matchUrl}` : ''}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(() => undefined);
+    }
+    setShared(true);
+    setTimeout(() => setShared(false), 2000);
+  }, [localResult]);
+
   return (
     <div
       className="absolute inset-0 z-50 flex items-center justify-center"
       role="dialog"
       aria-label="Resultados de la partida"
     >
-      <div className="w-full max-w-xl rounded-card bg-surface-base/60 px-8 py-10 shadow-2xl backdrop-blur-glass">
-        {/* Local player stats */}
+      <div className="w-full max-w-2xl rounded-card bg-surface-base/60 px-8 py-10 shadow-2xl backdrop-blur-glass">
+        {/* Headline */}
+        <div className="mb-6 text-center">
+          <h2 className="mb-1 font-sans text-3xl font-bold tracking-[-0.02em] text-text-main">
+            ¡Prueba Finalizada!
+          </h2>
+          {reason === 'timeout' && (
+            <p className="text-sm text-text-muted">Tiempo agotado</p>
+          )}
+        </div>
+
+        {/* Hero Stats — solo para el jugador local */}
         {localResult && (
-          <div className="mb-8 text-center">
-            <p className="text-7xl font-bold text-primary">
-              {localResult.wpm}
-            </p>
-            <p className="text-lg text-text-muted">PPM</p>
-            <p className="mt-2 text-3xl font-bold text-text-main">
-              {localResult.score} pts
-            </p>
-            <p className="text-lg text-text-muted">
-              {localResult.precision}% precisión
-            </p>
-            {localResult.missingChars > 0 && (
-              <p className="mt-1 text-sm text-text-muted">
-                {localResult.missingChars} caracteres faltantes
-              </p>
-            )}
+          <div className="mb-8 flex flex-wrap justify-center gap-4">
+            {/* PPM */}
+            <div className="flex flex-col items-center rounded-card bg-surface-container-low px-8 py-6">
+              <span className="mb-2 text-sm font-semibold uppercase tracking-wider text-text-muted">
+                VELOCIDAD DE ESCRITURA
+              </span>
+              <span className="font-mono text-6xl font-bold leading-none text-primary">
+                {localResult.wpm}
+              </span>
+            </div>
+            {/* Precisión */}
+            <div className="flex flex-col items-center rounded-card bg-surface-container-low px-8 py-6">
+              <span className="mb-2 text-sm font-semibold uppercase tracking-wider text-text-muted">
+                PRECISIÓN
+              </span>
+              <span className="font-mono text-6xl font-bold leading-none text-text-main">
+                {localResult.precision}%
+              </span>
+            </div>
+            {/* Puntaje Total */}
+            <div className="flex flex-col items-center rounded-card bg-surface-container-low px-8 py-6">
+              <span className="mb-2 text-sm font-semibold uppercase tracking-wider text-text-muted">
+                PUNTAJE TOTAL
+              </span>
+              <span className="font-mono text-6xl font-bold leading-none text-text-main">
+                {localResult.score}
+              </span>
+            </div>
           </div>
         )}
 
-        {/* Title */}
-        <h2 className="mb-1 text-center text-2xl font-bold text-text-main">
-          Resultados
-        </h2>
-        {reason === 'timeout' && (
-          <p className="mb-4 text-center text-sm text-text-muted">
-            Tiempo agotado
-          </p>
-        )}
-
-        {/* Results table */}
-        <table className="mb-8 w-full text-left text-sm">
-          <thead>
-            <tr className="text-text-muted">
-              <th className="pb-2 pr-2">#</th>
-              <th className="pb-2 pr-2">Jugador</th>
-              <th className="pb-2 pr-2 text-right">PPM</th>
-              <th className="pb-2 pr-2 text-right">Prec.</th>
-              <th className="pb-2 pr-2 text-right">Faltantes</th>
-              <th className="pb-2 text-right">Puntos</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.map((r) => {
-              const isLocal = r.playerId === localUserId;
-              const color = PLAYER_COLORS[r.colorIndex] ?? PLAYER_COLORS[0];
-              return (
-                <tr
-                  key={r.playerId}
-                  className={
-                    isLocal ? 'bg-surface-raised/60 font-semibold' : ''
-                  }
-                >
-                  <td className="py-1.5 pr-2">{r.rank}</td>
-                  <td className="py-1.5 pr-2">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="inline-block h-3 w-3 shrink-0 rounded-sm"
-                        style={{ backgroundColor: color }}
-                      />
-                      {r.countryCode && (
-                        <span className="shrink-0">
-                          <CountryFlag countryCode={r.countryCode} size={16} />
-                        </span>
-                      )}
-                      {r.displayName}
-                    </div>
-                  </td>
-                  <td className="py-1.5 pr-2 text-right">{r.wpm}</td>
-                  <td className="py-1.5 pr-2 text-right">{r.precision}%</td>
-                  <td className="py-1.5 pr-2 text-right">{r.missingChars}</td>
-                  <td className="py-1.5 text-right">{r.score}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        {/* Rankings Table */}
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+          Posición respecto a los competidores
+        </p>
+        <div className="mb-6 overflow-hidden rounded-card bg-surface-container-low/40">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-text-muted">
+                <th className="px-4 pb-2 pt-3">#</th>
+                <th className="px-4 pb-2 pt-3">Jugador</th>
+                <th className="px-4 pb-2 pt-3 text-right">Prec.</th>
+                <th className="px-4 pb-2 pt-3 text-right">PPM</th>
+                <th className="px-4 pb-2 pt-3 text-right">Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.map((r, index) => {
+                const isLocal = r.playerId === localUserId;
+                const color = PLAYER_COLORS[r.colorIndex] ?? PLAYER_COLORS[0];
+                const rowBg = isLocal
+                  ? 'bg-primary/10 font-semibold'
+                  : index % 2 === 0
+                    ? 'bg-surface-container-low/40'
+                    : '';
+                return (
+                  <tr key={r.playerId} className={rowBg}>
+                    <td className="px-4 py-2">{r.rank}</td>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="inline-block h-5 w-1 shrink-0 rounded-full"
+                          style={{ backgroundColor: color }}
+                        />
+                        {r.countryCode && (
+                          <span className="shrink-0">
+                            <CountryFlag countryCode={r.countryCode} size={16} />
+                          </span>
+                        )}
+                        {r.displayName}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2 text-right">{r.precision}%</td>
+                    <td className="px-4 py-2 text-right">{r.wpm}</td>
+                    <td className="px-4 py-2 text-right">{r.score}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
         {/* Guest registration banner */}
         {isGuest && (
@@ -207,58 +235,70 @@ export function MatchResultsOverlay({
         )}
 
         {/* Action buttons */}
-        <div className="flex items-center justify-center gap-4">
-          <button
-            type="button"
-            onClick={onExit}
-            className="rounded-full bg-surface-raised px-6 py-3 text-lg font-medium text-text-muted transition-colors hover:text-text-main"
-          >
-            Salir
-          </button>
-          {onJoinAsPlayer && !joined ? (
+        <div className="flex flex-col items-center gap-4">
+          {localResult && (
             <button
               type="button"
-              onClick={handleJoin}
-              autoFocus
-              className="rounded-full bg-surface-raised px-8 py-3 text-lg font-medium text-text-main transition-colors hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-primary/50"
+              onClick={handleShare}
+              className="flex items-center gap-1.5 rounded-full bg-surface-raised px-4 py-2 text-sm font-medium text-text-muted transition-colors hover:text-text-main"
             >
-              Unirse a la partida
+              <span className="material-symbols-outlined text-[16px] leading-none" aria-hidden="true">share</span>
+              {shared ? '¡Copiado!' : 'Compartir'}
             </button>
-          ) : onJoinAsPlayer && joined ? (
-            <span className="px-8 py-3 text-lg font-medium text-success">
-              Inscrito para la siguiente ✓
-            </span>
-          ) : isHost ? (
-            <div className="relative">
-              {/* Invisible focusable placeholder during countdown — receives autoFocus,
-                  Tab navigation works, Enter/Space do nothing (P7) */}
-              {!rematchReady && (
-                <button
-                  type="button"
-                  autoFocus
-                  className="absolute inset-0 opacity-0"
-                  aria-label="Esperando para activar revancha"
-                />
-              )}
-              <button
-                ref={rematchBtnRef}
-                type="button"
-                onClick={onRematch}
-                disabled={!rematchReady}
-                className={`rounded-full px-8 py-3 text-xl font-bold transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                  rematchReady
-                    ? 'bg-primary text-surface-base hover:opacity-90'
-                    : 'cursor-not-allowed bg-primary/40 text-surface-base/60'
-                }`}
-              >
-                {rematchReady ? 'Revancha' : `Revancha (${rematchCountdown}s)`}
-              </button>
-            </div>
-          ) : (
-            <span className="px-8 py-3 text-lg font-medium text-text-muted">
-              Esperando revancha del host...
-            </span>
           )}
+          <div className="flex items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={onExit}
+              className="rounded-full bg-surface-raised px-6 py-3 text-lg font-medium text-text-muted transition-colors hover:text-text-main"
+            >
+              Salir
+            </button>
+            {onJoinAsPlayer && !joined ? (
+              <button
+                type="button"
+                onClick={handleJoin}
+                autoFocus
+                className="rounded-full bg-surface-raised px-8 py-3 text-lg font-medium text-text-main transition-colors hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                Unirse a la partida
+              </button>
+            ) : onJoinAsPlayer && joined ? (
+              <span className="px-8 py-3 text-lg font-medium text-success">
+                Inscrito para la siguiente ✓
+              </span>
+            ) : isHost ? (
+              <div className="relative">
+                {/* Invisible focusable placeholder during countdown — receives autoFocus,
+                    Tab navigation works, Enter/Space do nothing (P7) */}
+                {!rematchReady && (
+                  <button
+                    type="button"
+                    autoFocus
+                    className="absolute inset-0 opacity-0"
+                    aria-label="Esperando para activar revancha"
+                  />
+                )}
+                <button
+                  ref={rematchBtnRef}
+                  type="button"
+                  onClick={onRematch}
+                  disabled={!rematchReady}
+                  className={`rounded-full px-8 py-3 text-xl font-bold transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                    rematchReady
+                      ? 'bg-primary text-surface-base hover:opacity-90'
+                      : 'cursor-not-allowed bg-primary/40 text-surface-base/60'
+                  }`}
+                >
+                  {rematchReady ? 'Revancha' : `Revancha (${rematchCountdown}s)`}
+                </button>
+              </div>
+            ) : (
+              <span className="px-8 py-3 text-lg font-medium text-text-muted">
+                Esperando revancha del host...
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
