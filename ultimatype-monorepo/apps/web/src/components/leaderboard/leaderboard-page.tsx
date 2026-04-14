@@ -70,7 +70,7 @@ export function LeaderboardPage() {
 
   const { data: leaderboard, isLoading, isError, refetch } = useLeaderboard({ level, period, country, page });
   const { data: position, isLoading: isPositionLoading } = useLeaderboardPosition({ level, period });
-  const { data: weeklyRecord, isLoading: isWeeklyLoading } = useWeeklyRecord();
+  const { data: weeklyRecord, isLoading: isWeeklyLoading, isError: isWeeklyError } = useWeeklyRecord();
 
   const isEmpty = !isLoading && !isError && (leaderboard?.data.length ?? 0) === 0;
 
@@ -93,7 +93,7 @@ export function LeaderboardPage() {
       <div className="w-full max-w-3xl 2xl:max-w-5xl space-y-6">
         {/* Header */}
         <h1 className="text-3xl font-bold text-text-main tracking-headline">
-          Global Rankings
+          Rankings Globales
         </h1>
 
         {/* Récord de la Semana + Tu Posición Global — grid 2 columnas */}
@@ -102,7 +102,7 @@ export function LeaderboardPage() {
           <div className="rounded-card bg-surface-sunken p-6">
             <div className="mb-6 flex items-center justify-between gap-3">
               <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted">
-                Tu récord de la semana
+                Récord de la semana
               </h2>
               {!isWeeklyLoading && weeklyRecord && (
                 <Link
@@ -120,7 +120,10 @@ export function LeaderboardPage() {
                 ))}
               </div>
             )}
-            {!isWeeklyLoading && !weeklyRecord && (
+            {!isWeeklyLoading && isWeeklyError && (
+              <p className="py-2 text-sm italic text-text-muted">No se pudo cargar el récord</p>
+            )}
+            {!isWeeklyLoading && !isWeeklyError && !weeklyRecord && (
               <p className="py-2 text-sm italic text-text-muted">Sin récord esta semana</p>
             )}
             {!isWeeklyLoading && weeklyRecord && (
@@ -138,7 +141,7 @@ export function LeaderboardPage() {
                   <div className="text-xs uppercase tracking-wide text-text-muted font-sans">Precisión</div>
                   <div className="text-xl font-semibold text-primary font-mono">{weeklyRecord.bestScorePrecision}%</div>
                 </div>
-                <div className="rounded-xl bg-surface-raised p-3">
+                <div className="overflow-hidden rounded-xl bg-surface-raised p-3">
                   <div className="text-xs uppercase tracking-wide text-text-muted font-sans">Nivel</div>
                   <div className="text-xl font-semibold text-primary font-mono">{getLevelName(weeklyRecord.bestScoreLevel)}</div>
                 </div>
@@ -177,7 +180,7 @@ export function LeaderboardPage() {
             {!isPositionLoading && position && (
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-xl bg-surface-raised p-3">
-                  <div className="text-xs uppercase tracking-wide text-text-muted font-sans">🏆 Mejor Puntaje</div>
+                  <div className="text-xs uppercase tracking-wide text-text-muted font-sans"><span aria-hidden="true">🏆</span> Mejor Puntaje</div>
                   <Link
                     to={`/match/${position.bestScoreMatchCode}`}
                     className="text-xl font-semibold text-primary font-mono hover:underline"
@@ -186,7 +189,7 @@ export function LeaderboardPage() {
                   </Link>
                 </div>
                 <div className="rounded-xl bg-surface-raised p-3">
-                  <div className="text-xs uppercase tracking-wide text-text-muted font-sans">🌍 Mundial</div>
+                  <div className="text-xs uppercase tracking-wide text-text-muted font-sans"><span aria-hidden="true">🌍</span> Mundial</div>
                   <div
                     className="text-xl font-semibold text-primary font-mono"
                     title={`#${position.globalRank} de ${position.globalTotal}`}
@@ -236,7 +239,7 @@ export function LeaderboardPage() {
         </div>{/* fin grid 2 columnas */}
 
         {/* Filtros */}
-        <div className="rounded-card bg-surface-container-low p-6 space-y-4">
+        <div className="rounded-card bg-surface-sunken p-6 space-y-4">
           {/* Level filter */}
           <div className="flex flex-wrap gap-2">
             <button
@@ -307,7 +310,7 @@ export function LeaderboardPage() {
         </div>
 
         {/* Tabla */}
-        <div className="rounded-card bg-surface-container-low p-6">
+        <div className="rounded-card bg-surface-sunken p-6">
           {/* Loading */}
           {isLoading && (
             <div className="space-y-3 py-4">
@@ -342,6 +345,7 @@ export function LeaderboardPage() {
           {!isLoading && !isEmpty && leaderboard && (
             <>
               <div className="overflow-hidden rounded-card">
+                <div className="overflow-x-auto">
                 <table className="w-full font-sans text-sm">
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-text-muted">
@@ -400,6 +404,7 @@ export function LeaderboardPage() {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
 
               {/* Pagination */}

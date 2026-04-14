@@ -212,4 +212,9 @@
 ## Deferred from: code review of 5-12-leaderboard-page-visual-design (2026-04-13)
 
 - **Percentil "Top 96% del mundo" del widget Tu Posición Global queda solo en `title` tooltip** — regresión de accesibilidad móvil (no hover touch). El dato `globalTotal` era visible antes del rediseño. Restaurar como texto secundario muted bajo el rank.
-- **`material-symbols-outlined` sin fallback textual si la fuente falla** — patrón pre-existente en Epic 5 (arena, lobby, leaderboard). Considerar un polyfill o ligar `@import` Material Symbols a un `visibility: hidden` por defecto con reveal post-load.
+- **`material-symbols-outlined` sin fallback textual si la fuente falla** — patrón pre-existente en Epic 5 (11 archivos afectados: arena, lobby, leaderboard, match-results-overlay, nav-bar, home sections). Si la fuente de Google Fonts no carga, se muestran nombres literales ("expand_more", "more_vert", "timer", etc.) como texto plano en lugar de íconos.
+  - **Opciones a evaluar:**
+    1. `font-display: block` + `visibility: hidden` en `.material-symbols-outlined` mientras la fuente carga (evita flash of unstyled icons).
+    2. **Self-hosting del WOFF2 de Material Symbols** — elimina dependencia de Google Fonts CDN, mejora privacy/latency, resiliente a bloqueos de red.
+    3. Componente `<Icon>` wrapper con fallback a SVG inline.
+  - **DISCUTIR EN EPIC 5 RETROSPECTIVE** — evaluar specifically self-hosting de Material Symbols como solución sistémica (decisión pedida por Seba en code review de 5-12, 2026-04-14).

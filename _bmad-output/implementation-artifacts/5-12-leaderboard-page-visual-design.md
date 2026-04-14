@@ -1,6 +1,6 @@
 # Story 5.12: Leaderboard Page Visual Design
 
-Status: review
+Status: done
 
 ## Story
 
@@ -326,12 +326,15 @@ La estructura resultante del JSX debería ser:
       <h1>Puntajes Históricos</h1>
     </div>
 
-    {/* Récord de la Semana */}
-    <div className="rounded-card bg-surface-container-low p-6"> ... </div>
+    {/* Récord de la Semana + Tu Posición Global — grid 2 columnas en md+ */}
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      {/* Récord de la Semana */}
+      <div className="rounded-card bg-surface-container-low p-6"> ... </div>
 
-    {/* Tu Posición Global (authenticated) o CTA (unauthenticated) */}
-    {isAuthenticated ? <div data-testid="position-widget" className="rounded-card bg-surface-container-low p-6"> ... </div>
-                    : <div className="rounded-card bg-surface-container-low p-6"> ... CTA ... </div>}
+      {/* Tu Posición Global (authenticated) o CTA (unauthenticated) */}
+      {isAuthenticated ? <div data-testid="position-widget" className="rounded-card bg-surface-container-low p-6"> ... </div>
+                      : <div className="rounded-card bg-surface-container-low p-6"> ... CTA ... </div>}
+    </div>
 
     {/* Filtros */}
     <div className="rounded-card bg-surface-container-low p-6 space-y-4">
@@ -414,30 +417,31 @@ Claude Sonnet 4.6
 
 #### Decision Needed
 
-- [ ] [Review][Decision] Layout Récord+Posición: grid 2-col vs stack vertical — Spec "Layout final" exige stack vertical (header → Récord → Posición → Filtros → Tabla); código usa `<div className="grid grid-cols-1 gap-6 md:grid-cols-2">` (leaderboard-page.tsx:100). ¿Fue intencional el grid o debe volver al stack?
-- [ ] [Review][Decision] Emojis 🏆 / 🌍 en tiles del card Récord — Spec no menciona emojis; otras stories del Epic 5 usan Material Symbols (`material-symbols-outlined`). ¿Mantener emojis, reemplazar con Material Symbols, o eliminar?
+- [x] [Review][Decision] Layout Récord+Posición: grid 2-col vs stack vertical — **RESUELTO: aceptar grid 2-col.** El stack vertical se veía vacío y sin información; el grid aprovecha mejor el espacio horizontal en desktop sin afectar mobile (grid-cols-1 en <768px). Spec "Layout final" actualizado abajo para reflejar grid.
+- [x] [Review][Decision] Emojis 🏆 / 🌍 en tiles del widget "Tu Posición Global" — **RESUELTO: mantener emojis + envolver en `<span aria-hidden="true">` para que lectores de pantalla no los lean.** Convertido a patch (ver abajo).
 
 #### Patch
 
-- [ ] [Review][Patch] AC1 header incompleto: falta `<p>GLOBAL RANKINGS</p>` (label-md uppercase) + `<h1>Puntajes Históricos</h1>` con `text-headline-lg` [leaderboard-page.tsx:96]
-- [ ] [Review][Patch] AC2 label del card dice "Tu récord de la semana" — debe ser "RÉCORD DE LA SEMANA" (label-md uppercase) [leaderboard-page.tsx:105]
-- [ ] [Review][Patch] AC2 tarjeta Récord usa `bg-surface-sunken` — spec exige `bg-surface-container-low` [leaderboard-page.tsx:102]
-- [ ] [Review][Patch] AC2 falta avatar/iniciales del jugador #1 en la tarjeta Récord (patrón del codebase: `<img>` o fallback `rounded-full bg-primary/10`)
-- [ ] [Review][Patch] AC2 nombre del jugador usa `text-text-main hover:text-primary` — spec exige `text-primary hover:underline`
-- [ ] [Review][Patch] AC3 widget Posición usa `bg-surface-sunken` — debe ser `bg-surface-container-low` [leaderboard-page.tsx:151]
-- [ ] [Review][Patch] AC3 CTA no-auth usa `bg-surface-sunken` — debe ser `bg-surface-container-low` [leaderboard-page.tsx:219]
-- [ ] [Review][Patch] AC3 heading "Tu Posición Global" debe ser uppercase "TU POSICIÓN GLOBAL" (aparece en widget auth y CTA no-auth) [leaderboard-page.tsx:154, 221]
-- [ ] [Review][Patch] AC3 rank global usa `font-semibold` — spec exige `font-mono font-bold text-primary`
-- [ ] [Review][Patch] Test 7.1 busca 'Tu Posición Global' Title Case — debe buscar 'TU POSICIÓN GLOBAL' [leaderboard-page.spec.tsx]
-- [ ] [Review][Patch] Test 7.4 busca 'Global Rankings' — debe buscar 'GLOBAL RANKINGS' [leaderboard-page.spec.tsx]
-- [ ] [Review][Patch] Test 7.5 faltante: agregar `expect(screen.getByText('Puntajes Históricos')).toBeDefined()`
-- [ ] [Review][Patch] Test 7.6 busca 'Tu récord de la semana' — debe buscar 'RÉCORD DE LA SEMANA' [leaderboard-page.spec.tsx]
-- [ ] [Review][Patch] Assert duplicado `getByText('#5')` en test de widget autenticado (segundo assert probablemente debía ser `Top 96%` o `globalTotal`) [leaderboard-page.spec.tsx:76-77]
-- [ ] [Review][Patch] Test CTA no-auth duplicado ("Inicia sesión para ver tu ranking") aparece en dos tests idénticos — consolidar [leaderboard-page.spec.tsx:88, 348]
-- [ ] [Review][Patch] `useWeeklyRecord` no distingue `isError` de `data === null` — fallo de red renderiza "Sin récord esta semana" silenciosamente [use-weekly-record.ts + leaderboard-page.tsx]
-- [ ] [Review][Patch] Link `/match/${weeklyRecord.bestScoreMatchCode}` sin guard si el campo es undefined → navegación a `/match/undefined` [leaderboard-page.tsx weekly record block]
-- [ ] [Review][Patch] `showLogin` state no se resetea en cambio de auth — tras login+logout puede quedar stale y reabrir modal [leaderboard-page.tsx]
-- [ ] [Review][Patch] Regresión responsive: se eliminó `overflow-x-auto` del wrapper de tabla; en móvil la tabla de 5 columnas se corta [leaderboard-page.tsx tabla wrapper]
+- [x] [Review][Patch] AC1 header — **RESUELTO con override del usuario:** solo traducir "Global Rankings" → "Rankings Globales". No agregar label eyebrow ni cambiar a "Puntajes Históricos" (semánticamente incorrecto: no se muestra el historial completo, solo top N). AC1 del spec queda parcialmente implementado: jerarquía label+headline no se aplica. [leaderboard-page.tsx:96]
+- [x] [Review][Patch] AC2 label del card "Tu récord de la semana" → "Récord de la semana" (uppercase vía CSS). Elimina el "Tu" engañoso (el card muestra top 1 global de la semana, no del usuario). [leaderboard-page.tsx:105]
+- [x] [Review][Patch] AC2 tarjeta Récord bg — **RESUELTO con override del usuario:** mantener `bg-surface-sunken`. Override además extendido a filtros (línea 239) y tabla (línea 310): cambiadas de `bg-surface-container-low` → `bg-surface-sunken` para unificar las 4 tarjetas con el mismo token. [leaderboard-page.tsx:102, 239, 310]
+- [x] [Review][Patch] AC2 avatar/iniciales en tarjeta Récord — **RECHAZADO por el usuario:** el avatar ya aparece en la tabla de jugadores; agregarlo también al card sería redundante. El card Récord queda sin avatar.
+- [x] [Review][Patch] AC2 nombre del jugador — **RECHAZADO por el usuario:** mantener `text-text-main hover:text-primary`. Look sobrio preferido; el puntaje primary grande mantiene la jerarquía visual del card.
+- [x] [Review][Patch] AC3 widget Posición bg — **RESUELTO con override del usuario:** mantener `bg-surface-sunken` (cubierto por el override de Patch 3). [leaderboard-page.tsx:151]
+- [x] [Review][Patch] AC3 CTA no-auth bg — **RESUELTO con override del usuario:** mantener `bg-surface-sunken` (cubierto por el override de Patch 3). [leaderboard-page.tsx:219]
+- [x] [Review][Patch] AC3 heading "Tu Posición Global" — **RECHAZADO por el usuario:** mantener Title Case en el string fuente. El `uppercase` CSS ya renderiza "TU POSICIÓN GLOBAL" en pantalla. Convención del codebase: Title Case en string + CSS uppercase (ver "Puntaje", "Precisión", "Nivel", etc.).
+- [x] [Review][Patch] AC3 rank global peso tipográfico — **RECHAZADO por el usuario:** mantener `font-semibold`. Los tres números del widget quedan con el mismo peso.
+- [x] [Review][Patch] Test 7.1 string — **DISMISSED (cascada de Patch 8):** el código mantiene Title Case en el string, así el test que busca "Tu Posición Global" está correcto.
+- [x] [Review][Patch] Test 7.4 actualizado a buscar 'Rankings Globales' (consistente con el texto español aplicado en Patch 1). [leaderboard-page.spec.tsx:462-465]
+- [x] [Review][Patch] Test 7.5 — **DISMISSED:** el override del Patch 1 dejó un único h1 ("Rankings Globales"), ya cubierto por Test 7.4 actualizado (Patch 11). No hay un segundo elemento textual que testear.
+- [x] [Review][Patch] Test 7.6 actualizado a buscar 'Récord de la semana' (consistente con Patch 2). [leaderboard-page.spec.tsx:473]
+- [x] [Review][Patch] Assert duplicado `getByText('#5')` eliminado del test de widget autenticado. [leaderboard-page.spec.tsx:119]
+- [x] [Review][Patch] Test CTA no-auth duplicado eliminado (línea 495 era subset del test de línea 122 que además verifica ausencia de `position-widget`). [leaderboard-page.spec.tsx:495-501]
+- [x] [Review][Patch] `useWeeklyRecord` ahora distingue `isError` de `data === null`: renderiza "No se pudo cargar el récord" en fallo y "Sin récord esta semana" en empty. [leaderboard-page.tsx:73, 123-128]
+- [x] [Review][Patch] Link `/match/${bestScoreMatchCode}` sin guard — **DISMISSED:** el DTO declara el campo como `string` no-nullable; mismo patrón sin guard se usa en los otros 3 Link `/match/...` del archivo. Mantener consistencia con el patrón del codebase basado en la garantía del DTO.
+- [x] [Review][Patch] `showLogin` state stale — **DISMISSED:** login y logout hacen full page reload (`window.location.href`), por lo que React remonta desde cero y `showLogin` se resetea. Bug no reproducible en el flujo actual.
+- [x] [Review][Patch] Regresión responsive resuelta: agregado `<div className="overflow-x-auto">` anidado dentro del `<div className="overflow-hidden rounded-card">`. Preserva rounded corners + permite scroll horizontal en mobile cuando la tabla excede el ancho. [leaderboard-page.tsx:347-349, 406-407]
+- [x] [Review][Patch] Emojis 🏆 🌍 envueltos en `<span aria-hidden="true">` — screen readers ahora leen solo "Mejor Puntaje" y "Mundial". [leaderboard-page.tsx:180, 189]
 
 #### Defer
 

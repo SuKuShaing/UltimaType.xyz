@@ -116,7 +116,6 @@ describe('LeaderboardPage', () => {
 
     expect(screen.getByText('Tu Posición Global')).toBeDefined();
     expect(screen.getByText('#5')).toBeDefined();
-    expect(screen.getByText('#5')).toBeDefined();
     expect(screen.getByText(/#2/)).toBeDefined();
   });
 
@@ -459,9 +458,9 @@ describe('LeaderboardPage', () => {
 
   // === NUEVOS TESTS — Design System 5-12 ===
 
-  it('renders Global Rankings headline', () => {
+  it('renders Rankings Globales headline', () => {
     renderPage();
-    expect(screen.getByText('Global Rankings')).toBeDefined();
+    expect(screen.getByText('Rankings Globales')).toBeDefined();
   });
 
   it('renders Récord de la Semana card with weekly record entry', () => {
@@ -470,7 +469,7 @@ describe('LeaderboardPage', () => {
 
     renderPage();
 
-    expect(screen.getByText('Tu récord de la semana')).toBeDefined();
+    expect(screen.getByText('Récord de la semana')).toBeDefined();
     expect(screen.getByText('TopPlayer')).toBeDefined();
   });
 
@@ -491,14 +490,6 @@ describe('LeaderboardPage', () => {
     const nameEl = screen.getByText('TopPlayer');
     expect(nameEl.closest('a')).toBeTruthy();
     expect(nameEl.closest('a')?.getAttribute('href')).toBe('/u/top-abc');
-  });
-
-  it('shows CTA for unauthenticated user in position section', () => {
-    mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
-
-    renderPage();
-
-    expect(screen.getByText('Inicia sesión para ver tu ranking')).toBeDefined();
   });
 
   it('highlights own row with bg-primary/10 when userId matches', () => {
