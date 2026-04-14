@@ -208,3 +208,8 @@
   - **Transferencia de host**: nuevo evento `HOST_TRANSFER` — el host designa a otro jugador como nuevo host. El host original pasa a ser jugador normal. Actualiza `hostId` en Redis y emite `LOBBY_STATE` actualizado.
   - Mientras no se implemente, el `MATCH_REMATCH` actual (sin guard de host) sigue activo — cualquier jugador puede dispararlo. Añadir guard `hostId === userId` como parche mínimo al inicio de la historia.
 - **`areAllPlayersFinished` retorna `false` para match vacío** — `match-state.service.ts`. Si `cleanupMatch` ya corrió, `getMatchState` retorna `{}` y el método retorna `false` en lugar de una señal más explícita. Frágil pero correcto para el flujo actual gracias a las guards de `status !== 'playing'` aguas arriba.
+
+## Deferred from: code review of 5-12-leaderboard-page-visual-design (2026-04-13)
+
+- **Percentil "Top 96% del mundo" del widget Tu Posición Global queda solo en `title` tooltip** — regresión de accesibilidad móvil (no hover touch). El dato `globalTotal` era visible antes del rediseño. Restaurar como texto secundario muted bajo el rank.
+- **`material-symbols-outlined` sin fallback textual si la fuente falla** — patrón pre-existente en Epic 5 (arena, lobby, leaderboard). Considerar un polyfill o ligar `@import` Material Symbols a un `visibility: hidden` por defecto con reveal post-load.

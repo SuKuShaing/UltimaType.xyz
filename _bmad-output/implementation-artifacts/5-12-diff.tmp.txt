@@ -1,0 +1,865 @@
+diff --git a/ultimatype-monorepo/apps/web/src/components/leaderboard/leaderboard-page.spec.tsx b/ultimatype-monorepo/apps/web/src/components/leaderboard/leaderboard-page.spec.tsx
+index 153cbda..de63fb8 100644
+--- a/ultimatype-monorepo/apps/web/src/components/leaderboard/leaderboard-page.spec.tsx
++++ b/ultimatype-monorepo/apps/web/src/components/leaderboard/leaderboard-page.spec.tsx
+@@ -4,6 +4,10 @@ import { MemoryRouter } from 'react-router-dom';
+ import { HelmetProvider } from 'react-helmet-async';
+ import { LeaderboardPage } from './leaderboard-page';
+ import type { PaginatedResponse, LeaderboardEntryDto, UserLeaderboardPositionDto } from '@ultimatype-monorepo/shared';
++import { useAuth } from '../../hooks/use-auth';
++import { useLeaderboard } from '../../hooks/use-leaderboard';
++import { useLeaderboardPosition } from '../../hooks/use-leaderboard-position';
++import { useWeeklyRecord } from '../../hooks/use-weekly-record';
+ 
+ vi.mock('../../hooks/use-auth', () => ({
+   useAuth: vi.fn(),
+@@ -17,13 +21,14 @@ vi.mock('../../hooks/use-leaderboard-position', () => ({
+   useLeaderboardPosition: vi.fn(),
+ }));
+ 
+-import { useAuth } from '../../hooks/use-auth';
+-import { useLeaderboard } from '../../hooks/use-leaderboard';
+-import { useLeaderboardPosition } from '../../hooks/use-leaderboard-position';
++vi.mock('../../hooks/use-weekly-record', () => ({
++  useWeeklyRecord: vi.fn(),
++}));
+ 
+ const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
+ const mockUseLeaderboard = useLeaderboard as ReturnType<typeof vi.fn>;
+ const mockUseLeaderboardPosition = useLeaderboardPosition as ReturnType<typeof vi.fn>;
++const mockUseWeeklyRecord = useWeeklyRecord as ReturnType<typeof vi.fn>;
+ 
+ const makeEntry = (overrides: Partial<LeaderboardEntryDto> = {}): LeaderboardEntryDto => ({
+   userId: 'user-alice',
+@@ -35,6 +40,7 @@ const makeEntry = (overrides: Partial<LeaderboardEntryDto> = {}): LeaderboardEnt
+   bestScore: 1200,
+   bestScorePrecision: 98.5,
+   bestScoreMatchCode: 'ABC123',
++  bestScoreLevel: 1,
+   ...overrides,
+ });
+ 
+@@ -71,6 +77,7 @@ beforeEach(() => {
+   mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
+   mockUseLeaderboard.mockReturnValue({ data: emptyLeaderboard, isLoading: false, isError: false, refetch: vi.fn() });
+   mockUseLeaderboardPosition.mockReturnValue({ data: null, isLoading: false });
++  mockUseWeeklyRecord.mockReturnValue({ data: null, isLoading: false, isError: false });
+ });
+ 
+ describe('LeaderboardPage', () => {
+@@ -95,46 +102,47 @@ describe('LeaderboardPage', () => {
+ 
+     renderPage();
+ 
+-    expect(screen.getByText('Alice')).toBeTruthy();
+-    expect(screen.getByText('Bob')).toBeTruthy();
+-    expect(screen.getByText('98.5%')).toBeTruthy();
+-    expect(screen.getByText('95%')).toBeTruthy();
++    expect(screen.getByText('Alice')).toBeDefined();
++    expect(screen.getByText('Bob')).toBeDefined();
++    expect(screen.getByText('98.5%')).toBeDefined();
++    expect(screen.getByText('95%')).toBeDefined();
+   });
+ 
+   it('should show position widget when authenticated', () => {
+-    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { displayName: 'Test' } });
++    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'u1', displayName: 'Test' } });
+     mockUseLeaderboardPosition.mockReturnValue({ data: defaultPosition, isLoading: false });
+ 
+     renderPage();
+ 
+-    expect(screen.getByText('Tu posición')).toBeTruthy();
+-    expect(screen.getByText('#5')).toBeTruthy();
+-    expect(screen.getByText(/Top 96% del mundo/)).toBeTruthy();
+-    expect(screen.getByText(/#2/)).toBeTruthy();
++    expect(screen.getByText('Tu Posición Global')).toBeDefined();
++    expect(screen.getByText('#5')).toBeDefined();
++    expect(screen.getByText('#5')).toBeDefined();
++    expect(screen.getByText(/#2/)).toBeDefined();
+   });
+ 
+-  it('should not show position widget when not authenticated', () => {
++  it('should show CTA instead of position data when not authenticated', () => {
+     mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
+ 
+     renderPage();
+ 
+-    expect(screen.queryByText('Tu posición')).toBeNull();
++    expect(screen.getByText('Inicia sesión para ver tu ranking')).toBeDefined();
++    expect(screen.queryByTestId('position-widget')).toBeNull();
+   });
+ 
+   it('should show empty message when position is null (no matches)', () => {
+-    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { displayName: 'Test' } });
++    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'u1', displayName: 'Test' } });
+     mockUseLeaderboardPosition.mockReturnValue({ data: null, isLoading: false });
+ 
+     renderPage();
+ 
+-    expect(screen.getByText('Juega tu primera partida para aparecer en el ranking')).toBeTruthy();
++    expect(screen.getByText('Juega tu primera partida para aparecer en el ranking')).toBeDefined();
+   });
+ 
+   it('should render level filter buttons', () => {
+     renderPage();
+ 
+-    expect(screen.getByText('Todos los niveles')).toBeTruthy();
+-    expect(screen.getByText(/Minúscula/)).toBeTruthy();
++    expect(screen.getByText('Todos los niveles')).toBeDefined();
++    expect(screen.getByText(/Minúscula/)).toBeDefined();
+   });
+ 
+   it('should change level filter and reset page', () => {
+@@ -146,7 +154,7 @@ describe('LeaderboardPage', () => {
+ 
+     renderPage();
+ 
+-    const levelButton = screen.getByText(/Minúscula/);
++    const levelButton = screen.getAllByText(/Minúscula/)[0];
+     fireEvent.click(levelButton);
+ 
+     expect(mockUseLeaderboard).toHaveBeenCalledWith(
+@@ -159,11 +167,10 @@ describe('LeaderboardPage', () => {
+ 
+     renderPage();
+ 
+-    // Click a level filter to trigger filtered empty state
+     const levelButton = screen.getByText(/Minúscula/);
+     fireEvent.click(levelButton);
+ 
+-    expect(screen.getByText('No hay jugadores registrados en este nivel')).toBeTruthy();
++    expect(screen.getByText('No hay jugadores registrados en este nivel')).toBeDefined();
+   });
+ 
+   it('should show error state with retry button', () => {
+@@ -172,21 +179,20 @@ describe('LeaderboardPage', () => {
+ 
+     renderPage();
+ 
+-    expect(screen.getByText('Error al cargar el ranking')).toBeTruthy();
++    expect(screen.getByText('Error al cargar el ranking')).toBeDefined();
+     const retryButton = screen.getByText('Reintentar');
+     fireEvent.click(retryButton);
+     expect(refetch).toHaveBeenCalled();
+   });
+ 
+   it('should render match code as link in position widget', () => {
+-    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { displayName: 'Test' } });
++    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'u1', displayName: 'Test' } });
+     mockUseLeaderboardPosition.mockReturnValue({ data: defaultPosition, isLoading: false });
+ 
+-    renderPage();
++    const { container } = renderPage();
+ 
+-    const link = screen.getByText('ABC123');
+-    expect(link.closest('a')).toBeTruthy();
+-    expect(link.closest('a')?.getAttribute('href')).toBe('/match/ABC123');
++    const matchLink = container.querySelector('a[href="/match/ABC123"]');
++    expect(matchLink).toBeTruthy();
+   });
+ 
+   it('should NOT link player name to public profile (profile accessible from match detail)', () => {
+@@ -225,9 +231,9 @@ describe('LeaderboardPage', () => {
+ 
+     renderPage();
+ 
+-    expect(screen.getByText('1 / 3')).toBeTruthy();
+-    expect(screen.getByLabelText('Página anterior')).toBeTruthy();
+-    expect(screen.getByLabelText('Página siguiente')).toBeTruthy();
++    expect(screen.getByText('1 / 3')).toBeDefined();
++    expect(screen.getByLabelText('Página anterior')).toBeDefined();
++    expect(screen.getByLabelText('Página siguiente')).toBeDefined();
+   });
+ 
+   it('should not show pagination for single page', () => {
+@@ -246,10 +252,10 @@ describe('LeaderboardPage', () => {
+   it('should render period filter buttons', () => {
+     renderPage();
+ 
+-    expect(screen.getByText('Histórico')).toBeTruthy();
+-    expect(screen.getByText('Último año')).toBeTruthy();
+-    expect(screen.getByText('Último mes')).toBeTruthy();
+-    expect(screen.getByText('Últimos 7 días')).toBeTruthy();
++    expect(screen.getByText('Histórico')).toBeDefined();
++    expect(screen.getByText('Último año')).toBeDefined();
++    expect(screen.getByText('Último mes')).toBeDefined();
++    expect(screen.getByText('Últimos 7 días')).toBeDefined();
+   });
+ 
+   it('should change period filter and reset page', () => {
+@@ -270,7 +276,7 @@ describe('LeaderboardPage', () => {
+   });
+ 
+   it('should reflect period filter in useLeaderboardPosition call', () => {
+-    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { displayName: 'Test' } });
++    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'u1', displayName: 'Test' } });
+     mockUseLeaderboardPosition.mockReturnValue({ data: defaultPosition, isLoading: false });
+ 
+     renderPage();
+@@ -287,8 +293,8 @@ describe('LeaderboardPage', () => {
+     renderPage();
+ 
+     const select = screen.getByLabelText('Filtrar por país');
+-    expect(select).toBeTruthy();
+-    expect(screen.getByText('Todos los países')).toBeTruthy();
++    expect(select).toBeDefined();
++    expect(screen.getByText('Todos los países')).toBeDefined();
+   });
+ 
+   it('should change country filter and reset page', () => {
+@@ -317,7 +323,7 @@ describe('LeaderboardPage', () => {
+ 
+     renderPage();
+ 
+-    fireEvent.click(screen.getByText(/Minúscula/));
++    fireEvent.click(screen.getAllByText(/Minúscula/)[0]);
+     fireEvent.change(screen.getByLabelText('Filtrar por país') as HTMLSelectElement, {
+       target: { value: 'CL' },
+     });
+@@ -336,7 +342,7 @@ describe('LeaderboardPage', () => {
+       target: { value: 'AR' },
+     });
+ 
+-    expect(screen.getByText('No hay jugadores de Argentina registrados')).toBeTruthy();
++    expect(screen.getByText('No hay jugadores de Argentina registrados')).toBeDefined();
+   });
+ 
+   it('should show contextual empty state with level and country active', () => {
+@@ -349,7 +355,7 @@ describe('LeaderboardPage', () => {
+       target: { value: 'AR' },
+     });
+ 
+-    expect(screen.getByText('No hay jugadores de Argentina registrados en este nivel')).toBeTruthy();
++    expect(screen.getByText('No hay jugadores de Argentina registrados en este nivel')).toBeDefined();
+   });
+ 
+   it('should show contextual empty state with period active', () => {
+@@ -359,7 +365,7 @@ describe('LeaderboardPage', () => {
+ 
+     fireEvent.click(screen.getByText('Últimos 7 días'));
+ 
+-    expect(screen.getByText('No hay jugadores registrados en los últimos 7 días')).toBeTruthy();
++    expect(screen.getByText('No hay jugadores registrados en los últimos 7 días')).toBeDefined();
+   });
+ 
+   it('should show contextual empty state with all three filters active', () => {
+@@ -373,7 +379,7 @@ describe('LeaderboardPage', () => {
+       target: { value: 'AR' },
+     });
+ 
+-    expect(screen.getByText('No hay jugadores de Argentina registrados en este nivel en el último mes')).toBeTruthy();
++    expect(screen.getByText('No hay jugadores de Argentina registrados en este nivel en el último mes')).toBeDefined();
+   });
+ 
+   it('should pass combined level, country and period filters to hook', () => {
+@@ -385,7 +391,7 @@ describe('LeaderboardPage', () => {
+ 
+     renderPage();
+ 
+-    fireEvent.click(screen.getByText(/Minúscula/));
++    fireEvent.click(screen.getAllByText(/Minúscula/)[0]);
+     fireEvent.click(screen.getByText('Últimos 7 días'));
+     fireEvent.change(screen.getByLabelText('Filtrar por país') as HTMLSelectElement, {
+       target: { value: 'CL' },
+@@ -415,7 +421,7 @@ describe('LeaderboardPage', () => {
+   });
+ 
+   it('should not show country row in widget when user has no country', () => {
+-    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { displayName: 'Test' } });
++    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'u1', displayName: 'Test' } });
+     mockUseLeaderboardPosition.mockReturnValue({
+       data: { ...defaultPosition, countryCode: null, countryRank: null, countryTotal: null, countryPercentile: null },
+       isLoading: false,
+@@ -424,20 +430,19 @@ describe('LeaderboardPage', () => {
+     renderPage();
+ 
+     const widget = screen.getByTestId('position-widget');
+-    expect(within(widget).getByText('#5')).toBeTruthy();
+-    // Country rank row must not appear in the widget (countryCode is null)
++    expect(within(widget).getByText('#5')).toBeDefined();
+     expect(within(widget).queryByText(/Top.*%.*de /)).toBeNull();
+   });
+ 
+   it('should show position loading skeletons while loading', () => {
+-    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { displayName: 'Test' } });
++    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'u1', displayName: 'Test' } });
+     mockUseLeaderboardPosition.mockReturnValue({ data: null, isLoading: true });
+ 
+     renderPage();
+ 
+-    const positionSection = screen.getByText('Tu posición').closest('div');
+-    const skeletons = positionSection?.querySelectorAll('.animate-pulse');
+-    expect(skeletons?.length).toBeGreaterThan(0);
++    const widget = screen.getByTestId('position-widget');
++    const skeletons = widget.querySelectorAll('.animate-pulse');
++    expect(skeletons.length).toBeGreaterThan(0);
+   });
+ 
+   it('should display avatar initials when avatarUrl is null', () => {
+@@ -449,6 +454,100 @@ describe('LeaderboardPage', () => {
+ 
+     renderPage();
+ 
+-    expect(screen.getByText('B')).toBeTruthy();
++    expect(screen.getByText('B')).toBeDefined();
++  });
++
++  // === NUEVOS TESTS — Design System 5-12 ===
++
++  it('renders Global Rankings headline', () => {
++    renderPage();
++    expect(screen.getByText('Global Rankings')).toBeDefined();
++  });
++
++  it('renders Récord de la Semana card with weekly record entry', () => {
++    const record = makeEntry({ displayName: 'TopPlayer', bestScore: 2500, bestScorePrecision: 99 });
++    mockUseWeeklyRecord.mockReturnValue({ data: record, isLoading: false, isError: false });
++
++    renderPage();
++
++    expect(screen.getByText('Tu récord de la semana')).toBeDefined();
++    expect(screen.getByText('TopPlayer')).toBeDefined();
++  });
++
++  it('renders empty state for Récord de la Semana when no data', () => {
++    mockUseWeeklyRecord.mockReturnValue({ data: null, isLoading: false, isError: false });
++
++    renderPage();
++
++    expect(screen.getByText('Sin récord esta semana')).toBeDefined();
++  });
++
++  it('links weekly record player name to profile page', () => {
++    const record = makeEntry({ displayName: 'TopPlayer', slug: 'top-abc' });
++    mockUseWeeklyRecord.mockReturnValue({ data: record, isLoading: false, isError: false });
++
++    renderPage();
++
++    const nameEl = screen.getByText('TopPlayer');
++    expect(nameEl.closest('a')).toBeTruthy();
++    expect(nameEl.closest('a')?.getAttribute('href')).toBe('/u/top-abc');
++  });
++
++  it('shows CTA for unauthenticated user in position section', () => {
++    mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
++
++    renderPage();
++
++    expect(screen.getByText('Inicia sesión para ver tu ranking')).toBeDefined();
++  });
++
++  it('highlights own row with bg-primary/10 when userId matches', () => {
++    const data: PaginatedResponse<LeaderboardEntryDto> = {
++      data: [
++        makeEntry({ userId: 'current-user', displayName: 'Me', position: 1 }),
++        makeEntry({ userId: 'other-user', displayName: 'Other', position: 2 }),
++      ],
++      meta: { total: 2, page: 1, limit: 100, totalPages: 1 },
++    };
++    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
++    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'current-user', displayName: 'Me' } });
++
++    const { container } = renderPage();
++
++    const ownRow = Array.from(container.querySelectorAll('tbody tr')).find(
++      (tr) => tr.className.includes('bg-primary')
++    );
++    expect(ownRow).toBeTruthy();
++  });
++
++  it('does not highlight rows when user is not authenticated', () => {
++    const data: PaginatedResponse<LeaderboardEntryDto> = {
++      data: [makeEntry({ userId: 'some-user' })],
++      meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
++    };
++    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
++    mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
++
++    const { container } = renderPage();
++
++    const highlightedRow = Array.from(container.querySelectorAll('tbody tr')).find(
++      (tr) => tr.className.includes('bg-primary')
++    );
++    expect(highlightedRow).toBeUndefined();
++  });
++
++  it('uses rounded-full for pagination buttons', () => {
++    const data: PaginatedResponse<LeaderboardEntryDto> = {
++      data: [makeEntry()],
++      meta: { total: 250, page: 1, limit: 100, totalPages: 3 },
++    };
++    mockUseLeaderboard.mockReturnValue({ data, isLoading: false, isError: false, refetch: vi.fn() });
++
++    renderPage();
++
++    const prevBtn = screen.getByLabelText('Página anterior');
++    const nextBtn = screen.getByLabelText('Página siguiente');
++    expect(prevBtn.className.includes('rounded-full')).toBe(true);
++    expect(nextBtn.className.includes('rounded-full')).toBe(true);
+   });
+ });
+diff --git a/ultimatype-monorepo/apps/web/src/components/leaderboard/leaderboard-page.tsx b/ultimatype-monorepo/apps/web/src/components/leaderboard/leaderboard-page.tsx
+index b73464d..ea28d73 100644
+--- a/ultimatype-monorepo/apps/web/src/components/leaderboard/leaderboard-page.tsx
++++ b/ultimatype-monorepo/apps/web/src/components/leaderboard/leaderboard-page.tsx
+@@ -5,7 +5,9 @@ import { DIFFICULTY_LEVELS, COUNTRIES, MatchPeriod } from '@ultimatype-monorepo/
+ import { useAuth } from '../../hooks/use-auth';
+ import { useLeaderboard } from '../../hooks/use-leaderboard';
+ import { useLeaderboardPosition } from '../../hooks/use-leaderboard-position';
++import { useWeeklyRecord } from '../../hooks/use-weekly-record';
+ import { CountryFlag } from '../ui/country-flag';
++import { LoginModal } from '../ui/login-modal';
+ 
+ function formatDate(isoString: string): string {
+   return new Date(isoString).toLocaleDateString('es', {
+@@ -44,11 +46,12 @@ const PERIOD_LABELS: Record<MatchPeriod, string> = {
+ };
+ 
+ export function LeaderboardPage() {
+-  const { isAuthenticated } = useAuth();
++  const { isAuthenticated, user } = useAuth();
+   const [level, setLevel] = useState<number | null>(null);
+   const [period, setPeriod] = useState<MatchPeriod>('all');
+   const [country, setCountry] = useState<string | null>(null);
+   const [page, setPage] = useState(1);
++  const [showLogin, setShowLogin] = useState(false);
+ 
+   function handleLevelChange(l: number | null) {
+     setLevel(l);
+@@ -67,6 +70,7 @@ export function LeaderboardPage() {
+ 
+   const { data: leaderboard, isLoading, isError, refetch } = useLeaderboard({ level, period, country, page });
+   const { data: position, isLoading: isPositionLoading } = useLeaderboardPosition({ level, period });
++  const { data: weeklyRecord, isLoading: isWeeklyLoading } = useWeeklyRecord();
+ 
+   const isEmpty = !isLoading && !isError && (leaderboard?.data.length ?? 0) === 0;
+ 
+@@ -87,16 +91,81 @@ export function LeaderboardPage() {
+       </Helmet>
+ 
+       <div className="w-full max-w-3xl 2xl:max-w-5xl space-y-6">
+-        <h1 className="text-2xl font-semibold">Ranking Global</h1>
++        {/* Header */}
++        <h1 className="text-3xl font-bold text-text-main tracking-headline">
++          Global Rankings
++        </h1>
+ 
+-        {/* Position widget — only for authenticated users */}
+-        {isAuthenticated && (
+-          <div className="rounded-2xl bg-surface-sunken p-6" data-testid="position-widget">
+-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text-muted">Tu posición</h2>
++        {/* Récord de la Semana + Tu Posición Global — grid 2 columnas */}
++        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
++          {/* Récord de la Semana */}
++          <div className="rounded-card bg-surface-sunken p-6">
++            <div className="mb-6 flex items-center justify-between gap-3">
++              <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted">
++                Tu récord de la semana
++              </h2>
++              {!isWeeklyLoading && weeklyRecord && (
++                <Link
++                  to={`/u/${weeklyRecord.slug}`}
++                  className="shrink-0 text-xs font-semibold text-text-main hover:text-primary font-sans"
++                >
++                  {weeklyRecord.displayName}
++                </Link>
++              )}
++            </div>
++            {isWeeklyLoading && (
++              <div className="grid grid-cols-3 gap-3">
++                {Array.from({ length: 3 }).map((_, i) => (
++                  <div key={i} className="h-14 animate-pulse rounded-xl bg-surface-raised" />
++                ))}
++              </div>
++            )}
++            {!isWeeklyLoading && !weeklyRecord && (
++              <p className="py-2 text-sm italic text-text-muted">Sin récord esta semana</p>
++            )}
++            {!isWeeklyLoading && weeklyRecord && (
++              <div className="grid grid-cols-3 gap-3">
++                <div className="rounded-xl bg-surface-raised p-3">
++                  <div className="text-xs uppercase tracking-wide text-text-muted font-sans">Puntaje</div>
++                  <Link
++                    to={`/match/${weeklyRecord.bestScoreMatchCode}`}
++                    className="text-xl font-semibold text-primary font-mono hover:underline"
++                  >
++                    {formatScore(weeklyRecord.bestScore)}
++                  </Link>
++                </div>
++                <div className="rounded-xl bg-surface-raised p-3">
++                  <div className="text-xs uppercase tracking-wide text-text-muted font-sans">Precisión</div>
++                  <div className="text-xl font-semibold text-primary font-mono">{weeklyRecord.bestScorePrecision}%</div>
++                </div>
++                <div className="rounded-xl bg-surface-raised p-3">
++                  <div className="text-xs uppercase tracking-wide text-text-muted font-sans">Nivel</div>
++                  <div className="text-xl font-semibold text-primary font-mono">{getLevelName(weeklyRecord.bestScoreLevel)}</div>
++                </div>
++              </div>
++            )}
++          </div>
++
++          {/* Tu Posición Global (authenticated) o CTA (unauthenticated) */}
++          {isAuthenticated ? (
++          <div className="rounded-card bg-surface-sunken p-6" data-testid="position-widget">
++            <div className="mb-6 flex items-center justify-between gap-3">
++              <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted">
++                Tu Posición Global
++              </h2>
++              {position && (
++                <Link
++                  to={`/match/${position.bestScoreMatchCode}`}
++                  className="text-xs text-text-muted hover:text-primary"
++                >
++                  {formatDate(position.bestScoreDate)}
++                </Link>
++              )}
++            </div>
+             {isPositionLoading && (
+-              <div className="space-y-3">
++              <div className="grid grid-cols-3 gap-3">
+                 {Array.from({ length: 3 }).map((_, i) => (
+-                  <div key={i} className="h-5 w-64 animate-pulse rounded bg-surface-raised" />
++                  <div key={i} className="h-14 animate-pulse rounded-xl bg-surface-raised" />
+                 ))}
+               </div>
+             )}
+@@ -106,50 +175,77 @@ export function LeaderboardPage() {
+               </p>
+             )}
+             {!isPositionLoading && position && (
+-              <div className="space-y-2 text-sm">
+-                <p>
+-                  <span className="text-text-muted">Tu mejor puntaje: </span>
+-                  <span className="font-semibold text-primary">{formatScore(position.bestScore)} pts</span>
+-                  <span className="text-text-muted">
+-                    {' · '}partida{' '}
+-                    <Link
+-                      to={`/match/${position.bestScoreMatchCode}`}
+-                      className="text-primary underline hover:text-primary/80"
++              <div className="grid grid-cols-3 gap-3">
++                <div className="rounded-xl bg-surface-raised p-3">
++                  <div className="text-xs uppercase tracking-wide text-text-muted font-sans">🏆 Mejor Puntaje</div>
++                  <Link
++                    to={`/match/${position.bestScoreMatchCode}`}
++                    className="text-xl font-semibold text-primary font-mono hover:underline"
++                  >
++                    {formatScore(position.bestScore)}
++                  </Link>
++                </div>
++                <div className="rounded-xl bg-surface-raised p-3">
++                  <div className="text-xs uppercase tracking-wide text-text-muted font-sans">🌍 Mundial</div>
++                  <div
++                    className="text-xl font-semibold text-primary font-mono"
++                    title={`#${position.globalRank} de ${position.globalTotal}`}
++                  >
++                    #{position.globalRank}
++                  </div>
++                </div>
++                {position.countryCode && position.countryRank !== null ? (
++                  <div className="rounded-xl bg-surface-raised p-3">
++                    <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-text-muted font-sans">
++                      <CountryFlag countryCode={position.countryCode} size={12} />
++                      <span>{getCountryName(position.countryCode)}</span>
++                    </div>
++                    <div
++                      className="text-xl font-semibold text-primary font-mono"
++                      title={`#${position.countryRank} de ${position.countryTotal}`}
+                     >
+-                      {position.bestScoreMatchCode}
+-                    </Link>
+-                    {', '}
+-                    {formatDate(position.bestScoreDate)}
+-                  </span>
+-                </p>
+-                <p>
+-                  <span className="text-text-muted">Mundial: </span>
+-                  <span className="font-semibold">#{position.globalRank}</span>
+-                  <span className="text-text-muted"> · {position.globalTotal >= 10 ? `Top ${position.globalPercentile}% del mundo` : `de ${position.globalTotal}`}</span>
+-                </p>
+-                {position.countryCode && position.countryRank !== null && (
+-                  <p>
+-                    <CountryFlag countryCode={position.countryCode} size={14} />{' '}
+-                    <span className="text-text-muted">{getCountryName(position.countryCode)}: </span>
+-                    <span className="font-semibold">#{position.countryRank}</span>
+-                    <span className="text-text-muted"> · {position.countryTotal != null && position.countryTotal >= 10 ? `Top ${position.countryPercentile}% de ${getCountryName(position.countryCode)}` : `de ${position.countryTotal}`}</span>
+-                  </p>
++                      #{position.countryRank}
++                    </div>
++                  </div>
++                ) : (
++                  <div className="rounded-xl bg-surface-raised p-3 flex items-center justify-center">
++                    <div className="text-xs text-text-muted italic">Sin país</div>
++                  </div>
+                 )}
+               </div>
+             )}
+           </div>
++        ) : (
++          <div className="rounded-card bg-surface-sunken p-6">
++            <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-text-muted">
++              Tu Posición Global
++            </h2>
++            <p className="mb-4 text-sm text-text-muted">
++              Inicia sesión para ver tu ranking
++            </p>
++            <button
++              type="button"
++              onClick={() => setShowLogin(true)}
++              className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-surface-base"
++            >
++              Iniciar sesión
++            </button>
++            {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
++          </div>
+         )}
++        </div>{/* fin grid 2 columnas */}
+ 
+-        {/* Leaderboard table */}
+-        <div className="rounded-2xl bg-surface-sunken p-6">
++        {/* Filtros */}
++        <div className="rounded-card bg-surface-container-low p-6 space-y-4">
+           {/* Level filter */}
+-          <div className="mb-4 flex flex-wrap gap-2">
++          <div className="flex flex-wrap gap-2">
+             <button
++              type="button"
+               onClick={() => handleLevelChange(null)}
+-              className={`rounded-lg px-3 py-1.5 text-sm font-sans ${
++              className={`rounded-full px-3 py-1.5 text-sm font-sans ${
+                 level === null
+                   ? 'bg-primary text-surface-base font-semibold'
+-                  : 'bg-surface-raised text-text-muted'
++                  : 'bg-surface-container-lowest text-text-muted'
+               }`}
+               aria-pressed={level === null}
+             >
+@@ -157,12 +253,13 @@ export function LeaderboardPage() {
+             </button>
+             {DIFFICULTY_LEVELS.map((d) => (
+               <button
++                type="button"
+                 key={d.level}
+                 onClick={() => handleLevelChange(d.level)}
+-                className={`rounded-lg px-3 py-1.5 text-sm font-sans ${
++                className={`rounded-full px-3 py-1.5 text-sm font-sans ${
+                   level === d.level
+                     ? 'bg-primary text-surface-base font-semibold'
+-                    : 'bg-surface-raised text-text-muted'
++                    : 'bg-surface-container-lowest text-text-muted'
+                 }`}
+                 aria-pressed={level === d.level}
+               >
+@@ -172,15 +269,16 @@ export function LeaderboardPage() {
+           </div>
+ 
+           {/* Period filter */}
+-          <div className="mb-4 flex flex-wrap gap-2">
++          <div className="flex flex-wrap gap-2">
+             {PERIOD_OPTIONS.map((opt) => (
+               <button
++                type="button"
+                 key={opt.value}
+                 onClick={() => handlePeriodChange(opt.value)}
+-                className={`rounded-lg px-3 py-1.5 text-sm font-sans ${
++                className={`rounded-full px-3 py-1.5 text-sm font-sans ${
+                   period === opt.value
+                     ? 'bg-primary text-surface-base font-semibold'
+-                    : 'bg-surface-raised text-text-muted'
++                    : 'bg-surface-container-lowest text-text-muted'
+                 }`}
+                 aria-pressed={period === opt.value}
+               >
+@@ -190,11 +288,11 @@ export function LeaderboardPage() {
+           </div>
+ 
+           {/* Country filter */}
+-          <div className="mb-6">
++          <div className="relative w-56">
+             <select
+               value={country ?? ''}
+               onChange={(e) => handleCountryChange(e.target.value || null)}
+-              className="rounded-lg bg-surface-raised px-3 py-1.5 text-sm text-text-muted font-sans"
++              className="w-full appearance-none rounded-full bg-surface-container-lowest pl-4 pr-10 py-1.5 text-sm text-text-muted font-sans"
+               aria-label="Filtrar por país"
+             >
+               <option value="">Todos los países</option>
+@@ -202,13 +300,19 @@ export function LeaderboardPage() {
+                 <option key={c.code} value={c.code}>{c.name}</option>
+               ))}
+             </select>
++            <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[20px] leading-none text-text-muted" aria-hidden="true">
++              expand_more
++            </span>
+           </div>
++        </div>
+ 
++        {/* Tabla */}
++        <div className="rounded-card bg-surface-container-low p-6">
+           {/* Loading */}
+           {isLoading && (
+             <div className="space-y-3 py-4">
+               {Array.from({ length: 6 }).map((_, i) => (
+-                <div key={i} className="h-10 animate-pulse rounded-lg bg-surface-raised" />
++                <div key={i} className="h-10 animate-pulse rounded-full bg-surface-container-lowest" />
+               ))}
+             </div>
+           )}
+@@ -218,8 +322,9 @@ export function LeaderboardPage() {
+             <div className="py-8 text-center font-sans text-sm">
+               <p className="text-error">Error al cargar el ranking</p>
+               <button
++                type="button"
+                 onClick={() => refetch()}
+-                className="mt-3 rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted hover:text-text-main"
++                className="mt-3 rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted hover:text-text-main"
+               >
+                 Reintentar
+               </button>
+@@ -236,10 +341,10 @@ export function LeaderboardPage() {
+           {/* Table */}
+           {!isLoading && !isEmpty && leaderboard && (
+             <>
+-              <div className="overflow-x-auto">
++              <div className="overflow-hidden rounded-card">
+                 <table className="w-full font-sans text-sm">
+                   <thead>
+-                    <tr className="border-b border-surface-raised text-left text-xs uppercase tracking-wide text-text-muted">
++                    <tr className="text-left text-xs uppercase tracking-wide text-text-muted">
+                       <th className="pb-2 pr-4 w-12">#</th>
+                       <th className="pb-2 pr-4">Jugador</th>
+                       <th className="pb-2 pr-4 text-right">Nivel</th>
+@@ -248,43 +353,51 @@ export function LeaderboardPage() {
+                     </tr>
+                   </thead>
+                   <tbody>
+-                    {leaderboard.data.map((entry) => (
+-                      <tr
+-                        key={entry.userId}
+-                        className="relative border-b border-surface-raised last:border-0 hover:bg-surface-raised/50"
+-                      >
+-                        <td className="py-3 pr-4 font-semibold text-text-muted">
+-                          <Link
+-                            to={`/match/${entry.bestScoreMatchCode}`}
+-                            className="absolute inset-0 z-10"
+-                            aria-label={`Ver partida de ${entry.displayName}`}
+-                          />
+-                          {entry.position}
+-                        </td>
+-                        <td className="py-3 pr-4">
+-                          <div className="flex items-center gap-2">
+-                            <CountryFlag countryCode={entry.countryCode} size={16} />
+-                            {entry.avatarUrl ? (
+-                              <img
+-                                src={entry.avatarUrl}
+-                                alt={entry.displayName}
+-                                className="h-6 w-6 rounded-full object-cover"
+-                              />
+-                            ) : (
+-                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-surface-base">
+-                                {entry.displayName.charAt(0).toUpperCase()}
+-                              </span>
+-                            )}
+-                            <span className="text-text-main">{entry.displayName}</span>
+-                          </div>
+-                        </td>
+-                        <td className="py-3 pr-4 text-right text-text-muted">{getLevelName(entry.bestScoreLevel)}</td>
+-                        <td className="py-3 pr-4 text-right text-text-muted">{entry.bestScorePrecision}%</td>
+-                        <td className="py-3 text-right font-semibold text-primary">
+-                          {formatScore(entry.bestScore)}
+-                        </td>
+-                      </tr>
+-                    ))}
++                    {leaderboard.data.map((entry, index) => {
++                      const isOwnRow = !!user && entry.userId === user.id;
++                      const rowBg = isOwnRow
++                        ? 'bg-primary/10 font-semibold'
++                        : index % 2 === 0
++                          ? 'bg-surface-container-low/40'
++                          : '';
++                      return (
++                        <tr
++                          key={entry.userId}
++                          className={`relative ${rowBg}`}
++                        >
++                          <td className="py-3 pr-4 font-semibold text-text-muted">
++                            <Link
++                              to={`/match/${entry.bestScoreMatchCode}`}
++                              className="absolute inset-0 z-10"
++                              aria-label={`Ver partida de ${entry.displayName}`}
++                            />
++                            {entry.position}
++                          </td>
++                          <td className="py-3 pr-4">
++                            <div className="flex items-center gap-2">
++                              <CountryFlag countryCode={entry.countryCode} size={16} />
++                              {entry.avatarUrl ? (
++                                <img
++                                  src={entry.avatarUrl}
++                                  alt={entry.displayName}
++                                  className="h-6 w-6 rounded-full object-cover"
++                                />
++                              ) : (
++                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-surface-base">
++                                  {entry.displayName.charAt(0).toUpperCase()}
++                                </span>
++                              )}
++                              <span className="text-text-main">{entry.displayName}</span>
++                            </div>
++                          </td>
++                          <td className="py-3 pr-4 text-right text-text-muted">{getLevelName(entry.bestScoreLevel)}</td>
++                          <td className="py-3 pr-4 text-right text-text-muted">{entry.bestScorePrecision}%</td>
++                          <td className="py-3 text-right font-mono font-semibold text-primary">
++                            {formatScore(entry.bestScore)}
++                          </td>
++                        </tr>
++                      );
++                    })}
+                   </tbody>
+                 </table>
+               </div>
+@@ -293,9 +406,10 @@ export function LeaderboardPage() {
+               {totalPages > 1 && (
+                 <div className="mt-4 flex items-center justify-between">
+                   <button
++                    type="button"
+                     onClick={() => setPage((p) => p - 1)}
+                     disabled={page <= 1}
+-                    className="rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted font-sans disabled:cursor-not-allowed disabled:opacity-40"
++                    className="rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted font-sans disabled:cursor-not-allowed disabled:opacity-40"
+                     aria-label="Página anterior"
+                   >
+                     ← Anterior
+@@ -304,9 +418,10 @@ export function LeaderboardPage() {
+                     {page} / {totalPages}
+                   </span>
+                   <button
++                    type="button"
+                     onClick={() => setPage((p) => p + 1)}
+                     disabled={page >= totalPages}
+-                    className="rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted font-sans disabled:cursor-not-allowed disabled:opacity-40"
++                    className="rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted font-sans disabled:cursor-not-allowed disabled:opacity-40"
+                     aria-label="Página siguiente"
+                   >
+                     Siguiente →
+diff --git a/ultimatype-monorepo/apps/web/src/hooks/use-weekly-record.ts b/ultimatype-monorepo/apps/web/src/hooks/use-weekly-record.ts
+new file mode 100644
+index 0000000..7e0dc5c
+--- /dev/null
++++ b/ultimatype-monorepo/apps/web/src/hooks/use-weekly-record.ts
+@@ -0,0 +1,16 @@
++import { useQuery } from '@tanstack/react-query';
++import { apiClient } from '../lib/api-client';
++import { PaginatedResponse, LeaderboardEntryDto } from '@ultimatype-monorepo/shared';
++
++export function useWeeklyRecord() {
++  return useQuery({
++    queryKey: ['weekly-record'],
++    queryFn: async () => {
++      const result = await apiClient<PaginatedResponse<LeaderboardEntryDto>>(
++        '/leaderboard?period=7d&limit=1'
++      );
++      return result.data[0] ?? null;
++    },
++    staleTime: 5 * 60 * 1000,
++  });
++}

@@ -97,7 +97,9 @@
       "Read(//dev/**)",
       "Bash(npm uninstall:*)",
       "Bash(ls -d \"D:\\\\Progra\\\\Proyectos_personales\\\\UltimaType\\\\.agent\\\\skills\"/*)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(git diff:*)",
+      "Read(//tmp/**)"
     ]
   }
 }

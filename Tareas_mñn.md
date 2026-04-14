@@ -19,7 +19,10 @@
 - [ ] Que en una feature futura, se vean las salas jugando en este momento, y listar las salas y poder ingresar como espectador a esas salas
 - [ ] Que se pueda jugar desde celulares
 - [ ] Instalar traqueo
+- [ ] Revisar el SEO de cada página: home, leaderboar y perfil
 - [ ] sí soy invitado y me registro, cuándo estoy viendo los datos de una partida, esos datos de esa partida se guardan sí me acabo de registrar, ¿los demás jugadores en sus registros verán invitado o mi nombre?
+- [ ] Que los perfiles tengan niveles, y en cada nivel, diga su score máximo y wpm Y del error
+- [ ] Hacer una página para explicar el cálculo del score y el cálculo de wpm
 - [ ] que claudflare redirija www a apex
 - [ ] Añadir un registro manual de sesión de nombre, usuario y contraseña
 - [ ] Al terminar la Epic 4, solucionar todos los errores y warnings del servidor local
