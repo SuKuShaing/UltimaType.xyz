@@ -137,10 +137,9 @@ describe('PublicProfilePage', () => {
 
     expect(screen.getByText('210')).toBeTruthy();
     expect(screen.getByText('150.5')).toBeTruthy();
-    expect(screen.getByText('15')).toBeTruthy();
     expect(screen.getByText('Mejor Puntaje')).toBeTruthy();
     expect(screen.getByText('Puntaje Promedio')).toBeTruthy();
-    expect(screen.getByText('Total Partidas')).toBeTruthy();
+    expect(screen.getByText('— 15 Partidas')).toBeTruthy();
   });
 
   it('should show CTA for unauthenticated visitors', () => {
@@ -212,5 +211,27 @@ describe('PublicProfilePage', () => {
     render(<PublicProfilePage />);
 
     expect(screen.queryByTestId('cta-login')).toBeNull();
+  });
+
+  it('should show crear-partida CTA when own profile and no matches', () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { slug: 'ss-abc', email: 'seba@example.com', displayName: 'Seba' },
+    });
+
+    render(<PublicProfilePage />);
+
+    expect(screen.getByText('¡Crea una partida y empieza!')).toBeDefined();
+  });
+
+  it('should NOT show crear-partida CTA for other user profile with no matches', () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { slug: 'otro-slug', email: 'otro@example.com' },
+    });
+
+    render(<PublicProfilePage />);
+
+    expect(screen.queryByText('¡Crea una partida y empieza!')).toBeNull();
   });
 });

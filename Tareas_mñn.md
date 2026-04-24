@@ -2,6 +2,8 @@
 
 ## To Fix
 
+- [ ] Cuando volvamos al lobby usa el mismo código de sala, es decir la partida nueva reescribe la anterior?, sí jugué 3 partidas con mis amigos se guarda la última?, al ingresar a match/{code:room} qué resultado veré, el de la última partida; Cuando se juega con el mismo room se guarda solo la primera partidas, las demás no quedan guardadas
+
 ## Tareas
 
 - [ ] ver si el proyecto ultimate se puede pasar a cloudflare
@@ -18,6 +20,7 @@
 - [ ] Salas activas en el home, que diga el nivel y la cantidad de jugadores
 - [ ] Que en una feature futura, se vean las salas jugando en este momento, y listar las salas y poder ingresar como espectador a esas salas
 - [ ] Que se pueda jugar desde celulares
+- [ ] Que salga confetti cuando ganes o salgas en primer lugar
 - [ ] Instalar traqueo
 - [ ] Revisar el SEO de cada página: home, leaderboar y perfil
 - [ ] sí soy invitado y me registro, cuándo estoy viendo los datos de una partida, esos datos de esa partida se guardan sí me acabo de registrar, ¿los demás jugadores en sus registros verán invitado o mi nombre?
@@ -37,7 +40,6 @@
 ## Preguntas
 
 - [ ] Veríficar que los invitados no sean clickeables cuando haya invitados, ver el tema de qué es más ligero para el servidor, sí que diga simplemente invitado en el historial o sí sale el invitado exacto, con su número de invitado
-- [ ] Cuando volvamos al lobby usa el mismo código de sala, es decir la partida nueva reescribe la anterior?, sí jugué 3 partidas con mis amigos se guarda la última?, al ingresar a match/{code:room} qué resultado veré, el de la última partida
 - [ ] qué es este fallo "Los tests existentes siguen pasando (el fallo en game.gateway.spec.ts es
       pre-existente)"
 - [ ] Debo hacer algo con estos warning: "Build: exitoso. Los warnings son de source-maps de @nestjs/throttler,
@@ -55,6 +57,9 @@
 - [x] Falta cerrar sesión
 - [x] Al menú en mobile le falta padding
 - [x] Espacio insuficiente en el timer para más de 60 seg ![img](/Fix%20pendientes/espacio%20insuficiente%20en%20el%20timer%20para%20más%20de%2060%20seg.jpeg)
+- [x] En mac los caracteres acentuados no los detecta, y los pone erroneos, en windows si los detecta
+      Caracteres windows: í ú ó é á
+      Caracteres mac: í ú ó é á
 
 ### Tareas
 

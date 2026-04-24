@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MatchDetailPage } from './match-detail-page';
 import type { MatchDetailDto } from '@ultimatype-monorepo/shared';
+import { useMatchDetail } from '../../hooks/use-match-detail';
+import { useAuth } from '../../hooks/use-auth';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
@@ -18,8 +20,12 @@ vi.mock('../../hooks/use-match-detail', () => ({
   useMatchDetail: vi.fn(),
 }));
 
-import { useMatchDetail } from '../../hooks/use-match-detail';
+vi.mock('../../hooks/use-auth', () => ({
+  useAuth: vi.fn(),
+}));
+
 const mockUseMatchDetail = useMatchDetail as ReturnType<typeof vi.fn>;
+const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
 
 const defaultMatch: MatchDetailDto = {
   matchCode: 'ABC123',
@@ -58,6 +64,7 @@ const defaultMatch: MatchDetailDto = {
 beforeEach(() => {
   vi.clearAllMocks();
   mockUseMatchDetail.mockReturnValue({ data: defaultMatch, isLoading: false, isError: false });
+  mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
 });
 
 describe('MatchDetailPage', () => {
@@ -141,5 +148,21 @@ describe('MatchDetailPage', () => {
 
     fireEvent.click(screen.getByLabelText('Volver'));
     expect(mockNavigate).toHaveBeenCalledWith(-1);
+  });
+
+  it('muestra CTA para visitantes no autenticados', () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
+
+    render(<MatchDetailPage />);
+
+    expect(screen.getByText('Comienza a competir')).toBeDefined();
+  });
+
+  it('no muestra CTA para usuarios autenticados', () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'u1' } });
+
+    render(<MatchDetailPage />);
+
+    expect(screen.queryByText('Comienza a competir')).toBeNull();
   });
 });

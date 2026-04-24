@@ -2,6 +2,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { DIFFICULTY_LEVELS } from '@ultimatype-monorepo/shared';
 import { useMatchDetail } from '../../hooks/use-match-detail';
+import { useAuth } from '../../hooks/use-auth';
 
 function getLevelName(level: number): string {
   return DIFFICULTY_LEVELS.find((d) => d.level === level)?.name ?? `Nv.${level}`;
@@ -20,6 +21,7 @@ function formatDate(isoString: string): string {
 export function MatchDetailPage() {
   const { matchCode } = useParams<{ matchCode: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { data: match, isLoading, isError, refetch } = useMatchDetail(matchCode!);
 
   return (
@@ -29,14 +31,15 @@ export function MatchDetailPage() {
       </Helmet>
       <div className="w-full max-w-2xl">
         <button
-          className="mb-6 bg-transparent p-0 text-sm text-text-muted hover:text-text-main"
+          type="button"
+          className="mb-6 rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted hover:text-text-main"
           onClick={() => navigate(-1)}
           aria-label="Volver"
         >
           ← Volver
         </button>
 
-        <div className="rounded-2xl bg-surface-sunken p-8">
+        <div className="rounded-card bg-surface-container-low p-8">
           {isLoading && (
             <div className="space-y-4">
               <div className="h-8 w-48 animate-pulse rounded bg-surface-raised" />
@@ -51,8 +54,9 @@ export function MatchDetailPage() {
             <div className="py-8 text-center font-sans text-sm">
               <p className="text-error">Error al cargar la partida</p>
               <button
+                type="button"
                 onClick={() => refetch()}
-                className="mt-3 rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted hover:text-text-main"
+                className="mt-3 rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted hover:text-text-main"
               >
                 Reintentar
               </button>
@@ -73,7 +77,7 @@ export function MatchDetailPage() {
               <div className="overflow-x-auto">
                 <table className="w-full font-sans text-sm">
                   <thead>
-                    <tr className="border-b border-surface-raised text-left text-xs uppercase tracking-wide text-text-muted">
+                    <tr className="text-left text-xs uppercase tracking-wide text-text-muted">
                       <th className="pb-2 pr-4">#</th>
                       <th className="pb-2 pr-4">Jugador</th>
                       <th className="pb-2 pr-4">Puntaje</th>
@@ -86,7 +90,7 @@ export function MatchDetailPage() {
                     {match.participants.map((p, i) => (
                       <tr
                         key={i}
-                        className="border-b border-surface-raised last:border-0"
+                        className={`${i % 2 === 0 ? 'bg-surface-container-low/40' : ''}`}
                       >
                         <td className="py-3 pr-4 font-semibold text-text-muted">
                           {p.rank}
@@ -100,7 +104,7 @@ export function MatchDetailPage() {
                                 p.displayName.charAt(0).toUpperCase()
                               )}
                             </div>
-                            <span className="text-text-main hover:text-primary">{p.displayName}</span>
+                            <span className="text-primary hover:underline">{p.displayName}</span>
                           </Link>
                         </td>
                         <td className="py-3 pr-4 font-semibold text-primary">{p.score.toFixed(1)}</td>
@@ -117,6 +121,17 @@ export function MatchDetailPage() {
             </>
           )}
         </div>
+
+        {!isAuthenticated && !isLoading && !isError && match && (
+          <div className="mt-6 text-center">
+            <a
+              href="/api/auth/google"
+              className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-surface-base"
+            >
+              Comienza a competir
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -195,8 +195,9 @@ export function PublicProfilePage() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-surface-base font-sans text-text-main">
         <p className="text-lg text-text-muted">Usuario no encontrado</p>
         <button
+          type="button"
           onClick={() => navigate('/')}
-          className="mt-4 rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted hover:text-text-main"
+          className="mt-4 rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted hover:text-text-main"
         >
           Volver al inicio
         </button>
@@ -218,311 +219,350 @@ export function PublicProfilePage() {
       <div className="w-full max-w-2xl 2xl:max-w-5xl">
         <div className="flex flex-col gap-6 2xl:grid 2xl:grid-cols-[2fr_3fr] 2xl:items-start">
           {/* Hero */}
-        <div className="rounded-2xl bg-surface-sunken p-8 text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-surface-raised text-3xl font-semibold text-primary">
-            {profile.avatarUrl ? (
-              <img
-                src={profile.avatarUrl}
-                alt={`Avatar de ${profile.displayName}`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              displayInitials
-            )}
-          </div>
-          <h1 className="text-2xl font-semibold">{profile.displayName}</h1>
-          {user?.email && isOwnProfile && (
-            <div className="mt-1 text-sm text-text-muted">{user.email}</div>
-          )}
-          <div className="mt-2 flex items-center justify-center gap-2 text-sm text-text-muted">
-            <CountryFlag countryCode={profile.countryCode} size={16} />
-            <span>{formatMemberSince(profile.createdAt)}</span>
-          </div>
-
-          {/* Edit panel — only shown for own profile */}
-          {isOwnProfile && (
-            <div className="mt-6 rounded-xl bg-surface-base p-6 text-left">
-              {/* Slug */}
-              <div className="mb-5">
-                <label htmlFor="slug-input" className="mb-2 block text-xs uppercase tracking-wide text-text-muted">
-                  Slug (URL pública)
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-text-muted">ultimatype.xyz/u/</span>
-                  <input
-                    id="slug-input"
-                    type="text"
-                    value={slugInput}
-                    onChange={(e) => handleSlugChange(e.target.value)}
-                    className="flex-1 rounded-lg bg-surface-raised px-3 py-2 text-sm text-text-main"
-                    maxLength={30}
-                    aria-label="Editar slug"
-                    data-testid="slug-input"
-                  />
-                </div>
-                {slugDirty && slugChanged && slugInput.length >= 3 && (
-                  <div className="mt-1 text-xs" data-testid="slug-status">
-                    {!slugValid && <span className="text-error">Formato inválido</span>}
-                    {slugValid && isCheckingSlug && <span className="text-text-muted">Verificando...</span>}
-                    {slugValid && !isCheckingSlug && slugAvailable && <span className="text-success">Disponible</span>}
-                    {slugValid && !isCheckingSlug && !slugAvailable && <span className="text-error">No disponible</span>}
-                  </div>
-                )}
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href);
-                    setLinkCopied(true);
-                    if (linkCopiedTimerRef.current) clearTimeout(linkCopiedTimerRef.current);
-                    linkCopiedTimerRef.current = setTimeout(() => setLinkCopied(false), 2000);
-                  }}
-                  className="mt-1 text-xs text-primary hover:underline"
-                >
-                  {linkCopied ? '¡Enlace copiado!' : 'Copiar enlace'}
-                </button>
-              </div>
-
-              {/* Country */}
-              <div className="mb-5">
-                <label htmlFor="country-select" className="mb-2 block text-xs uppercase tracking-wide text-text-muted">
-                  País
-                </label>
-                {!selectedCountry && currentCountryName && (
-                  <div className="mb-2 text-sm">{currentCountryName}</div>
-                )}
-                {!selectedCountry && !profile.countryCode && (
-                  <div className="mb-2 text-sm italic text-text-muted">Sin país asignado</div>
-                )}
-                <select
-                  id="country-select"
-                  className="w-full appearance-none rounded-lg bg-surface-raised px-4 py-3 text-sm text-text-main font-sans"
-                  value={effectiveCountry}
-                  onChange={(e) => handleCountryChange(e.target.value)}
-                  aria-label="Seleccionar país"
-                >
-                  <option value="">Seleccionar país...</option>
-                  {COUNTRIES.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Save */}
-              <button
-                className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-surface-base font-sans disabled:cursor-not-allowed disabled:opacity-40"
-                onClick={handleSave}
-                disabled={
-                  !hasChanged ||
-                  mutation.isPending ||
-                  (slugChanged && slugValid && (isCheckingSlug || !slugAvailable))
-                }
-                aria-label="Guardar cambios de perfil"
-              >
-                {mutation.isPending ? '_' : 'Guardar cambios'}
-              </button>
-
-              {successMessage && (
-                <div className="mt-3 text-center text-sm text-success">{successMessage}</div>
-              )}
-              {mutation.isError && (
-                <div className="mt-3 text-center text-sm text-error">
-                  Error al guardar. Intenta nuevamente.
-                </div>
+          <div className="rounded-card-lg bg-surface-container-low p-8 text-center">
+            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-3xl font-bold text-primary">
+              {profile.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={`Avatar de ${profile.displayName}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                displayInitials
               )}
             </div>
-          )}
+            <h1 className="text-4xl font-bold">{profile.displayName}</h1>
+            {user?.email && isOwnProfile && (
+              <div className="mt-1 text-sm text-text-muted">{user.email}</div>
+            )}
+            {isOwnProfile && (
+              <div className="mt-0.5 text-xs text-text-muted opacity-50">Tu email no es visible para otros</div>
+            )}
+            <div className="mt-2 flex items-center justify-center gap-2 text-sm text-text-muted">
+              <CountryFlag countryCode={profile.countryCode} size={16} />
+              <span>{formatMemberSince(profile.createdAt)}</span>
+            </div>
 
-          {/* CTA — only for unauthenticated visitors */}
-          {!isAuthenticated && (
-            <a
-              href="/api/auth/google"
-              className="mt-6 inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-surface-base"
-              data-testid="cta-login"
-            >
-              Comienza a competir
-            </a>
-          )}
-        </div>
+            {/* Edit panel — only shown for own profile */}
+            {isOwnProfile && (
+              <div className="mt-6 rounded-card bg-surface-container-lowest p-6 text-left">
+                {/* Slug */}
+                <div className="mb-5">
+                  <label htmlFor="slug-input" className="mb-2 block text-xs uppercase tracking-wide text-text-muted">
+                    Slug (URL pública)
+                  </label>
+                  <div className="flex items-center rounded-full bg-surface-container-low px-4 py-2">
+                    <span className="shrink-0 text-sm text-text-muted">ultimatype.xyz/u/</span>
+                    <input
+                      id="slug-input"
+                      type="text"
+                      value={slugInput}
+                      onChange={(e) => handleSlugChange(e.target.value)}
+                      className="min-w-0 flex-1 bg-transparent text-sm text-text-main focus:outline-none"
+                      maxLength={30}
+                      aria-label="Editar slug"
+                      data-testid="slug-input"
+                    />
+                  </div>
+                  {slugDirty && slugChanged && slugInput.length >= 3 && (
+                    <div className="mt-1 text-xs" data-testid="slug-status">
+                      {!slugValid && <span className="text-error">Formato inválido</span>}
+                      {slugValid && isCheckingSlug && <span className="text-text-muted">Verificando...</span>}
+                      {slugValid && !isCheckingSlug && slugAvailable && <span className="text-success">Disponible</span>}
+                      {slugValid && !isCheckingSlug && !slugAvailable && <span className="text-error">No disponible</span>}
+                    </div>
+                  )}
+                  {/* Shareable link pill */}
+                  <div className="mt-2 flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2">
+                    <span className="flex-1 truncate text-xs text-text-muted">
+                      {typeof window !== 'undefined' ? window.location.href : ''}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        setLinkCopied(true);
+                        if (linkCopiedTimerRef.current) clearTimeout(linkCopiedTimerRef.current);
+                        linkCopiedTimerRef.current = setTimeout(() => setLinkCopied(false), 2000);
+                      }}
+                      className="shrink-0 text-primary"
+                      aria-label="Copiar enlace"
+                    >
+                      {linkCopied ? (
+                        <span className="text-xs font-semibold text-success">¡Copiado!</span>
+                      ) : (
+                        <span className="material-symbols-outlined text-base" aria-hidden="true">content_copy</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Country */}
+                <div className="mb-5">
+                  <label htmlFor="country-select" className="mb-2 block text-xs uppercase tracking-wide text-text-muted">
+                    País
+                  </label>
+                  {!selectedCountry && currentCountryName && (
+                    <div className="mb-2 text-sm">{currentCountryName}</div>
+                  )}
+                  {!selectedCountry && !profile.countryCode && (
+                    <div className="mb-2 text-sm italic text-text-muted">Sin país asignado</div>
+                  )}
+                  <select
+                    id="country-select"
+                    className="w-full appearance-none rounded-full bg-surface-container-lowest px-4 py-3 text-sm text-text-main font-sans"
+                    value={effectiveCountry}
+                    onChange={(e) => handleCountryChange(e.target.value)}
+                    aria-label="Seleccionar país"
+                  >
+                    <option value="">Seleccionar país...</option>
+                    {COUNTRIES.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Save */}
+                <button
+                  type="button"
+                  className="w-full rounded-full bg-primary px-6 py-3 text-sm font-semibold text-surface-base font-sans disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={handleSave}
+                  disabled={
+                    !hasChanged ||
+                    mutation.isPending ||
+                    (slugChanged && slugValid && (isCheckingSlug || !slugAvailable))
+                  }
+                  aria-label="Guardar cambios de perfil"
+                >
+                  {mutation.isPending ? '_' : 'Guardar cambios'}
+                </button>
+
+                {successMessage && (
+                  <div className="mt-3 text-center text-sm text-success">{successMessage}</div>
+                )}
+                {mutation.isError && (
+                  <div className="mt-3 text-center text-sm text-error">
+                    Error al guardar. Intenta nuevamente.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* CTA — only for unauthenticated visitors */}
+            {!isAuthenticated && (
+              <a
+                href="/api/auth/google"
+                className="mt-6 inline-block rounded-full bg-primary px-6 py-3 text-sm font-semibold text-surface-base"
+                data-testid="cta-login"
+              >
+                Comienza a competir
+              </a>
+            )}
+          </div>
 
           {/* Columna derecha: ranking + stats + historia */}
           <div className="flex flex-col gap-6">
-        {/* Ranking positions */}
-        {(isPositionLoading || position) && (
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              {
-                label: 'Posición Global',
-                value: position ? `#${position.globalRank}` : '—',
-                sub: position ? `de ${position.globalTotal} jugadores` : null,
-              },
-              {
-                label: position?.countryCode
-                  ? (COUNTRIES.find((c) => c.code === position.countryCode)?.name ?? 'Posición Nacional')
-                  : 'Posición Nacional',
-                value: position?.countryRank != null ? `#${position.countryRank}` : '—',
-                sub: position?.countryTotal != null ? `de ${position.countryTotal} jugadores` : null,
-              },
-            ].map(({ label, value, sub }) => (
-              <div key={label} className="rounded-xl bg-surface-sunken p-4 text-center">
-                {isPositionLoading ? (
-                  <div className="mx-auto h-8 w-16 animate-pulse rounded bg-surface-raised" />
-                ) : (
-                  <>
-                    <div className="text-2xl font-semibold text-primary">{value}</div>
-                    {sub && <div className="mt-0.5 text-xs text-text-muted">{sub}</div>}
-                  </>
-                )}
-                <div className="mt-1 text-xs uppercase tracking-wide text-text-muted">{label}</div>
+            {/* Ranking positions */}
+            {(isPositionLoading || position) && (
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  {
+                    label: 'Posición Global',
+                    value: position ? `#${position.globalRank}` : '—',
+                    sub: position ? `de ${position.globalTotal} jugadores` : null,
+                  },
+                  {
+                    label: position?.countryCode
+                      ? (COUNTRIES.find((c) => c.code === position.countryCode)?.name ?? 'Posición Nacional')
+                      : 'Posición Nacional',
+                    value: position?.countryRank != null ? `#${position.countryRank}` : '—',
+                    sub: position?.countryTotal != null ? `de ${position.countryTotal} jugadores` : null,
+                  },
+                ].map(({ label, value, sub }) => (
+                  <div key={label} className="rounded-card bg-surface-container-low p-4 text-center">
+                    {isPositionLoading ? (
+                      <div className="mx-auto h-8 w-16 animate-pulse rounded bg-surface-raised" />
+                    ) : (
+                      <>
+                        <div className="text-4xl font-bold text-primary font-mono">{value}</div>
+                        {sub && <div className="mt-0.5 text-xs text-text-muted">{sub}</div>}
+                      </>
+                    )}
+                    <div className="mt-1 text-xs uppercase tracking-wide text-text-muted">{label}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
 
-        {/* Stats — se actualizan con los filtros de período y nivel */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-          {[
-            { label: 'Mejor Puntaje', value: stats?.bestScore ?? '—', tooltip: undefined },
-            { label: 'Puntaje Promedio', value: stats?.avgScore ?? '—', tooltip: undefined },
-            { label: 'Precisión Prom.', value: stats?.avgPrecision != null ? `${stats.avgPrecision}%` : '—', tooltip: 'Precisión promedio' },
-            { label: 'WPM', value: stats?.avgWpm ?? '—', tooltip: 'Palabras por minuto' },
-            { label: 'Total Partidas', value: stats?.totalMatches ?? '—', tooltip: undefined },
-          ].map(({ label, value, tooltip }) => (
-            <div key={label} title={tooltip} className="rounded-xl bg-surface-sunken p-4 text-center">
-              {isStatsLoading ? (
-                <div className="mx-auto h-8 w-16 animate-pulse rounded bg-surface-raised" />
-              ) : (
-                <div className="text-2xl font-semibold text-primary">{value}</div>
-              )}
-              <div className="mt-1 text-xs uppercase tracking-wide text-text-muted">{label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Match History */}
-        <div className="rounded-2xl bg-surface-sunken p-8">
-          <h2 className="mb-6 text-lg font-semibold">Historial de partidas</h2>
-
-          {/* Period filter */}
-          <div className="mb-3 flex flex-wrap gap-2">
-            {PERIOD_OPTIONS.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => handlePeriodChange(value)}
-                className={`rounded-lg px-3 py-1.5 text-sm ${
-                  period === value
-                    ? 'bg-primary text-surface-base font-semibold'
-                    : 'bg-surface-raised text-text-muted'
-                }`}
-                aria-pressed={period === value}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Level filter */}
-          <div className="mb-6 flex flex-wrap gap-2">
-            <button
-              onClick={() => handleLevelChange(null)}
-              className={`rounded-lg px-3 py-1.5 text-sm ${
-                level === null
-                  ? 'bg-primary text-surface-base font-semibold'
-                  : 'bg-surface-raised text-text-muted'
-              }`}
-              aria-pressed={level === null}
-            >
-              Todos los niveles
-            </button>
-            {DIFFICULTY_LEVELS.map((d) => (
-              <button
-                key={d.level}
-                onClick={() => handleLevelChange(d.level)}
-                className={`rounded-lg px-3 py-1.5 text-sm ${
-                  level === d.level
-                    ? 'bg-primary text-surface-base font-semibold'
-                    : 'bg-surface-raised text-text-muted'
-                }`}
-                aria-pressed={level === d.level}
-              >
-                {d.level} {d.name}
-              </button>
-            ))}
-          </div>
-
-          {isHistoryLoading && (
-            <div className="space-y-3 py-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-10 animate-pulse rounded-lg bg-surface-raised" />
+            {/* Stats — se actualizan con los filtros de período y nivel */}
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {[
+                { label: 'Mejor Puntaje', value: stats?.bestScore != null ? stats.bestScore : '—', tooltip: undefined },
+                { label: 'Puntaje Promedio', value: stats?.avgScore != null ? stats.avgScore : '—', tooltip: undefined },
+                { label: 'Precisión Prom.', value: stats?.avgPrecision != null ? `${stats.avgPrecision}%` : '—', tooltip: 'Precisión promedio' },
+                { label: 'WPM', value: stats?.avgWpm != null ? stats.avgWpm : '—', tooltip: 'Palabras por minuto' },
+              ].map(({ label, value, tooltip }) => (
+                <div key={label} title={tooltip} className="rounded-card bg-surface-container-lowest p-4 text-center">
+                  {isStatsLoading ? (
+                    <div className="mx-auto h-8 w-16 animate-pulse rounded bg-surface-raised" />
+                  ) : (
+                    <div className={`text-2xl font-bold font-mono ${value === '—' ? 'text-text-muted' : 'text-primary'}`}>{value}</div>
+                  )}
+                  <div className="mt-1 text-xs uppercase tracking-wide text-text-muted">{label}</div>
+                </div>
               ))}
             </div>
-          )}
 
-          {!isHistoryLoading && isEmpty && (
-            <div className="py-8 text-center text-sm italic text-text-muted">
-              Sin partidas registradas
-            </div>
-          )}
+            {/* Match History */}
+            <div className="rounded-card bg-surface-container-low p-8">
+              <h2 className="mb-6 text-xs font-semibold uppercase tracking-wider text-text-muted">
+                Historial de Partidas
+                {!isStatsLoading && stats?.totalMatches != null && (
+                  <span className="ml-2 normal-case">
+                    — {stats.totalMatches} {stats.totalMatches === 1 ? 'Partida' : 'Partidas'}
+                  </span>
+                )}
+              </h2>
 
-          {!isHistoryLoading && !isEmpty && history && (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-raised text-left text-xs uppercase tracking-wide text-text-muted">
-                      <th className="pb-2 pr-4">Puntaje</th>
-                      <th className="pb-2 pr-4">WPM</th>
-                      <th className="pb-2 pr-4">Precisión</th>
-                      <th className="pb-2 pr-4">Nivel</th>
-                      <th className="pb-2 pr-4">Rank</th>
-                      <th className="pb-2">Fecha</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.data.map((r) => (
-                      <tr
-                        key={r.id}
-                        onClick={() => navigate(`/match/${r.matchCode}`)}
-                        className="cursor-pointer border-b border-surface-raised last:border-0 hover:bg-surface-raised/50"
-                      >
-                        <td className="py-3 pr-4 font-semibold text-primary">{r.score.toFixed(1)}</td>
-                        <td className="py-3 pr-4 text-text-main">{r.wpm.toFixed(1)}</td>
-                        <td className="py-3 pr-4 text-text-main">{r.precision}%</td>
-                        <td className="py-3 pr-4 text-text-muted">{getLevelName(r.level)}</td>
-                        <td className="py-3 pr-4 text-text-muted">#{r.rank}</td>
-                        <td className="py-3 text-text-muted">{formatDate(r.createdAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Period filter */}
+              <div className="mb-3 flex flex-wrap gap-2">
+                {PERIOD_OPTIONS.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => handlePeriodChange(value)}
+                    className={`rounded-full px-3 py-1.5 text-sm ${
+                      period === value
+                        ? 'bg-primary text-surface-base font-semibold'
+                        : 'bg-surface-container-lowest text-text-muted'
+                    }`}
+                    aria-pressed={period === value}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
 
-              {totalPages > 1 && (
-                <div className="mt-4 flex items-center justify-between">
+              {/* Level filter */}
+              <div className="mb-6 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleLevelChange(null)}
+                  className={`rounded-full px-3 py-1.5 text-sm ${
+                    level === null
+                      ? 'bg-primary text-surface-base font-semibold'
+                      : 'bg-surface-container-lowest text-text-muted'
+                  }`}
+                  aria-pressed={level === null}
+                >
+                  Todos los niveles
+                </button>
+                {DIFFICULTY_LEVELS.map((d) => (
                   <button
-                    onClick={() => setPage((p) => p - 1)}
-                    disabled={page <= 1}
-                    className="rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Página anterior"
+                    key={d.level}
+                    type="button"
+                    onClick={() => handleLevelChange(d.level)}
+                    className={`rounded-full px-3 py-1.5 text-sm ${
+                      level === d.level
+                        ? 'bg-primary text-surface-base font-semibold'
+                        : 'bg-surface-container-lowest text-text-muted'
+                    }`}
+                    aria-pressed={level === d.level}
                   >
-                    ← Anterior
+                    {d.level} {d.name}
                   </button>
-                  <span className="text-sm text-text-muted">
-                    {page} / {totalPages}
-                  </span>
+                ))}
+              </div>
+
+              {isHistoryLoading && (
+                <div className="space-y-3 py-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-10 animate-pulse rounded-lg bg-surface-raised" />
+                  ))}
+                </div>
+              )}
+
+              {!isHistoryLoading && isEmpty && (
+                <div className="py-8 text-center text-sm italic text-text-muted">
+                  Sin partidas registradas
+                </div>
+              )}
+
+              {!isHistoryLoading && isEmpty && isOwnProfile && (
+                <div className="text-center">
                   <button
-                    onClick={() => setPage((p) => p + 1)}
-                    disabled={page >= totalPages}
-                    className="rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Página siguiente"
+                    type="button"
+                    onClick={() => navigate('/')}
+                    className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-surface-base"
                   >
-                    Siguiente →
+                    ¡Crea una partida y empieza!
                   </button>
                 </div>
               )}
-            </>
-          )}
-        </div>
+
+              {!isHistoryLoading && !isEmpty && history && (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs uppercase tracking-wide text-text-muted">
+                          <th className="pb-2 pr-4">Puntaje</th>
+                          <th className="pb-2 pr-4">WPM</th>
+                          <th className="pb-2 pr-4">Precisión</th>
+                          <th className="pb-2 pr-4">Nivel</th>
+                          <th className="pb-2 pr-4">Rank</th>
+                          <th className="pb-2">Fecha</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {history.data.map((r, index) => (
+                          <tr
+                            key={r.id}
+                            onClick={() => navigate(`/match/${r.matchCode}`)}
+                            className={`cursor-pointer ${index % 2 === 0 ? 'bg-surface-container-low/40' : ''} hover:bg-surface-raised/30`}
+                          >
+                            <td className="py-3 pr-4 font-semibold text-primary">{r.score.toFixed(1)}</td>
+                            <td className="py-3 pr-4 text-text-main">{r.wpm.toFixed(1)}</td>
+                            <td className="py-3 pr-4 text-text-main">{r.precision}%</td>
+                            <td className="py-3 pr-4 text-text-muted">{getLevelName(r.level)}</td>
+                            <td className="py-3 pr-4 text-text-muted">#{r.rank}</td>
+                            <td className="py-3 text-text-muted">{formatDate(r.createdAt)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="mt-4 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setPage((p) => p - 1)}
+                        disabled={page <= 1}
+                        className="rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label="Página anterior"
+                      >
+                        ← Anterior
+                      </button>
+                      <span className="text-sm text-text-muted">
+                        {page} / {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPage((p) => p + 1)}
+                        disabled={page >= totalPages}
+                        className="rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label="Página siguiente"
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

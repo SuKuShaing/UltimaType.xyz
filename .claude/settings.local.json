@@ -99,7 +99,8 @@
       "Bash(ls -d \"D:\\\\Progra\\\\Proyectos_personales\\\\UltimaType\\\\.agent\\\\skills\"/*)",
       "Bash(xargs ls:*)",
       "Bash(git diff:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(xargs cat *)"
     ]
   }
 }

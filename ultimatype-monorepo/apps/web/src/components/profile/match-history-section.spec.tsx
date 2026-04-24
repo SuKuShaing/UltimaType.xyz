@@ -211,6 +211,13 @@ describe('MatchHistorySection', () => {
     expect(screen.getByText('1 / 3')).toBeDefined();
   });
 
+  it('los botones de filtro tienen rounded-full', () => {
+    render(<MatchHistorySection />);
+
+    const btn = screen.getByRole('button', { name: /Todo el tiempo/i });
+    expect(btn.className.includes('rounded-full')).toBe(true);
+  });
+
   it('click en una fila navega a /match/:matchCode', () => {
     const matchData: PaginatedResponse<MatchResultDto> = {
       data: [makeHistoryResult({ matchCode: 'XYZ789' })],

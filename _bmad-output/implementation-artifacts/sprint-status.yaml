@@ -35,7 +35,8 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26T17:35:14-03:00
-last_updated: 2026-04-14T18:20:00-03:00
+last_updated: 2026-04-24T18:35:00-03:00
+# 2026-04-24: Story 5-13 implementation complete, set to review (421 web tests passing). Frontend-only: Design System "Kinetic Monospace" aplicado a public-profile-page, match-history-section, match-detail-page. rounded-card/rounded-full/bg-surface-container-low/lowest tokens. No-Line Rule en 3 tablas. CTA no-auth en match-detail. CTA crear-partida en propio perfil sin historial. Enlace compartible rediseñado con pill + content_copy icon. 5 nuevos tests.
 # 2026-04-14: Story 5-12 code review complete, set to done. 2 decisions resueltas (grid 2-col aceptado, emojis + aria-hidden). 20 patches triaged: 7 aplicados (Rankings Globales es en lugar de Global Rankings, Récord de la semana sin "Tu", filtros/tabla → bg-surface-sunken unificado, isError distinguished from empty en useWeeklyRecord, test 7.4/7.6 actualizados, duplicate assert #5 eliminado, test CTA duplicado eliminado, overflow-x-auto restaurado con wrapper anidado, emojis aria-hidden), 8 rechazados por override del usuario (avatar del Récord, estilo nombre text-primary, heading uppercase, rank font-bold, tests asociados en cascada). 2 defers confirmados (percentil mobile, material-symbols fallback — self-hosting a evaluar en retro Epic 5). Tests 36/36 en leaderboard-page.spec passing. 0 nuevos errores lint.
 # 2026-04-13: Story 5-12 implementation complete, set to review (418 web tests passing). Frontend-only: header GLOBAL RANKINGS + Puntajes Históricos, Récord de la Semana hero card (use-weekly-record hook), Tu Posición Global restyled (CTA no-auth + LoginModal), filter pills rounded-full surface-container-lowest, No-Line Rule tabla (alternación tonal + bg-primary/10 fila propia + 0 border-b), rounded-card containers, pagination rounded-full. 8 nuevos tests.
 # 2026-04-13: Story 5-12 created (leaderboard-page-visual-design), set to ready-for-dev. Frontend-only: header redesign (GLOBAL RANKINGS + Puntajes Históricos), Récord de la Semana hero card (GET /api/leaderboard?period=7d&limit=1), Tu Posición Global restyled (display-scale rank, CTA para no-auth), filter pills rounded-full surface-container-lowest, No-Line Rule tabla (alternación tonal, bg-primary/10 fila propia), rounded-card containers.
@@ -180,6 +181,6 @@ development_status:
   5-10-arena-visual-restyling: done
   5-11-match-results-overlay-redesign: done
   5-12-leaderboard-page-visual-design: done
-  5-13-profile-and-public-profile-visual-polish: backlog
+  5-13-profile-and-public-profile-visual-polish: review
   5-14-dynamic-og-image-generation: backlog
   epic-5-retrospective: optional

@@ -47,8 +47,8 @@ export function MatchHistorySection() {
   const totalPages = history?.meta.totalPages ?? 1;
 
   return (
-    <div className="rounded-2xl bg-surface-sunken p-8">
-      <h2 className="mb-6 text-lg font-semibold text-text-main font-sans">Historial de partidas</h2>
+    <div className="rounded-card bg-surface-container-low p-8">
+      <h2 className="mb-6 text-xs font-semibold uppercase tracking-wider text-text-muted font-sans">Historial de Partidas</h2>
 
       {/* Stats row */}
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -58,11 +58,11 @@ export function MatchHistorySection() {
           { label: 'Precisión Promedio', value: stats ? `${stats.avgPrecision}%` : '0%' },
           { label: 'Total Partidas', value: stats?.totalMatches ?? 0 },
         ].map(({ label, value }) => (
-          <div key={label} className="rounded-xl bg-surface-raised p-4 text-center">
+          <div key={label} className="rounded-card bg-surface-container-lowest p-4 text-center">
             {isStatsLoading ? (
-              <div className="mx-auto h-8 w-16 animate-pulse rounded bg-surface-sunken" />
+              <div className="mx-auto h-8 w-16 animate-pulse rounded bg-surface-raised" />
             ) : (
-              <div className="text-2xl font-semibold text-primary font-sans">{value}</div>
+              <div className="text-4xl font-bold text-primary font-mono font-sans">{value}</div>
             )}
             <div className="mt-1 text-xs uppercase tracking-wide text-text-muted font-sans">{label}</div>
           </div>
@@ -74,11 +74,12 @@ export function MatchHistorySection() {
         {PERIOD_OPTIONS.map(({ value, label }) => (
           <button
             key={value}
+            type="button"
             onClick={() => handlePeriodChange(value)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-sans ${
+            className={`rounded-full px-3 py-1.5 text-sm font-sans ${
               period === value
                 ? 'bg-primary text-surface-base font-semibold'
-                : 'bg-surface-raised text-text-muted'
+                : 'bg-surface-container-lowest text-text-muted'
             }`}
             aria-pressed={period === value}
           >
@@ -90,11 +91,12 @@ export function MatchHistorySection() {
       {/* Level filter */}
       <div className="mb-6 flex flex-wrap gap-2">
         <button
+          type="button"
           onClick={() => handleLevelChange(null)}
-          className={`rounded-lg px-3 py-1.5 text-sm font-sans ${
+          className={`rounded-full px-3 py-1.5 text-sm font-sans ${
             level === null
               ? 'bg-primary text-surface-base font-semibold'
-              : 'bg-surface-raised text-text-muted'
+              : 'bg-surface-container-lowest text-text-muted'
           }`}
           aria-pressed={level === null}
         >
@@ -103,11 +105,12 @@ export function MatchHistorySection() {
         {DIFFICULTY_LEVELS.map((d) => (
           <button
             key={d.level}
+            type="button"
             onClick={() => handleLevelChange(d.level)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-sans ${
+            className={`rounded-full px-3 py-1.5 text-sm font-sans ${
               level === d.level
                 ? 'bg-primary text-surface-base font-semibold'
-                : 'bg-surface-raised text-text-muted'
+                : 'bg-surface-container-lowest text-text-muted'
             }`}
             aria-pressed={level === d.level}
           >
@@ -129,8 +132,9 @@ export function MatchHistorySection() {
         <div className="py-8 text-center font-sans text-sm">
           <p className="text-error">Error al cargar el historial</p>
           <button
+            type="button"
             onClick={() => refetch()}
-            className="mt-3 rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted hover:text-text-main"
+            className="mt-3 rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted hover:text-text-main"
           >
             Reintentar
           </button>
@@ -154,7 +158,7 @@ export function MatchHistorySection() {
           <div className="overflow-x-auto">
             <table className="w-full font-sans text-sm">
               <thead>
-                <tr className="border-b border-surface-raised text-left text-xs uppercase tracking-wide text-text-muted">
+                <tr className="text-left text-xs uppercase tracking-wide text-text-muted">
                   <th className="pb-2 pr-4">Puntaje</th>
                   <th className="pb-2 pr-4">WPM</th>
                   <th className="pb-2 pr-4">Precisión</th>
@@ -164,11 +168,11 @@ export function MatchHistorySection() {
                 </tr>
               </thead>
               <tbody>
-                {history.data.map((r) => (
+                {history.data.map((r, index) => (
                   <tr
                     key={r.id}
                     onClick={() => navigate(`/match/${r.matchCode}`)}
-                    className="cursor-pointer border-b border-surface-raised last:border-0 hover:bg-surface-raised/50"
+                    className={`cursor-pointer ${index % 2 === 0 ? 'bg-surface-container-low/40' : ''} hover:bg-surface-raised/30`}
                   >
                     <td className="py-3 pr-4 font-semibold text-primary">{r.score.toFixed(1)}</td>
                     <td className="py-3 pr-4 text-text-main">{r.wpm.toFixed(1)}</td>
@@ -188,9 +192,10 @@ export function MatchHistorySection() {
           {totalPages > 1 && (
             <div className="mt-4 flex items-center justify-between">
               <button
+                type="button"
                 onClick={() => setPage((p) => p - 1)}
                 disabled={page <= 1}
-                className="rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted font-sans disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted font-sans disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Página anterior"
               >
                 ← Anterior
@@ -199,9 +204,10 @@ export function MatchHistorySection() {
                 {page} / {totalPages}
               </span>
               <button
+                type="button"
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page >= totalPages}
-                className="rounded-lg bg-surface-raised px-4 py-2 text-sm text-text-muted font-sans disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted font-sans disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Página siguiente"
               >
                 Siguiente →
