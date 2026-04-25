@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Socket } from 'socket.io-client';
 import { connectSocket, disconnectSocket } from '../lib/socket';
 import { arenaStore } from './use-arena-store';
@@ -9,6 +10,7 @@ import {
   MAX_SPECTATORS,
   MatchStartPayload,
   RejoinStatePayload,
+  RoomMigratedPayload,
 } from '@ultimatype-monorepo/shared';
 
 interface LobbyNotificationPayload {
@@ -62,6 +64,7 @@ function buildErrorMessage(data: LobbyErrorPayload): string {
 }
 
 export function useLobby(code: string, userId?: string, spectateMode = false): UseLobbyReturn {
+  const navigate = useNavigate();
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -78,6 +81,9 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
   const pendingRejoinRef = useRef<string | null>(null);
   const hasJoinedRef = useRef(false);
   const pendingJoinAsPlayerRef = useRef(false);
+  const isMigratingRef = useRef(false);
+  const hasReceivedStateRef = useRef(false);
+  const finishedRedirectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     matchStartedRef.current = matchStarted;
@@ -141,6 +147,7 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
     s.io.on('reconnect_failed', handleReconnectFailed);
 
     s.on(WS_EVENTS.LOBBY_STATE, (state: RoomState) => {
+      hasReceivedStateRef.current = true;
       setRoomState(state);
       setError(null);
       setIsSwitchingRole(false);
@@ -164,6 +171,16 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
     s.on(WS_EVENTS.LOBBY_ERROR, (data: LobbyErrorPayload) => {
       setError(buildErrorMessage(data));
       setIsSwitchingRole(false);
+      if (
+        data.code === ROOM_ERROR_CODES.ROOM_NOT_FOUND &&
+        !hasReceivedStateRef.current &&
+        !finishedRedirectRef.current
+      ) {
+        finishedRedirectRef.current = setTimeout(() => {
+          finishedRedirectRef.current = null;
+          navigate('/', { replace: true });
+        }, 2000);
+      }
     });
 
     s.on(WS_EVENTS.MATCH_START, (data: MatchStartPayload) => {
@@ -181,6 +198,15 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
 
     s.on(WS_EVENTS.LOBBY_MOVED_TO_SPECTATOR, (data: LobbyNotificationPayload) => {
       setMovedToSpectatorMessage(data.message ?? 'El host te cambió a espectador');
+    });
+
+    s.on(WS_EVENTS.ROOM_MIGRATED, ({ oldCode, newCode }: RoomMigratedPayload) => {
+      if (oldCode !== code) return;
+      isMigratingRef.current = true;
+      arenaStore.getState().reset();
+      setMatchStarted(false);
+      setMatchData(null);
+      navigate(`/room/${newCode}`, { replace: true });
     });
 
     if (s.connected) {
@@ -206,7 +232,18 @@ export function useLobby(code: string, userId?: string, spectateMode = false): U
       s.off(WS_EVENTS.LOBBY_AUTO_SPECTATE);
       s.off(WS_EVENTS.LOBBY_KICKED);
       s.off(WS_EVENTS.LOBBY_MOVED_TO_SPECTATOR);
+      s.off(WS_EVENTS.ROOM_MIGRATED);
       if (rejoinHandler) s.off(WS_EVENTS.REJOIN_STATE, rejoinHandler);
+      if (finishedRedirectRef.current) {
+        clearTimeout(finishedRedirectRef.current);
+        finishedRedirectRef.current = null;
+      }
+      hasReceivedStateRef.current = false;
+      if (isMigratingRef.current) {
+        // Server already moved the socket to the new room — keep socket alive and skip re-join
+        isMigratingRef.current = false;
+        return;
+      }
       hasJoinedRef.current = false;
       pendingRejoinRef.current = null;
       disconnectSocket();

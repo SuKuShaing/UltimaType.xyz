@@ -251,6 +251,14 @@ export class GameGateway
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
       }
 
+      const existing = await this.roomsService.getRoomState(data.code);
+      if (existing && existing.status === 'finished') {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, {
+          code: ROOM_ERROR_CODES.ROOM_NOT_FOUND,
+          message: ROOM_ERROR_CODES.ROOM_NOT_FOUND,
+        });
+      }
+
       const userId = client.data.user.sub;
       const user = await this.usersService.findById(userId);
       const userInfo = {
@@ -345,6 +353,14 @@ export class GameGateway
     try {
       if (!data?.code || typeof data.code !== 'string' || !ROOM_CODE_REGEX.test(data.code)) {
         return client.emit(WS_EVENTS.LOBBY_ERROR, { message: 'Código de partida inválido' });
+      }
+
+      const existing = await this.roomsService.getRoomState(data.code);
+      if (existing && existing.status === 'finished') {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, {
+          code: ROOM_ERROR_CODES.ROOM_NOT_FOUND,
+          message: ROOM_ERROR_CODES.ROOM_NOT_FOUND,
+        });
       }
 
       const userId = client.data.user.sub;
@@ -682,27 +698,116 @@ export class GameGateway
         });
       }
 
-      const roomState = await this.roomsService.getRoomState(conn.roomCode);
-      if (!roomState || roomState.status !== 'finished') {
+      const oldCode = conn.roomCode;
+      const oldRoomState = await this.roomsService.getRoomState(oldCode);
+      if (!oldRoomState || oldRoomState.status !== 'finished') {
         return client.emit(WS_EVENTS.LOBBY_ERROR, {
           message: 'La partida no ha terminado',
         });
       }
 
-      // Cleanup match state
-      await this.matchStateService.cleanupMatch(conn.roomCode);
-      this.clearMatchTimeout(conn.roomCode);
-      this.clearAllGraceTimersForRoom(conn.roomCode);
-
-      // Reset room to waiting
-      await this.roomsService.setRoomStatus(conn.roomCode, 'waiting');
-      await this.roomsService.addToActiveRooms(conn.roomCode);
-      await this.resetAllPlayersReady(conn.roomCode, roomState.players.map((p) => p.id));
-
-      const newState = await this.roomsService.getRoomState(conn.roomCode);
-      if (newState) {
-        this.server.to(conn.roomCode).emit(WS_EVENTS.LOBBY_STATE, newState);
+      if (oldRoomState.hostId !== conn.userId) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, {
+          message: 'Solo el host puede iniciar la revancha',
+        });
       }
+
+      const hostPlayer = oldRoomState.players.find((p) => p.id === oldRoomState.hostId);
+      if (!hostPlayer) {
+        return client.emit(WS_EVENTS.LOBBY_ERROR, {
+          message: 'Host no encontrado en la partida',
+        });
+      }
+
+      // Cleanup match state from old room (room stays in 'finished' — TTL expires it)
+      await this.matchStateService.cleanupMatch(oldCode);
+      this.clearMatchTimeout(oldCode);
+      this.clearAllGraceTimersForRoom(oldCode);
+
+      let newCode: string | undefined;
+      try {
+        const newRoom = await this.roomsService.createRoom(oldRoomState.hostId, {
+          id: hostPlayer.id,
+          displayName: hostPlayer.displayName,
+          avatarUrl: hostPlayer.avatarUrl,
+          countryCode: hostPlayer.countryCode,
+        });
+        newCode = newRoom.code;
+
+        await this.roomsService.setLevel(newCode, oldRoomState.hostId, oldRoomState.level);
+        await this.roomsService.setTimeLimit(newCode, oldRoomState.hostId, oldRoomState.timeLimit);
+        await this.roomsService.setMaxPlayers(newCode, oldRoomState.hostId, oldRoomState.maxPlayers);
+
+        const playersToMigrate = oldRoomState.players.filter(
+          (p) => p.id !== oldRoomState.hostId && !p.disconnected,
+        );
+        for (const p of playersToMigrate) {
+          try {
+            await this.roomsService.joinRoom(newCode, p.id, {
+              id: p.id,
+              displayName: p.displayName,
+              avatarUrl: p.avatarUrl,
+              countryCode: p.countryCode,
+            });
+          } catch (err: any) {
+            this.logger.warn(
+              `Rematch: failed to migrate player ${p.id} to ${newCode}: ${err.message}`,
+            );
+          }
+        }
+
+        for (const s of oldRoomState.spectators) {
+          try {
+            await this.roomsService.joinAsSpectator(newCode, s.id, {
+              id: s.id,
+              displayName: s.displayName,
+              avatarUrl: s.avatarUrl,
+              countryCode: null,
+            });
+          } catch (err: any) {
+            this.logger.warn(
+              `Rematch: failed to migrate spectator ${s.id} to ${newCode}: ${err.message}`,
+            );
+          }
+        }
+      } catch (err: any) {
+        this.logger.error(`Rematch failed for room ${oldCode}: ${err.message}`);
+        if (newCode) {
+          try {
+            await this.roomsService.setRoomStatus(newCode, 'finished');
+          } catch {
+            // best-effort cleanup
+          }
+        }
+        return client.emit(WS_EVENTS.LOBBY_ERROR, {
+          message: 'No se pudo crear la revancha, intenta de nuevo',
+        });
+      }
+
+      // Migrate all Socket.IO sockets from old room to new room
+      await this.server.in(oldCode).socketsJoin(newCode);
+      await this.server.in(oldCode).socketsLeave(oldCode);
+
+      // Update connections map
+      for (const [socketId, c] of this.connections.entries()) {
+        if (c.roomCode === oldCode) {
+          this.connections.set(socketId, { ...c, roomCode: newCode });
+        }
+      }
+
+      const finalState = await this.roomsService.getRoomState(newCode);
+
+      this.server.to(newCode).emit(WS_EVENTS.ROOM_MIGRATED, {
+        oldCode,
+        newCode,
+      });
+      if (finalState) {
+        this.server.to(newCode).emit(WS_EVENTS.LOBBY_STATE, finalState);
+      }
+
+      this.logger.log(
+        `Rematch: room ${oldCode} -> ${newCode} (${oldRoomState.players.length} players, ${oldRoomState.spectators.length} spectators)`,
+      );
     } catch (err: any) {
       client.emit(WS_EVENTS.LOBBY_ERROR, { message: err.message });
     }

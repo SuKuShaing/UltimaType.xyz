@@ -11,14 +11,18 @@ import { WS_EVENTS, DISCONNECT_GRACE_PERIOD_MS } from '@ultimatype-monorepo/shar
 describe('GameGateway', () => {
   let gateway: GameGateway;
   let roomsService: {
+    createRoom: ReturnType<typeof vi.fn>;
     joinRoom: ReturnType<typeof vi.fn>;
     leaveRoom: ReturnType<typeof vi.fn>;
     getRoomState: ReturnType<typeof vi.fn>;
     setReady: ReturnType<typeof vi.fn>;
     setLevel: ReturnType<typeof vi.fn>;
+    setMaxPlayers: ReturnType<typeof vi.fn>;
+    setTimeLimit: ReturnType<typeof vi.fn>;
     canStart: ReturnType<typeof vi.fn>;
     setRoomStatus: ReturnType<typeof vi.fn>;
     setRoomStatusAtomically: ReturnType<typeof vi.fn>;
+    addToActiveRooms: ReturnType<typeof vi.fn>;
     markPlayerDisconnected: ReturnType<typeof vi.fn>;
     markPlayerConnected: ReturnType<typeof vi.fn>;
     isPlayerInRoom: ReturnType<typeof vi.fn>;
@@ -83,29 +87,36 @@ describe('GameGateway', () => {
         id: 'user-1',
         displayName: 'Host',
         avatarUrl: null,
+        countryCode: null,
         colorIndex: 0,
         isReady: false,
         disconnected: false,
       },
     ],
+    spectators: [],
     maxPlayers: 20,
+    timeLimit: 0,
   };
 
   beforeEach(() => {
     roomsService = {
+      createRoom: vi.fn().mockResolvedValue({ ...roomState, code: 'XYZ987' }),
       joinRoom: vi.fn().mockResolvedValue(roomState),
       leaveRoom: vi.fn().mockResolvedValue(roomState),
       getRoomState: vi.fn().mockResolvedValue(roomState),
       setReady: vi.fn().mockResolvedValue(undefined),
       setLevel: vi.fn().mockResolvedValue(undefined),
+      setMaxPlayers: vi.fn().mockResolvedValue(undefined),
+      setTimeLimit: vi.fn().mockResolvedValue(undefined),
       canStart: vi.fn().mockResolvedValue(true),
       setRoomStatus: vi.fn().mockResolvedValue(undefined),
       setRoomStatusAtomically: vi.fn().mockResolvedValue(true),
+      addToActiveRooms: vi.fn().mockResolvedValue(undefined),
       markPlayerDisconnected: vi.fn().mockResolvedValue(undefined),
       markPlayerConnected: vi.fn().mockResolvedValue(undefined),
       isPlayerInRoom: vi.fn().mockResolvedValue(true),
       isSpectatorInRoom: vi.fn().mockResolvedValue(false),
-      joinAsSpectator: vi.fn(),
+      joinAsSpectator: vi.fn().mockResolvedValue(roomState),
       leaveSpectator: vi.fn(),
       switchToSpectator: vi.fn().mockResolvedValue(roomState),
       resetAllPlayersReady: vi.fn().mockResolvedValue(undefined),
@@ -157,7 +168,10 @@ describe('GameGateway', () => {
 
     mockServer = {
       to: vi.fn().mockReturnThis(),
-      in: vi.fn().mockReturnValue({ socketsLeave: vi.fn() }),
+      in: vi.fn().mockReturnValue({
+        socketsLeave: vi.fn().mockResolvedValue(undefined),
+        socketsJoin: vi.fn().mockResolvedValue(undefined),
+      }),
       emit: vi.fn(),
       use: vi.fn(),
       opts: {},
@@ -225,6 +239,39 @@ describe('GameGateway', () => {
         message: 'Código de partida inválido',
       });
       expect(roomsService.joinRoom).not.toHaveBeenCalled();
+    });
+
+    it('rechaza join a un room finished con código ROOM_NOT_FOUND y no llama joinRoom', async () => {
+      roomsService.getRoomState.mockResolvedValue({
+        ...roomState,
+        status: 'finished',
+      });
+
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        code: 'Esta partida ya terminó',
+        message: 'Esta partida ya terminó',
+      });
+      expect(roomsService.joinRoom).not.toHaveBeenCalled();
+      expect(roomsService.joinAsSpectator).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('lobby:spectate', () => {
+    it('rechaza spectate a un room finished con código ROOM_NOT_FOUND', async () => {
+      roomsService.getRoomState.mockResolvedValue({
+        ...roomState,
+        status: 'finished',
+      });
+
+      await gateway.handleSpectateJoin(mockSocket as any, { code: 'ABC234' });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        code: 'Esta partida ya terminó',
+        message: 'Esta partida ya terminó',
+      });
+      expect(roomsService.joinAsSpectator).not.toHaveBeenCalled();
     });
   });
 
@@ -549,23 +596,140 @@ describe('GameGateway', () => {
   });
 
   describe('match:rematch', () => {
+    const finishedRoom = {
+      ...roomState,
+      status: 'finished' as const,
+      level: 3,
+      timeLimit: 60,
+      maxPlayers: 4,
+      players: [
+        {
+          id: 'user-1',
+          displayName: 'Host',
+          avatarUrl: null,
+          countryCode: null,
+          colorIndex: 0,
+          isReady: false,
+          disconnected: false,
+        },
+        {
+          id: 'user-2',
+          displayName: 'Guest',
+          avatarUrl: null,
+          countryCode: null,
+          colorIndex: 1,
+          isReady: false,
+          disconnected: false,
+        },
+      ],
+    };
+
+    const newRoom = { ...roomState, code: 'XYZ987' };
+
     beforeEach(async () => {
       await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      roomsService.getRoomState.mockResolvedValue(finishedRoom);
+      roomsService.createRoom.mockResolvedValue(newRoom);
     });
 
-    it('resetea partida y broadcast LOBBY_STATE', async () => {
-      roomsService.getRoomState
-        .mockResolvedValueOnce({ ...roomState, status: 'finished' })
-        .mockResolvedValueOnce({ ...roomState, status: 'waiting' });
+    it('crea nuevo room con código distinto y copia host', async () => {
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(roomsService.createRoom).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ id: 'user-1', displayName: 'Host' }),
+      );
+    });
+
+    it('copia level, timeLimit y maxPlayers al nuevo room', async () => {
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(roomsService.setLevel).toHaveBeenCalledWith('XYZ987', 'user-1', 3);
+      expect(roomsService.setTimeLimit).toHaveBeenCalledWith('XYZ987', 'user-1', 60);
+      expect(roomsService.setMaxPlayers).toHaveBeenCalledWith('XYZ987', 'user-1', 4);
+    });
+
+    it('migra jugadores conectados no-host al nuevo room', async () => {
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(roomsService.joinRoom).toHaveBeenCalledWith(
+        'XYZ987',
+        'user-2',
+        expect.objectContaining({ id: 'user-2', displayName: 'Guest' }),
+      );
+      // host no debe ser migrado vía joinRoom (ya se agregó por createRoom)
+      const joinCallsForHost = roomsService.joinRoom.mock.calls.filter(
+        ([code, uid]) => code === 'XYZ987' && uid === 'user-1',
+      );
+      expect(joinCallsForHost).toHaveLength(0);
+    });
+
+    it('no migra jugadores desconectados', async () => {
+      roomsService.getRoomState.mockResolvedValue({
+        ...finishedRoom,
+        players: [
+          finishedRoom.players[0],
+          { ...finishedRoom.players[1], disconnected: true },
+        ],
+      });
 
       await gateway.handleRematch(mockSocket as any);
 
-      expect(matchStateService.cleanupMatch).toHaveBeenCalledWith('ABC234');
-      expect(roomsService.setRoomStatus).toHaveBeenCalledWith('ABC234', 'waiting');
-      expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_STATE, expect.any(Object));
+      const joinCallsForNewRoom = roomsService.joinRoom.mock.calls.filter(
+        ([code]) => code === 'XYZ987',
+      );
+      expect(joinCallsForNewRoom).toHaveLength(0);
     });
 
-    it('emite error si partida no está en finished', async () => {
+    it('migra sockets de Socket.IO al nuevo room', async () => {
+      const inMock = mockServer.in.mock.results[0]?.value ?? {
+        socketsJoin: vi.fn().mockResolvedValue(undefined),
+        socketsLeave: vi.fn().mockResolvedValue(undefined),
+      };
+      mockServer.in.mockReturnValue(inMock);
+
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(mockServer.in).toHaveBeenCalledWith('ABC234');
+      expect(inMock.socketsJoin).toHaveBeenCalledWith('XYZ987');
+      expect(inMock.socketsLeave).toHaveBeenCalledWith('ABC234');
+    });
+
+    it('actualiza el connections map al newCode', async () => {
+      await gateway.handleRematch(mockSocket as any);
+
+      // Tras migración, otra llamada debe leer el estado del room NUEVO (XYZ987)
+      roomsService.getRoomState.mockClear();
+      roomsService.getRoomState.mockResolvedValue({ ...newRoom, status: 'finished' });
+      await gateway.handleRematch(mockSocket as any);
+      expect(roomsService.getRoomState).toHaveBeenCalledWith('XYZ987');
+    });
+
+    it('emite ROOM_MIGRATED con {oldCode, newCode} al room nuevo', async () => {
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(mockServer.to).toHaveBeenCalledWith('XYZ987');
+      expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.ROOM_MIGRATED, {
+        oldCode: 'ABC234',
+        newCode: 'XYZ987',
+      });
+    });
+
+    it('rechaza si el caller no es host', async () => {
+      roomsService.getRoomState.mockResolvedValue({
+        ...finishedRoom,
+        hostId: 'other-user',
+      });
+
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'Solo el host puede iniciar la revancha',
+      });
+      expect(roomsService.createRoom).not.toHaveBeenCalled();
+    });
+
+    it('rechaza si partida no está en finished', async () => {
       roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'playing' });
 
       await gateway.handleRematch(mockSocket as any);
@@ -574,6 +738,35 @@ describe('GameGateway', () => {
         message: 'La partida no ha terminado',
       });
       expect(matchStateService.cleanupMatch).not.toHaveBeenCalled();
+      expect(roomsService.createRoom).not.toHaveBeenCalled();
+    });
+
+    it('emite error si createRoom falla', async () => {
+      roomsService.createRoom.mockRejectedValue(new Error('Redis down'));
+
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'No se pudo crear la revancha, intenta de nuevo',
+      });
+    });
+
+    it('es idempotente: segunda llamada (ya migrada) rechaza por status !== finished', async () => {
+      // Primera: crea nuevo room y actualiza connections a XYZ987
+      await gateway.handleRematch(mockSocket as any);
+      expect(roomsService.createRoom).toHaveBeenCalledTimes(1);
+
+      // Tras migración, conn.roomCode apunta a XYZ987 (que está en 'waiting')
+      roomsService.getRoomState.mockResolvedValue(newRoom);
+      roomsService.createRoom.mockClear();
+
+      // Segunda llamada: encuentra room en 'waiting', rechaza con "La partida no ha terminado"
+      await gateway.handleRematch(mockSocket as any);
+
+      expect(roomsService.createRoom).not.toHaveBeenCalled();
+      expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
+        message: 'La partida no ha terminado',
+      });
     });
 
     it('emite error si no hay conexion registrada', async () => {
@@ -656,7 +849,7 @@ describe('GameGateway', () => {
     });
 
     it('deja inmediatamente en room finished', async () => {
-      roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'finished' });
+      // Join ocurre con room en waiting; luego el room termina entre el join y el disconnect
       await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
       roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'finished' });
 

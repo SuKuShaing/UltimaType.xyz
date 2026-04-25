@@ -25,6 +25,7 @@ export const WS_EVENTS = {
   MATCH_REMATCH: 'match:rematch',
   // Match lifecycle: Server → Client
   MATCH_END: 'match:end',
+  ROOM_MIGRATED: 'room:migrated',
   // Reconnection: Client → Server
   LOBBY_REJOIN: 'lobby:rejoin',
   // Reconnection: Server → Client (direct response to rejoining socket)

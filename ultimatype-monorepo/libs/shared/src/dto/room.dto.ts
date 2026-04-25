@@ -31,3 +31,8 @@ export interface CreateRoomResponse {
   code: string;
   link: string;
 }
+
+export interface RoomMigratedPayload {
+  oldCode: string;
+  newCode: string;
+}
