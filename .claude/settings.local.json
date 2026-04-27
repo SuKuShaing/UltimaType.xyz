@@ -106,7 +106,19 @@
       "PowerShell(git diff 80b3c22..b71b644 -- ultimatype-monorepo/apps/web/src/components/profile/match-history-section.tsx 2>&1 | Out-String)",
       "PowerShell(git diff 80b3c22..b71b644 -- ultimatype-monorepo/apps/web/src/components/match/match-detail-page.tsx 2>&1 | Out-String)",
       "PowerShell(git diff 80b3c22..b71b644 -- ultimatype-monorepo/apps/web/src/components/profile/public-profile-page.spec.tsx ultimatype-monorepo/apps/web/src/components/profile/match-history-section.spec.tsx ultimatype-monorepo/apps/web/src/components/match/match-detail-page.spec.tsx 2>&1 | Out-String)",
-      "PowerShell(git diff 80b3c22..b71b644 -- ultimatype-monorepo/apps/web/src/components/profile/public-profile-page.tsx ultimatype-monorepo/apps/web/src/components/profile/match-history-section.tsx ultimatype-monorepo/apps/web/src/components/match/match-detail-page.tsx ultimatype-monorepo/apps/web/src/components/profile/public-profile-page.spec.tsx ultimatype-monorepo/apps/web/src/components/profile/match-history-section.spec.tsx ultimatype-monorepo/apps/web/src/components/match/match-detail-page.spec.tsx > _bmad-output/implementation-artifacts/5-13-review-diff.tmp.txt 2>&1 ; Get-Content _bmad-output/implementation-artifacts/5-13-review-diff.tmp.txt | Measure-Object -Line | Out-String)"
+      "PowerShell(git diff 80b3c22..b71b644 -- ultimatype-monorepo/apps/web/src/components/profile/public-profile-page.tsx ultimatype-monorepo/apps/web/src/components/profile/match-history-section.tsx ultimatype-monorepo/apps/web/src/components/match/match-detail-page.tsx ultimatype-monorepo/apps/web/src/components/profile/public-profile-page.spec.tsx ultimatype-monorepo/apps/web/src/components/profile/match-history-section.spec.tsx ultimatype-monorepo/apps/web/src/components/match/match-detail-page.spec.tsx > _bmad-output/implementation-artifacts/5-13-review-diff.tmp.txt 2>&1 ; Get-Content _bmad-output/implementation-artifacts/5-13-review-diff.tmp.txt | Measure-Object -Line | Out-String)",
+      "PowerShell(npx nx test web -- public-profile-page 2>&1 | Select-Object -Last 30 | Out-String)",
+      "PowerShell(npx nx test web 2>&1 | Select-Object -Last 15 | Out-String)",
+      "PowerShell(npx nx test web 2>&1 | Select-Object -Last 8 | Out-String)",
+      "PowerShell(npx nx test web -- public-profile-page 2>&1 | Select-Object -Last 12 | Out-String)",
+      "PowerShell(npx nx test web 2>&1 | Select-String \"Tests\" | Select-Object -Last 3 | Out-String)",
+      "PowerShell(npx nx test web -- public-profile-page 2>&1 | Select-Object -Last 8 | Out-String)",
+      "PowerShell(npx nx test web -- match-detail-page 2>&1 | Select-Object -Last 12 | Out-String)",
+      "PowerShell(npx nx test web 2>&1 | Select-String -Pattern \"Tests|Failed|FAIL\" | Out-String)",
+      "PowerShell(npx nx lint web 2>&1 | Select-String -Pattern \"error|warning|problems\" | Select-Object -Last 10 | Out-String)",
+      "PowerShell(npx nx test web 2>&1 | Select-String -Pattern \"Tests\" | Select-Object -Last 1 | Out-String)",
+      "PowerShell(npx nx test web 2>&1 | Select-String -Pattern \"passed\" | Select-Object -Last 2 | Out-String)",
+      "PowerShell(cd D:\\\\Progra\\\\Proyectos_personales\\\\UltimaType\\\\ultimatype-monorepo ; npx nx test web -- public-profile-page 2>&1 | Select-Object -Last 12 | Out-String)"
     ]
   }
 }

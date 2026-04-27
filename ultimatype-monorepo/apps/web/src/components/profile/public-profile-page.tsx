@@ -11,6 +11,7 @@ import { useUserPosition } from '../../hooks/use-user-position';
 import { useCheckSlug } from '../../hooks/use-check-slug';
 import { apiClient } from '../../lib/api-client';
 import { CountryFlag } from '../ui/country-flag';
+import { LoginModal } from '../ui/login-modal';
 
 const SLUG_REGEX = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
 
@@ -60,6 +61,7 @@ export function PublicProfilePage() {
   const [hasChanged, setHasChanged] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const linkCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,7 +95,7 @@ export function PublicProfilePage() {
 
   const { data: position, isLoading: isPositionLoading } = useUserPosition(profile?.id ?? '');
 
-  const { data: history, isLoading: isHistoryLoading } = useUserMatches({
+  const { data: history, isLoading: isHistoryLoading, isError: isHistoryError, refetch: refetchHistory } = useUserMatches({
     userId: profile?.id ?? '',
     page,
     level,
@@ -169,7 +171,7 @@ export function PublicProfilePage() {
   const slugChanged = slugInput !== (user?.slug ?? '');
   const slugAvailable = slugCheck?.available ?? false;
 
-  const isEmpty = !isHistoryLoading && (history?.data.length ?? 0) === 0;
+  const isEmpty = !isHistoryLoading && !isHistoryError && (history?.data.length ?? 0) === 0;
   const totalPages = Math.max(1, history?.meta.totalPages ?? 1);
 
   const displayInitials = profile?.displayName
@@ -218,6 +220,8 @@ export function PublicProfilePage() {
 
       <div className="w-full max-w-2xl 2xl:max-w-5xl">
         <div className="flex flex-col gap-6 2xl:grid 2xl:grid-cols-[2fr_3fr] 2xl:items-start">
+          {/* Columna izquierda: hero + CTA */}
+          <div className="flex flex-col gap-6">
           {/* Hero */}
           <div className="rounded-card-lg bg-surface-container-low p-8 text-center">
             <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-3xl font-bold text-primary">
@@ -233,10 +237,10 @@ export function PublicProfilePage() {
             </div>
             <h1 className="text-4xl font-bold">{profile.displayName}</h1>
             {user?.email && isOwnProfile && (
-              <div className="mt-1 text-sm text-text-muted">{user.email}</div>
-            )}
-            {isOwnProfile && (
-              <div className="mt-0.5 text-xs text-text-muted opacity-50">Tu email no es visible para otros</div>
+              <>
+                <div className="mt-1 text-sm text-text-muted">{user.email}</div>
+                <div className="mt-0.5 text-xs text-text-muted opacity-50">Tu email no es visible para otros</div>
+              </>
             )}
             <div className="mt-2 flex items-center justify-center gap-2 text-sm text-text-muted">
               <CountryFlag countryCode={profile.countryCode} size={16} />
@@ -336,7 +340,7 @@ export function PublicProfilePage() {
                   }
                   aria-label="Guardar cambios de perfil"
                 >
-                  {mutation.isPending ? '_' : 'Guardar cambios'}
+                  {mutation.isPending ? 'Guardando...' : 'Guardar cambios'}
                 </button>
 
                 {successMessage && (
@@ -350,16 +354,21 @@ export function PublicProfilePage() {
               </div>
             )}
 
-            {/* CTA — only for unauthenticated visitors */}
-            {!isAuthenticated && (
-              <a
-                href="/api/auth/google"
-                className="mt-6 inline-block rounded-full bg-primary px-6 py-3 text-sm font-semibold text-surface-base"
+          </div>
+
+          {/* CTA — fuera de la card del hero, alineado con match-detail */}
+          {!isAuthenticated && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowLogin(true)}
+                className="inline-block rounded-full bg-primary px-6 py-3 text-sm font-semibold text-surface-base"
                 data-testid="cta-login"
               >
                 Comienza a competir
-              </a>
-            )}
+              </button>
+            </div>
+          )}
           </div>
 
           {/* Columna derecha: ranking + stats + historia */}
@@ -399,10 +408,10 @@ export function PublicProfilePage() {
             {/* Stats — se actualizan con los filtros de período y nivel */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[
-                { label: 'Mejor Puntaje', value: stats?.bestScore != null ? stats.bestScore : '—', tooltip: undefined },
-                { label: 'Puntaje Promedio', value: stats?.avgScore != null ? stats.avgScore : '—', tooltip: undefined },
-                { label: 'Precisión Prom.', value: stats?.avgPrecision != null ? `${stats.avgPrecision}%` : '—', tooltip: 'Precisión promedio' },
-                { label: 'WPM', value: stats?.avgWpm != null ? stats.avgWpm : '—', tooltip: 'Palabras por minuto' },
+                { label: 'Mejor\nPuntaje', value: stats?.bestScore != null ? stats.bestScore : '—', tooltip: undefined },
+                { label: 'Puntaje\nPromedio', value: stats?.avgScore != null ? stats.avgScore : '—', tooltip: undefined },
+                { label: 'Precisión\nProm.', value: stats?.avgPrecision != null ? `${stats.avgPrecision}%` : '—', tooltip: 'Precisión promedio' },
+                { label: 'PPM', value: stats?.avgWpm != null ? stats.avgWpm : '—', tooltip: 'Palabras por minuto' },
               ].map(({ label, value, tooltip }) => (
                 <div key={label} title={tooltip} className="rounded-card bg-surface-container-lowest p-4 text-center">
                   {isStatsLoading ? (
@@ -410,7 +419,7 @@ export function PublicProfilePage() {
                   ) : (
                     <div className={`text-2xl font-bold font-mono ${value === '—' ? 'text-text-muted' : 'text-primary'}`}>{value}</div>
                   )}
-                  <div className="mt-1 text-xs uppercase tracking-wide text-text-muted">{label}</div>
+                  <div className="mt-1 whitespace-pre-line text-xs uppercase tracking-wide text-text-muted">{label}</div>
                 </div>
               ))}
             </div>
@@ -484,21 +493,22 @@ export function PublicProfilePage() {
                 </div>
               )}
 
-              {!isHistoryLoading && isEmpty && (
-                <div className="py-8 text-center text-sm italic text-text-muted">
-                  Sin partidas registradas
+              {!isHistoryLoading && isHistoryError && (
+                <div className="py-8 text-center font-sans text-sm">
+                  <p className="text-error">Error al cargar el historial</p>
+                  <button
+                    type="button"
+                    onClick={() => refetchHistory()}
+                    className="mt-3 rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted hover:text-text-main"
+                  >
+                    Reintentar
+                  </button>
                 </div>
               )}
 
-              {!isHistoryLoading && isEmpty && isOwnProfile && (
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/')}
-                    className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-surface-base"
-                  >
-                    ¡Crea una partida y empieza!
-                  </button>
+              {!isHistoryLoading && isEmpty && (
+                <div className="py-8 text-center text-sm italic text-text-muted">
+                  Sin partidas
                 </div>
               )}
 
@@ -509,7 +519,7 @@ export function PublicProfilePage() {
                       <thead>
                         <tr className="text-left text-xs uppercase tracking-wide text-text-muted">
                           <th className="pb-2 pr-4">Puntaje</th>
-                          <th className="pb-2 pr-4">WPM</th>
+                          <th className="pb-2 pr-4">PPM</th>
                           <th className="pb-2 pr-4">Precisión</th>
                           <th className="pb-2 pr-4">Nivel</th>
                           <th className="pb-2 pr-4">Rank</th>
@@ -521,7 +531,7 @@ export function PublicProfilePage() {
                           <tr
                             key={r.id}
                             onClick={() => navigate(`/match/${r.matchCode}`)}
-                            className={`cursor-pointer ${index % 2 === 0 ? 'bg-surface-container-low/40' : ''} hover:bg-surface-raised/30`}
+                            className={`cursor-pointer ${index % 2 === 0 ? 'bg-surface-container-lowest/40' : ''} hover:bg-surface-raised/30`}
                           >
                             <td className="py-3 pr-4 font-semibold text-primary">{r.score.toFixed(1)}</td>
                             <td className="py-3 pr-4 text-text-main">{r.wpm.toFixed(1)}</td>
@@ -566,6 +576,7 @@ export function PublicProfilePage() {
           </div>
         </div>
       </div>
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </div>
   );
 }

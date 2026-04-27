@@ -1,6 +1,6 @@
 # Story 5.13: Pulido Visual de Perfil y Perfil Público
 
-Status: review
+Status: done
 
 ## Story
 
@@ -447,7 +447,38 @@ Los siguientes cambios fueron solicitados explícitamente por Seba después de l
 
 - `ultimatype-monorepo/apps/web/src/components/profile/public-profile-page.tsx`
 - `ultimatype-monorepo/apps/web/src/components/profile/public-profile-page.spec.tsx`
-- `ultimatype-monorepo/apps/web/src/components/profile/match-history-section.tsx`
-- `ultimatype-monorepo/apps/web/src/components/profile/match-history-section.spec.tsx`
+- ~~`ultimatype-monorepo/apps/web/src/components/profile/match-history-section.tsx`~~ — eliminado en review (código muerto, no se importaba en ningún componente vivo)
+- ~~`ultimatype-monorepo/apps/web/src/components/profile/match-history-section.spec.tsx`~~ — eliminado en review
 - `ultimatype-monorepo/apps/web/src/components/match/match-detail-page.tsx`
 - `ultimatype-monorepo/apps/web/src/components/match/match-detail-page.spec.tsx`
+- `ultimatype-monorepo/apps/web/src/styles.css` — quitada referencia a match-history-section.tsx en bloque de comentario "NO-LINE VIOLATIONS"
+- `ultimatype-monorepo/apps/web/src/design-system.spec.ts` — quitada assertion de match-history-section.tsx; renombrado test "all 4 Epic 4 components" → "all Epic 4 components"
+
+### Review Findings
+
+**Decisions needed (1)**
+
+- [x] [Review][Decision] ~~Tamaño numérico divergente MatchHistorySection vs PublicProfilePage~~ — RESUELTO en review: MatchHistorySection eliminado como código muerto. Único lugar de stats numéricas ahora es `public-profile-page.tsx` con `text-2xl` (intencional: jerarquía rankings `text-4xl` > stats `text-2xl`).
+- [x] [Review][Decision] ~~CTA "Comienza a competir" DENTRO del hero (public-profile) vs FUERA (match-detail)~~ — RESUELTO en review: CTA en public-profile-page movido FUERA del hero card (alineado con patrón de match-detail). Hero envuelto en wrapper `<div className="flex flex-col gap-6">` para mantener layout en grid 2xl.
+
+**Patches (8)**
+
+- [x] [Review][Patch] ~~Clases `font-mono font-sans` contradictorias en match-history-section.tsx:65~~ — RESUELTO en review: archivo eliminado.
+- [x] [Review][Patch] ~~Zebra striping invisible~~ — RESUELTO: `bg-surface-container-low/40` → `bg-surface-container-lowest/40` en public-profile-page.tsx:524 y match-detail-page.tsx:93. Filas pares quedan ligeramente más oscuras (dark) o más blancas (light) que el container, en dirección opuesta al hover.
+- [x] [Review][Patch] ~~`navigator.clipboard.writeText` sin try/catch~~ — DESCARTADO en review por user override: en producción (HTTPS) el riesgo es bajo y no vale la pena agregar manejo. Si surgen métricas reales de fallo, retomar.
+- [x] [Review][Patch] ~~`mutation.onSuccess` sobre componente desmontado~~ — DESCARTADO en review por user override: caso poco frecuente (requiere navegar durante 500ms-1s del PATCH), riesgo bajo no compensa el guard adicional.
+- [x] [Review][Patch] ~~`public-profile-page` no maneja `isError` del historial~~ — RESUELTO: agregado branch de error con botón Reintentar (paridad con MatchDetailPage). `isEmpty` ahora excluye casos de error. +1 test.
+- [x] [Review][Patch] ~~CTA "¡Crea una partida!" engañoso con filtros activos~~ — RESUELTO en review por user override del AC6: CTA "¡Crea una partida y empieza!" eliminado completamente (era redundante con GameModeSelector del home). Mensaje empty state simplificado a "Sin partidas" — funciona tanto sin filtros como con filtros. Tests del CTA eliminados (2 menos), test del isError mantenido.
+- [x] [Review][Patch] ~~Header "Historial de Partidas — 0 Partidas" redundante~~ — DESCARTADO en review por user override: redundancia cosmética aceptable.
+- [x] [Review][Patch] ~~`opacity-50` viola WCAG AA en disclaimer email~~ — DESCARTADO en review por user override.
+- [x] [Review][Patch] ~~Disclaimer email se muestra sin email~~ — RESUELTO: email + disclaimer combinados en un fragment con la misma condición `user?.email && isOwnProfile`.
+
+**Deferred (7)**
+
+- [x] [Review][Defer] `<tr>` con `onClick` sin `role="button"`, `tabIndex={0}`, `onKeyDown` — inaccesible por teclado en 2 archivos [public-profile-page.tsx:520, match-detail-page.tsx:91] — deferred, pre-existing (patrón histórico en todas las tablas del proyecto)
+- [x] [Review][Patch] ~~`navigate(-1)` sin history fallback~~ — RESUELTO en review (promovido de defer): agregado guard `window.history.length > 1` con fallback a `/`. +1 test (browser history vacío → navega a /). Bug conocido con screenshot ahora cerrado.
+- [x] [Review][Patch] ~~Botón Guardar muestra `'_'` durante mutation~~ — RESUELTO en review (promovido de defer): cambiado a `'Guardando...'`.
+- [x] [Review][Defer] `useMatchDetail(matchCode!)` con non-null assertion sin guard cuando `matchCode` es undefined [match-detail-page.tsx:25] — deferred, pre-existing
+- [x] [Review][Defer] Filter pills sin `role="radiogroup"` ni `aria-label` en contenedor — a11y mejorable [public-profile-page.tsx:430-477] — deferred, pre-existing
+- [x] [Review][Patch] ~~6 lint errors imports después de `vi.mock`~~ — RESUELTO en review (promovido de defer): imports movidos al tope del archivo, casts `as ReturnType<typeof vi.fn>` reemplazados con `vi.mocked()`. Lint pasó de 9 errores a 1 (el restante en `use-lobby.spec.tsx`, fuera de scope).
+- [x] [Review][Patch] ~~Test `'— 15 Partidas'` literal frágil~~ — RESUELTO en review (promovido de defer): cambiado a regex `/15\s*Partidas?/` que tolera variación de separador, espaciado y plural/singular.

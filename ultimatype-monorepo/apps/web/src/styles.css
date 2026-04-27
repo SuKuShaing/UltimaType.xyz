@@ -46,7 +46,6 @@
  * ⚠️  "NO-LINE" VIOLATIONS (to fix in Stories 5-12 / 5-13):
  *   leaderboard-page.tsx    — border-b border-surface-raised (thead + tbody rows)
  *   public-profile-page.tsx — border-b border-surface-raised (match history thead + rows)
- *   match-history-section.tsx — border-b border-surface-raised (thead + tbody rows)
  *   match-detail-page.tsx   — border-b border-surface-raised (thead + tbody rows)
  *   All use: last:border-0 pattern on last row.
  *

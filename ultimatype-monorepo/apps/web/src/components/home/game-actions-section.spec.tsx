@@ -230,13 +230,13 @@ describe('GameActionsSection', () => {
       expect(screen.getByLabelText('Código de partida para unirse')).toBeTruthy();
     });
 
-    it('convierte a mayúsculas y limita a 6 caracteres', () => {
+    it('convierte a mayúsculas y limita a 8 caracteres', () => {
       setup();
       const input = screen.getByLabelText(
         'Código de partida para unirse'
       ) as HTMLInputElement;
-      fireEvent.change(input, { target: { value: 'abc234xyz' } });
-      expect(input.value).toBe('ABC234');
+      fireEvent.change(input, { target: { value: 'abc234xyz99' } });
+      expect(input.value).toBe('ABC234XY');
     });
 
     it('navega a la sala en código válido', () => {
@@ -244,9 +244,9 @@ describe('GameActionsSection', () => {
       const input = screen.getByLabelText(
         'Código de partida para unirse'
       ) as HTMLInputElement;
-      fireEvent.change(input, { target: { value: 'ABC234' } });
+      fireEvent.change(input, { target: { value: 'ABC234XY' } });
       fireEvent.click(screen.getByText('Unirse'));
-      expect(mockNavigate).toHaveBeenCalledWith('/room/ABC234');
+      expect(mockNavigate).toHaveBeenCalledWith('/room/ABC234XY');
     });
 
     it('navega con Enter en código válido', () => {
@@ -254,12 +254,12 @@ describe('GameActionsSection', () => {
       const input = screen.getByLabelText(
         'Código de partida para unirse'
       ) as HTMLInputElement;
-      fireEvent.change(input, { target: { value: 'XYZ789' } });
+      fireEvent.change(input, { target: { value: 'XYZ789AB' } });
       fireEvent.keyDown(input, { key: 'Enter' });
-      expect(mockNavigate).toHaveBeenCalledWith('/room/XYZ789');
+      expect(mockNavigate).toHaveBeenCalledWith('/room/XYZ789AB');
     });
 
-    it('muestra error en código inválido (menos de 6 chars)', () => {
+    it('muestra error en código inválido (menos de 8 chars)', () => {
       setup();
       const input = screen.getByLabelText(
         'Código de partida para unirse'
@@ -267,7 +267,7 @@ describe('GameActionsSection', () => {
       fireEvent.change(input, { target: { value: 'AB' } });
       fireEvent.click(screen.getByText('Unirse'));
       expect(
-        screen.getByText('Código inválido (6 caracteres, letras y números)')
+        screen.getByText('Código inválido (8 caracteres, letras y números)')
       ).toBeTruthy();
       expect(mockNavigate).not.toHaveBeenCalled();
     });
@@ -286,12 +286,12 @@ describe('GameActionsSection', () => {
       fireEvent.change(input, { target: { value: 'x' } });
       fireEvent.click(screen.getByText('Unirse'));
       expect(
-        screen.getByText('Código inválido (6 caracteres, letras y números)')
+        screen.getByText('Código inválido (8 caracteres, letras y números)')
       ).toBeTruthy();
 
       fireEvent.change(input, { target: { value: 'AB' } });
       expect(
-        screen.queryByText('Código inválido (6 caracteres, letras y números)')
+        screen.queryByText('Código inválido (8 caracteres, letras y números)')
       ).toBeNull();
     });
 

@@ -78,7 +78,7 @@ describe('GameGateway', () => {
   };
 
   const roomState = {
-    code: 'ABC234',
+    code: 'ABC234XY',
     hostId: 'user-1',
     level: 1,
     status: 'waiting' as const,
@@ -100,7 +100,7 @@ describe('GameGateway', () => {
 
   beforeEach(() => {
     roomsService = {
-      createRoom: vi.fn().mockResolvedValue({ ...roomState, code: 'XYZ987' }),
+      createRoom: vi.fn().mockResolvedValue({ ...roomState, code: 'XYZ987CD' }),
       joinRoom: vi.fn().mockResolvedValue(roomState),
       leaveRoom: vi.fn().mockResolvedValue(roomState),
       getRoomState: vi.fn().mockResolvedValue(roomState),
@@ -205,15 +205,15 @@ describe('GameGateway', () => {
 
   describe('lobby:join', () => {
     it('une al jugador al room y broadcast estado', async () => {
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
 
       expect(roomsService.joinRoom).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         'user-1',
         expect.objectContaining({ id: 'user-1' }),
       );
-      expect(mockSocket.join).toHaveBeenCalledWith('ABC234');
-      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockSocket.join).toHaveBeenCalledWith('ABC234XY');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
       expect(mockServer.emit).toHaveBeenCalledWith(
         WS_EVENTS.LOBBY_STATE,
         roomState,
@@ -225,7 +225,7 @@ describe('GameGateway', () => {
         new Error('Esta partida ya terminó'),
       );
 
-      await gateway.handleJoin(mockSocket as any, { code: 'XYZ789' });
+      await gateway.handleJoin(mockSocket as any, { code: 'XYZ789AB' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
         message: 'Esta partida ya terminó',
@@ -247,7 +247,7 @@ describe('GameGateway', () => {
         status: 'finished',
       });
 
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
         code: 'Esta partida ya terminó',
@@ -265,7 +265,7 @@ describe('GameGateway', () => {
         status: 'finished',
       });
 
-      await gateway.handleSpectateJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleSpectateJoin(mockSocket as any, { code: 'ABC234XY' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
         code: 'Esta partida ya terminó',
@@ -278,37 +278,37 @@ describe('GameGateway', () => {
   describe('lobby:leave', () => {
     it('remueve al jugador y broadcast estado', async () => {
       // First join to register connection
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
 
-      await gateway.handleLeave(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleLeave(mockSocket as any, { code: 'ABC234XY' });
 
       expect(roomsService.leaveRoom).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         'user-1',
       );
-      expect(mockSocket.leave).toHaveBeenCalledWith('ABC234');
-      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockSocket.leave).toHaveBeenCalledWith('ABC234XY');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
     });
   });
 
   describe('lobby:ready', () => {
     it('cambia estado ready y broadcast', async () => {
       await gateway.handleReady(mockSocket as any, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         ready: true,
       });
 
       expect(roomsService.setReady).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         'user-1',
         true,
       );
-      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
     });
 
     it('emite error si ready no es boolean', async () => {
       await gateway.handleReady(mockSocket as any, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         ready: 'yes' as any,
       });
 
@@ -322,16 +322,16 @@ describe('GameGateway', () => {
   describe('lobby:select-level', () => {
     it('cambia nivel y broadcast', async () => {
       await gateway.handleSelectLevel(mockSocket as any, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         level: 3,
       });
 
       expect(roomsService.setLevel).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         'user-1',
         3,
       );
-      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
     });
 
     it('emite error si no es host', async () => {
@@ -340,7 +340,7 @@ describe('GameGateway', () => {
       );
 
       await gateway.handleSelectLevel(mockSocket as any, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         level: 3,
       });
 
@@ -351,7 +351,7 @@ describe('GameGateway', () => {
 
     it('emite error si nivel es invalido', async () => {
       await gateway.handleSelectLevel(mockSocket as any, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         level: 999,
       });
 
@@ -364,30 +364,30 @@ describe('GameGateway', () => {
 
   describe('lobby:start', () => {
     it('emite match:start con textId, textContent y players si condiciones se cumplen', async () => {
-      await gateway.handleStart(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleStart(mockSocket as any, { code: 'ABC234XY' });
 
       expect(roomsService.setReady).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         'user-1',
         true,
       );
-      expect(roomsService.canStart).toHaveBeenCalledWith('ABC234');
+      expect(roomsService.canStart).toHaveBeenCalledWith('ABC234XY');
       expect(textsService.getRandomByLevel).toHaveBeenCalledWith(
         roomState.level,
       );
       expect(roomsService.setRoomStatus).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         'playing',
       );
       expect(matchStateService.initMatch).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         ['user-1'],
         42,
         'Hola mundo test',
       );
-      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
       expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.MATCH_START, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         textId: 42,
         textContent: 'Hola mundo test',
         players: roomState.players,
@@ -401,7 +401,7 @@ describe('GameGateway', () => {
         hostId: 'other-user',
       });
 
-      await gateway.handleStart(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleStart(mockSocket as any, { code: 'ABC234XY' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
         message: 'Solo el host puede iniciar la partida',
@@ -411,7 +411,7 @@ describe('GameGateway', () => {
     it('rechaza si no se puede iniciar', async () => {
       roomsService.canStart.mockResolvedValue(false);
 
-      await gateway.handleStart(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleStart(mockSocket as any, { code: 'ABC234XY' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(
         WS_EVENTS.LOBBY_ERROR,
@@ -426,9 +426,9 @@ describe('GameGateway', () => {
         .mockResolvedValueOnce(roomState)   // primera llamada: validación de host/canStart
         .mockResolvedValueOnce(null);        // segunda llamada: post-setRoomStatus
 
-      await gateway.handleStart(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleStart(mockSocket as any, { code: 'ABC234XY' });
 
-      expect(roomsService.setRoomStatus).toHaveBeenCalledWith('ABC234', 'waiting');
+      expect(roomsService.setRoomStatus).toHaveBeenCalledWith('ABC234XY', 'waiting');
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
         message: 'No se pudo obtener el estado de la partida',
       });
@@ -439,7 +439,7 @@ describe('GameGateway', () => {
   describe('caret:update', () => {
     beforeEach(async () => {
       // Join room first so connection is tracked
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       // Set room status to playing
       roomsService.getRoomState.mockResolvedValue({
         ...roomState,
@@ -458,13 +458,13 @@ describe('GameGateway', () => {
       });
 
       expect(matchStateService.updatePosition).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         'user-1',
         1,
         undefined,
         undefined,
       );
-      expect(toFn).toHaveBeenCalledWith('ABC234');
+      expect(toFn).toHaveBeenCalledWith('ABC234XY');
     });
 
     it('rechaza payload invalido (position no es number)', async () => {
@@ -556,7 +556,7 @@ describe('GameGateway', () => {
 
   describe('player:finish', () => {
     beforeEach(async () => {
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       roomsService.getRoomState.mockResolvedValue({
         ...roomState,
         status: 'playing',
@@ -580,7 +580,7 @@ describe('GameGateway', () => {
       });
 
       expect(matchStateService.markPlayerFinished).toHaveBeenCalledWith(
-        'ABC234', 'user-1', 50, 5,
+        'ABC234XY', 'user-1', 50, 5,
       );
       expect(mockServer.emit).toHaveBeenCalledWith(
         WS_EVENTS.PLAYER_FINISH,
@@ -624,10 +624,10 @@ describe('GameGateway', () => {
       ],
     };
 
-    const newRoom = { ...roomState, code: 'XYZ987' };
+    const newRoom = { ...roomState, code: 'XYZ987CD' };
 
     beforeEach(async () => {
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       roomsService.getRoomState.mockResolvedValue(finishedRoom);
       roomsService.createRoom.mockResolvedValue(newRoom);
     });
@@ -644,22 +644,22 @@ describe('GameGateway', () => {
     it('copia level, timeLimit y maxPlayers al nuevo room', async () => {
       await gateway.handleRematch(mockSocket as any);
 
-      expect(roomsService.setLevel).toHaveBeenCalledWith('XYZ987', 'user-1', 3);
-      expect(roomsService.setTimeLimit).toHaveBeenCalledWith('XYZ987', 'user-1', 60);
-      expect(roomsService.setMaxPlayers).toHaveBeenCalledWith('XYZ987', 'user-1', 4);
+      expect(roomsService.setLevel).toHaveBeenCalledWith('XYZ987CD', 'user-1', 3);
+      expect(roomsService.setTimeLimit).toHaveBeenCalledWith('XYZ987CD', 'user-1', 60);
+      expect(roomsService.setMaxPlayers).toHaveBeenCalledWith('XYZ987CD', 'user-1', 4);
     });
 
     it('migra jugadores conectados no-host al nuevo room', async () => {
       await gateway.handleRematch(mockSocket as any);
 
       expect(roomsService.joinRoom).toHaveBeenCalledWith(
-        'XYZ987',
+        'XYZ987CD',
         'user-2',
         expect.objectContaining({ id: 'user-2', displayName: 'Guest' }),
       );
       // host no debe ser migrado vía joinRoom (ya se agregó por createRoom)
       const joinCallsForHost = roomsService.joinRoom.mock.calls.filter(
-        ([code, uid]) => code === 'XYZ987' && uid === 'user-1',
+        ([code, uid]) => code === 'XYZ987CD' && uid === 'user-1',
       );
       expect(joinCallsForHost).toHaveLength(0);
     });
@@ -676,7 +676,7 @@ describe('GameGateway', () => {
       await gateway.handleRematch(mockSocket as any);
 
       const joinCallsForNewRoom = roomsService.joinRoom.mock.calls.filter(
-        ([code]) => code === 'XYZ987',
+        ([code]) => code === 'XYZ987CD',
       );
       expect(joinCallsForNewRoom).toHaveLength(0);
     });
@@ -690,28 +690,28 @@ describe('GameGateway', () => {
 
       await gateway.handleRematch(mockSocket as any);
 
-      expect(mockServer.in).toHaveBeenCalledWith('ABC234');
-      expect(inMock.socketsJoin).toHaveBeenCalledWith('XYZ987');
-      expect(inMock.socketsLeave).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.in).toHaveBeenCalledWith('ABC234XY');
+      expect(inMock.socketsJoin).toHaveBeenCalledWith('XYZ987CD');
+      expect(inMock.socketsLeave).toHaveBeenCalledWith('ABC234XY');
     });
 
     it('actualiza el connections map al newCode', async () => {
       await gateway.handleRematch(mockSocket as any);
 
-      // Tras migración, otra llamada debe leer el estado del room NUEVO (XYZ987)
+      // Tras migración, otra llamada debe leer el estado del room NUEVO (XYZ987CD)
       roomsService.getRoomState.mockClear();
       roomsService.getRoomState.mockResolvedValue({ ...newRoom, status: 'finished' });
       await gateway.handleRematch(mockSocket as any);
-      expect(roomsService.getRoomState).toHaveBeenCalledWith('XYZ987');
+      expect(roomsService.getRoomState).toHaveBeenCalledWith('XYZ987CD');
     });
 
     it('emite ROOM_MIGRATED con {oldCode, newCode} al room nuevo', async () => {
       await gateway.handleRematch(mockSocket as any);
 
-      expect(mockServer.to).toHaveBeenCalledWith('XYZ987');
+      expect(mockServer.to).toHaveBeenCalledWith('XYZ987CD');
       expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.ROOM_MIGRATED, {
-        oldCode: 'ABC234',
-        newCode: 'XYZ987',
+        oldCode: 'ABC234XY',
+        newCode: 'XYZ987CD',
       });
     });
 
@@ -752,11 +752,11 @@ describe('GameGateway', () => {
     });
 
     it('es idempotente: segunda llamada (ya migrada) rechaza por status !== finished', async () => {
-      // Primera: crea nuevo room y actualiza connections a XYZ987
+      // Primera: crea nuevo room y actualiza connections a XYZ987CD
       await gateway.handleRematch(mockSocket as any);
       expect(roomsService.createRoom).toHaveBeenCalledTimes(1);
 
-      // Tras migración, conn.roomCode apunta a XYZ987 (que está en 'waiting')
+      // Tras migración, conn.roomCode apunta a XYZ987CD (que está en 'waiting')
       roomsService.getRoomState.mockResolvedValue(newRoom);
       roomsService.createRoom.mockClear();
 
@@ -781,7 +781,7 @@ describe('GameGateway', () => {
 
   describe('WebSocket caret throttle (AC5)', () => {
     beforeEach(async () => {
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'playing' });
       (mockSocket as any).volatile = { to: vi.fn().mockReturnValue({ emit: vi.fn() }) };
     });
@@ -819,7 +819,7 @@ describe('GameGateway', () => {
 
   describe('caret:update — no server-side finish detection (AC2)', () => {
     beforeEach(async () => {
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'playing' });
       (mockSocket as any).volatile = { to: vi.fn().mockReturnValue({ emit: vi.fn() }) };
     });
@@ -838,24 +838,24 @@ describe('GameGateway', () => {
   describe('handleDisconnect', () => {
     it('marca jugador como desconectado y emite LOBBY_STATE en room waiting', async () => {
       // First join
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
 
       await gateway.handleDisconnect(mockSocket as any);
 
-      expect(roomsService.markPlayerDisconnected).toHaveBeenCalledWith('ABC234', 'user-1');
+      expect(roomsService.markPlayerDisconnected).toHaveBeenCalledWith('ABC234XY', 'user-1');
       expect(roomsService.leaveRoom).not.toHaveBeenCalled();
-      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
       expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_STATE, roomState);
     });
 
     it('deja inmediatamente en room finished', async () => {
       // Join ocurre con room en waiting; luego el room termina entre el join y el disconnect
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       roomsService.getRoomState.mockResolvedValue({ ...roomState, status: 'finished' });
 
       await gateway.handleDisconnect(mockSocket as any);
 
-      expect(roomsService.leaveRoom).toHaveBeenCalledWith('ABC234', 'user-1');
+      expect(roomsService.leaveRoom).toHaveBeenCalledWith('ABC234XY', 'user-1');
       expect(roomsService.markPlayerDisconnected).not.toHaveBeenCalled();
     });
 
@@ -866,7 +866,7 @@ describe('GameGateway', () => {
     });
 
     it('no lanza excepcion si getRoomState falla', async () => {
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       roomsService.getRoomState.mockRejectedValue(new Error('Redis error'));
 
       await expect(
@@ -886,7 +886,7 @@ describe('GameGateway', () => {
           .mockResolvedValueOnce(playingRoomState)  // inside handleDisconnect
           .mockResolvedValue(playingRoomState);      // inside grace timer callback
 
-        await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+        await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
         roomsService.getRoomState.mockResolvedValue(playingRoomState);
         await gateway.handleDisconnect(mockSocket as any);
 
@@ -896,8 +896,8 @@ describe('GameGateway', () => {
         // Advance clock past the grace period
         await vi.advanceTimersByTimeAsync(DISCONNECT_GRACE_PERIOD_MS);
 
-        expect(roomsService.leaveRoom).toHaveBeenCalledWith('ABC234', 'user-1');
-        expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+        expect(roomsService.leaveRoom).toHaveBeenCalledWith('ABC234XY', 'user-1');
+        expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
         expect(mockServer.emit).toHaveBeenCalledWith(
           WS_EVENTS.LOBBY_STATE,
           expect.any(Object),
@@ -917,7 +917,7 @@ describe('GameGateway', () => {
         };
         roomsService.getRoomState.mockResolvedValue(playingRoomState);
 
-        await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+        await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
         await gateway.handleDisconnect(mockSocket as any);
 
         // Advance past grace period — but player.disconnected is false (reconnected)
@@ -933,7 +933,7 @@ describe('GameGateway', () => {
   describe('endMatch atomicity (AC1)', () => {
     it('solo el primer caller de endMatch emite MATCH_END', async () => {
       // Setup: join room, start match
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       roomsService.getRoomState.mockResolvedValue({
         ...roomState,
         status: 'playing',
@@ -964,10 +964,10 @@ describe('GameGateway', () => {
       });
 
       // setRoomStatusAtomically should have been called
-      expect(roomsService.setRoomStatusAtomically).toHaveBeenCalledWith('ABC234', 'finished');
+      expect(roomsService.setRoomStatusAtomically).toHaveBeenCalledWith('ABC234XY', 'finished');
       // persistResults should have been called with correct args
       expect(matchResultsService.persistResults).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         expect.any(Number),
         expect.any(Array),
       );
@@ -979,7 +979,7 @@ describe('GameGateway', () => {
     });
 
     it('no emite MATCH_END si setRoomStatusAtomically retorna false', async () => {
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       roomsService.getRoomState.mockResolvedValue({
         ...roomState,
         status: 'playing',
@@ -1026,8 +1026,8 @@ describe('GameGateway', () => {
         roomsService.getRoomState.mockResolvedValue(playingRoom);
         roomsService.canStart.mockResolvedValue(true);
 
-        await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
-        await gateway.handleStart(mockSocket as any, { code: 'ABC234' });
+        await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
+        await gateway.handleStart(mockSocket as any, { code: 'ABC234XY' });
 
         // Trigger a disconnect to create grace timer
         await gateway.handleDisconnect(mockSocket as any);
@@ -1049,7 +1049,7 @@ describe('GameGateway', () => {
 
   describe('handleRejoin', () => {
     it('restaura player y emite REJOIN_STATE en room waiting', async () => {
-      await gateway.handleJoin(mockSocket as any, { code: 'ABC234' });
+      await gateway.handleJoin(mockSocket as any, { code: 'ABC234XY' });
       // Simulate disconnect and new socket
       await gateway.handleDisconnect(mockSocket as any);
 
@@ -1061,19 +1061,19 @@ describe('GameGateway', () => {
         emit: vi.fn(),
       };
 
-      await gateway.handleRejoin(newSocket as any, { roomCode: 'ABC234' });
+      await gateway.handleRejoin(newSocket as any, { roomCode: 'ABC234XY' });
 
-      expect(roomsService.markPlayerConnected).toHaveBeenCalledWith('ABC234', 'user-1');
-      expect(newSocket.join).toHaveBeenCalledWith('ABC234');
-      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(roomsService.markPlayerConnected).toHaveBeenCalledWith('ABC234XY', 'user-1');
+      expect(newSocket.join).toHaveBeenCalledWith('ABC234XY');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
       expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.PLAYER_RECONNECTED, {
         playerId: 'user-1',
-        roomCode: 'ABC234',
+        roomCode: 'ABC234XY',
       });
       expect(newSocket.emit).toHaveBeenCalledWith(
         WS_EVENTS.REJOIN_STATE,
         expect.objectContaining({
-          roomCode: 'ABC234',
+          roomCode: 'ABC234XY',
           roomState: expect.any(Object),
           matchState: null,
         }),
@@ -1083,7 +1083,7 @@ describe('GameGateway', () => {
     it('emite error si jugador no esta en la partida', async () => {
       roomsService.isPlayerInRoom.mockResolvedValue(false);
 
-      await gateway.handleRejoin(mockSocket as any, { roomCode: 'ABC234' });
+      await gateway.handleRejoin(mockSocket as any, { roomCode: 'ABC234XY' });
 
       expect(mockSocket.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_ERROR, {
         message: 'Ya no estás en esta partida',
@@ -1104,7 +1104,7 @@ describe('GameGateway', () => {
       // Register socket as player in a playing room
       (gateway as any).connections.set('socket-1', {
         userId: 'user-1',
-        roomCode: 'ABC234',
+        roomCode: 'ABC234XY',
         role: 'player',
       });
       roomsService.getRoomState.mockResolvedValue({
@@ -1130,12 +1130,12 @@ describe('GameGateway', () => {
       });
 
       expect(matchStateService.markPlayerFinished).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         'user-1',
         100,
         5,
       );
-      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
       expect(mockServer.emit).toHaveBeenCalledWith(
         WS_EVENTS.PLAYER_FINISH,
         expect.objectContaining({ playerId: 'user-1' }),
@@ -1184,12 +1184,12 @@ describe('GameGateway', () => {
     beforeEach(() => {
       (gateway as any).connections.set('socket-host', {
         userId: 'user-1',
-        roomCode: 'ABC234',
+        roomCode: 'ABC234XY',
         role: 'player',
       });
       (gateway as any).connections.set('socket-target', {
         userId: 'user-2',
-        roomCode: 'ABC234',
+        roomCode: 'ABC234XY',
         role: 'player',
       });
       const twoPlayerRoomState = {
@@ -1213,7 +1213,7 @@ describe('GameGateway', () => {
 
     it('expulsa al jugador y emite LOBBY_KICKED al target y LOBBY_STATE a la partida', async () => {
       await gateway.handleKickPlayer(hostSocket as any, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         targetUserId: 'user-2',
       });
 
@@ -1225,10 +1225,10 @@ describe('GameGateway', () => {
       );
 
       // Should remove target from room
-      expect(roomsService.leaveRoom).toHaveBeenCalledWith('ABC234', 'user-2');
+      expect(roomsService.leaveRoom).toHaveBeenCalledWith('ABC234XY', 'user-2');
 
       // Should broadcast updated state
-      expect(mockServer.to).toHaveBeenCalledWith('ABC234');
+      expect(mockServer.to).toHaveBeenCalledWith('ABC234XY');
       expect(mockServer.emit).toHaveBeenCalledWith(WS_EVENTS.LOBBY_STATE, roomState);
     });
 
@@ -1242,7 +1242,7 @@ describe('GameGateway', () => {
       };
 
       await gateway.handleKickPlayer(nonHostSocket as any, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         targetUserId: 'user-1',
       });
 
@@ -1277,12 +1277,12 @@ describe('GameGateway', () => {
     beforeEach(() => {
       (gateway as any).connections.set('socket-host', {
         userId: 'user-1',
-        roomCode: 'ABC234',
+        roomCode: 'ABC234XY',
         role: 'player',
       });
       (gateway as any).connections.set('socket-target', {
         userId: 'user-2',
-        roomCode: 'ABC234',
+        roomCode: 'ABC234XY',
         role: 'player',
       });
       const twoPlayerRoomState = {
@@ -1314,12 +1314,12 @@ describe('GameGateway', () => {
 
     it('mueve al jugador a espectador y emite LOBBY_MOVED_TO_SPECTATOR al target', async () => {
       await gateway.handleMoveToSpectator(hostSocket as any, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         targetUserId: 'user-2',
       });
 
       expect(roomsService.switchToSpectator).toHaveBeenCalledWith(
-        'ABC234',
+        'ABC234XY',
         'user-2',
         expect.objectContaining({ id: 'user-2' }),
       );
@@ -1346,7 +1346,7 @@ describe('GameGateway', () => {
       };
 
       await gateway.handleMoveToSpectator(nonHostSocket as any, {
-        code: 'ABC234',
+        code: 'ABC234XY',
         targetUserId: 'user-1',
       });
 

@@ -5,7 +5,7 @@ import { apiClient } from '../../lib/api-client';
 import { CreateRoomResponse } from '@ultimatype-monorepo/shared';
 import { getGuestId, getGuestName } from '../../lib/guest';
 
-const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
+const ROOM_CODE_REGEX = /^[A-Z2-9]{8}$/;
 
 function JoinRoomInput() {
   const [code, setCode] = useState('');
@@ -19,7 +19,7 @@ function JoinRoomInput() {
       return;
     }
     if (!ROOM_CODE_REGEX.test(normalized)) {
-      setError('Código inválido (6 caracteres, letras y números)');
+      setError('Código inválido (8 caracteres, letras y números)');
       return;
     }
     setError('');
@@ -33,12 +33,12 @@ function JoinRoomInput() {
           type="text"
           value={code}
           onChange={(e) => {
-            setCode(e.target.value.toUpperCase().slice(0, 6));
+            setCode(e.target.value.toUpperCase().slice(0, 8));
             setError('');
           }}
           onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
           placeholder="Código de partida"
-          maxLength={6}
+          maxLength={8}
           className="min-w-0 flex-1 rounded-full bg-surface-raised px-4 py-2 text-center text-sm uppercase tracking-widest text-text-main font-mono focus:outline-none"
           aria-label="Código de partida para unirse"
         />

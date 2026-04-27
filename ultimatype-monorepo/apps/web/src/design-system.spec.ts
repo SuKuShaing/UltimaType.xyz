@@ -171,9 +171,8 @@ describe('Design System — Token Audit (AC6)', () => {
     expect(stylesContent).toContain('"NO-LINE" VIOLATIONS');
   });
 
-  it('flags No-Line violations in all 4 Epic 4 components', () => {
+  it('flags No-Line violations in all Epic 4 components', () => {
     expect(stylesContent).toContain('public-profile-page.tsx');
-    expect(stylesContent).toContain('match-history-section.tsx');
     expect(stylesContent).toContain('match-detail-page.tsx');
   });
 });

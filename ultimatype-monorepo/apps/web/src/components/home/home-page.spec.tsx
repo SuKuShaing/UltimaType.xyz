@@ -251,7 +251,7 @@ describe('HomePage', () => {
       fireEvent.click(joinButton);
 
       expect(
-        screen.getByText('Código inválido (6 caracteres, letras y números)')
+        screen.getByText('Código inválido (8 caracteres, letras y números)')
       ).toBeTruthy();
       expect(mockNavigate).not.toHaveBeenCalled();
     });
@@ -263,10 +263,10 @@ describe('HomePage', () => {
       ) as HTMLInputElement;
       const joinButton = screen.getByText('Unirse');
 
-      fireEvent.change(input, { target: { value: 'ABC234' } });
+      fireEvent.change(input, { target: { value: 'ABC234XY' } });
       fireEvent.click(joinButton);
 
-      expect(mockNavigate).toHaveBeenCalledWith('/room/ABC234');
+      expect(mockNavigate).toHaveBeenCalledWith('/room/ABC234XY');
     });
 
     it('navigates on Enter key press', () => {
@@ -275,10 +275,10 @@ describe('HomePage', () => {
         'Código de partida para unirse'
       ) as HTMLInputElement;
 
-      fireEvent.change(input, { target: { value: 'XYZ789' } });
+      fireEvent.change(input, { target: { value: 'XYZ789AB' } });
       fireEvent.keyDown(input, { key: 'Enter' });
 
-      expect(mockNavigate).toHaveBeenCalledWith('/room/XYZ789');
+      expect(mockNavigate).toHaveBeenCalledWith('/room/XYZ789AB');
     });
 
     it('uppercases input value', () => {
@@ -287,8 +287,8 @@ describe('HomePage', () => {
         'Código de partida para unirse'
       ) as HTMLInputElement;
 
-      fireEvent.change(input, { target: { value: 'abc234' } });
-      expect(input.value).toBe('ABC234');
+      fireEvent.change(input, { target: { value: 'abc234xy' } });
+      expect(input.value).toBe('ABC234XY');
     });
 
     it('clears error on input change', () => {
@@ -301,12 +301,12 @@ describe('HomePage', () => {
       fireEvent.change(input, { target: { value: 'x' } });
       fireEvent.click(joinButton);
       expect(
-        screen.getByText('Código inválido (6 caracteres, letras y números)')
+        screen.getByText('Código inválido (8 caracteres, letras y números)')
       ).toBeTruthy();
 
       fireEvent.change(input, { target: { value: 'AB' } });
       expect(
-        screen.queryByText('Código inválido (6 caracteres, letras y números)')
+        screen.queryByText('Código inválido (8 caracteres, letras y números)')
       ).toBeNull();
     });
   });

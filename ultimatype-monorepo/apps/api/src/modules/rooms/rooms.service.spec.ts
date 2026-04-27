@@ -41,10 +41,10 @@ describe('RoomsService', () => {
   });
 
   describe('createRoom', () => {
-    it('crea un room con codigo de 6 caracteres', async () => {
+    it('crea un room con codigo de 8 caracteres', async () => {
       const result = await service.createRoom('user-1', hostInfo);
 
-      expect(result.code).toHaveLength(6);
+      expect(result.code).toHaveLength(8);
       expect(result.hostId).toBe('user-1');
       expect(result.level).toBe(1);
       expect(result.status).toBe('waiting');
@@ -61,15 +61,15 @@ describe('RoomsService', () => {
       // refreshTTL expires roomKey, playersKey, and spectatorsKey
       expect(mockRedis.expire).toHaveBeenCalledTimes(3);
       expect(mockRedis.expire).toHaveBeenCalledWith(
-        expect.stringMatching(/^room:[A-Z0-9]{6}$/),
+        expect.stringMatching(/^room:[A-Z0-9]{8}$/),
         86400,
       );
       expect(mockRedis.expire).toHaveBeenCalledWith(
-        expect.stringMatching(/^room:[A-Z0-9]{6}:players$/),
+        expect.stringMatching(/^room:[A-Z0-9]{8}:players$/),
         86400,
       );
       expect(mockRedis.expire).toHaveBeenCalledWith(
-        expect.stringMatching(/^room:[A-Z0-9]{6}:spectators$/),
+        expect.stringMatching(/^room:[A-Z0-9]{8}:spectators$/),
         86400,
       );
     });

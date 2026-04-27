@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { DIFFICULTY_LEVELS } from '@ultimatype-monorepo/shared';
 import { useMatchDetail } from '../../hooks/use-match-detail';
 import { useAuth } from '../../hooks/use-auth';
+import { LoginModal } from '../ui/login-modal';
 
 function getLevelName(level: number): string {
   return DIFFICULTY_LEVELS.find((d) => d.level === level)?.name ?? `Nv.${level}`;
@@ -22,6 +24,7 @@ export function MatchDetailPage() {
   const { matchCode } = useParams<{ matchCode: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
   const { data: match, isLoading, isError, refetch } = useMatchDetail(matchCode!);
 
   return (
@@ -33,7 +36,13 @@ export function MatchDetailPage() {
         <button
           type="button"
           className="mb-6 rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted hover:text-text-main"
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/');
+            }
+          }}
           aria-label="Volver"
         >
           ← Volver
@@ -81,7 +90,7 @@ export function MatchDetailPage() {
                       <th className="pb-2 pr-4">#</th>
                       <th className="pb-2 pr-4">Jugador</th>
                       <th className="pb-2 pr-4">Puntaje</th>
-                      <th className="pb-2 pr-4">WPM</th>
+                      <th className="pb-2 pr-4">PPM</th>
                       <th className="pb-2 pr-4">Precisión</th>
                       <th className="pb-2">Estado</th>
                     </tr>
@@ -90,7 +99,7 @@ export function MatchDetailPage() {
                     {match.participants.map((p, i) => (
                       <tr
                         key={i}
-                        className={`${i % 2 === 0 ? 'bg-surface-container-low/40' : ''}`}
+                        className={`${i % 2 === 0 ? 'bg-surface-container-lowest/40' : ''}`}
                       >
                         <td className="py-3 pr-4 font-semibold text-text-muted">
                           {p.rank}
@@ -124,15 +133,17 @@ export function MatchDetailPage() {
 
         {!isAuthenticated && !isLoading && !isError && match && (
           <div className="mt-6 text-center">
-            <a
-              href="/api/auth/google"
+            <button
+              type="button"
+              onClick={() => setShowLogin(true)}
               className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-surface-base"
             >
               Comienza a competir
-            </a>
+            </button>
           </div>
         )}
       </div>
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </div>
   );
 }

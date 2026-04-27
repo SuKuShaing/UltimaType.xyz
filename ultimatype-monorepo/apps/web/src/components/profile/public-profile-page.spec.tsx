@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { PublicProfilePage } from './public-profile-page';
 import type { PublicUserProfileDto, MatchStatsDto, PaginatedResponse, MatchResultDto } from '@ultimatype-monorepo/shared';
+import { useAuth } from '../../hooks/use-auth';
+import { usePublicProfile } from '../../hooks/use-public-profile';
+import { useUserMatches } from '../../hooks/use-user-matches';
+import { useUserStats } from '../../hooks/use-user-stats';
+import { useUserPosition } from '../../hooks/use-user-position';
+import { useCheckSlug } from '../../hooks/use-check-slug';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
@@ -62,19 +68,12 @@ vi.mock('../ui/country-flag', () => ({
     countryCode ? <span data-testid="flag">{countryCode}</span> : null,
 }));
 
-import { useAuth } from '../../hooks/use-auth';
-import { usePublicProfile } from '../../hooks/use-public-profile';
-import { useUserMatches } from '../../hooks/use-user-matches';
-import { useUserStats } from '../../hooks/use-user-stats';
-import { useUserPosition } from '../../hooks/use-user-position';
-import { useCheckSlug } from '../../hooks/use-check-slug';
-
-const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
-const mockUsePublicProfile = usePublicProfile as ReturnType<typeof vi.fn>;
-const mockUseUserMatches = useUserMatches as ReturnType<typeof vi.fn>;
-const mockUseUserStats = useUserStats as ReturnType<typeof vi.fn>;
-const mockUseUserPosition = useUserPosition as ReturnType<typeof vi.fn>;
-const mockUseCheckSlug = useCheckSlug as ReturnType<typeof vi.fn>;
+const mockUseAuth = vi.mocked(useAuth);
+const mockUsePublicProfile = vi.mocked(usePublicProfile);
+const mockUseUserMatches = vi.mocked(useUserMatches);
+const mockUseUserStats = vi.mocked(useUserStats);
+const mockUseUserPosition = vi.mocked(useUserPosition);
+const mockUseCheckSlug = vi.mocked(useCheckSlug);
 
 const defaultProfile: PublicUserProfileDto = {
   id: 'user-1',
@@ -139,7 +138,7 @@ describe('PublicProfilePage', () => {
     expect(screen.getByText('150.5')).toBeTruthy();
     expect(screen.getByText('Mejor Puntaje')).toBeTruthy();
     expect(screen.getByText('Puntaje Promedio')).toBeTruthy();
-    expect(screen.getByText('— 15 Partidas')).toBeTruthy();
+    expect(screen.getByText(/15\s*Partidas?/)).toBeTruthy();
   });
 
   it('should show CTA for unauthenticated visitors', () => {
@@ -163,7 +162,7 @@ describe('PublicProfilePage', () => {
   it('should show empty state when no matches', () => {
     render(<PublicProfilePage />);
 
-    expect(screen.getByText('Sin partidas registradas')).toBeTruthy();
+    expect(screen.getByText('Sin partidas')).toBeTruthy();
   });
 
   it('should show initials when no avatar', () => {
@@ -213,25 +212,22 @@ describe('PublicProfilePage', () => {
     expect(screen.queryByTestId('cta-login')).toBeNull();
   });
 
-  it('should show crear-partida CTA when own profile and no matches', () => {
-    mockUseAuth.mockReturnValue({
-      isAuthenticated: true,
-      user: { slug: 'ss-abc', email: 'seba@example.com', displayName: 'Seba' },
+  it('muestra error con botón reintentar cuando falla la carga del historial', () => {
+    const refetchFn = vi.fn();
+    mockUseUserMatches.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch: refetchFn,
     });
 
     render(<PublicProfilePage />);
 
-    expect(screen.getByText('¡Crea una partida y empieza!')).toBeDefined();
-  });
+    expect(screen.getByText('Error al cargar el historial')).toBeDefined();
+    expect(screen.queryByText('Sin partidas')).toBeNull();
 
-  it('should NOT show crear-partida CTA for other user profile with no matches', () => {
-    mockUseAuth.mockReturnValue({
-      isAuthenticated: true,
-      user: { slug: 'otro-slug', email: 'otro@example.com' },
-    });
-
-    render(<PublicProfilePage />);
-
-    expect(screen.queryByText('¡Crea una partida y empieza!')).toBeNull();
+    const retryBtn = screen.getByText('Reintentar');
+    retryBtn.click();
+    expect(refetchFn).toHaveBeenCalledTimes(1);
   });
 });

@@ -2,18 +2,19 @@
 
 ## To Fix
 
-- [x] Cuando volvamos al lobby usa el mismo código de sala, es decir la partida nueva reescribe la anterior?, sí jugué 3 partidas con mis amigos se guarda la última?, al ingresar a match/{code:room} qué resultado veré, el de la última partida; Cuando se juega con el mismo room se guarda solo la primera partidas, las demás no quedan guardadas
-- [ ] Aumentar el número de códigos de 6 dígitos a 8 para aumentar el número de match disponibles
-
 ## Tareas
 
+- [ ] Ver que cosas hay que eliminar frecuentemente del docker en producción para que no se caiga, una eran las redes que no se ocupan, algo con las coincidencias de nombre, con todo estas cosas a limpiar crear un CronJobs que los limpie una vez a la semana
 - [ ] ver si el proyecto ultimate se puede pasar a cloudflare
 - [ ] Cuando alguien se une a la sala, que haga un sonido
 - [ ] Revisar que el código sea código moderno y usen context7, dejar esto en Claude
 - [ ] El espectador también debiese poder ver el tiempo regresivo de la partida
+- [ ] Que el seleccionar el país sea un input cosa de seleccionar más rápido que el actual donde hay que buscar tu país
 - [ ] Para un futuro que los países se puedan seleccionar por continente y sea vean las banderas de los países
 - [ ] En el botón de revancha o en la pantalla de resultados debiese estar revancha con subir el nivel de dificultad
 - [ ] Colocar un footer donde diga el autor
+- [ ] "copiar link" en una room debe estar con el icono de copiar
+- [ ] El volver en el match de un link enviado no lleva a ninguna parte, deviese llevarte al home sí no tiene un lugar previo al que volver
 - [ ] Que se pueda ceder el host a otro jugador
 - [ ] Visualizador de ping, en algún lugar visible, <120 ms verde, 120-250 ms amarillo , 250 ms o más ms rojo
 - [ ] Salas publicas y privadas
@@ -52,6 +53,8 @@
 
 ### FiXs
 
+- [x] Aumentar el número de códigos de 6 dígitos a 8 para aumentar el número de match disponibles
+- [x] Cuando volvamos al lobby usa el mismo código de sala, es decir la partida nueva reescribe la anterior?, sí jugué 3 partidas con mis amigos se guarda la última?, al ingresar a match/{code:room} qué resultado veré, el de la última partida; Cuando se juega con el mismo room se guarda solo la primera partidas, las demás no quedan guardadas
 - [x] El menú es más ancho que el contenido
 - [x] Que no se necesite iniciar sesión para crear una partida
 - [x] El país no se asigna al registrarse, manualmente en el perfil hay que colocarlo

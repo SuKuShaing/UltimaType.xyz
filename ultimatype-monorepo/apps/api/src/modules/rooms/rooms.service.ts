@@ -12,7 +12,7 @@ import {
   isValidTimeLimit,
 } from '@ultimatype-monorepo/shared';
 
-const generateRoomCode = customAlphabet('ABCDEFGHJKMNPQRSTUVWXYZ23456789', 6);
+const generateRoomCode = customAlphabet('ABCDEFGHJKMNPQRSTUVWXYZ23456789', 8);
 
 const ROOM_TTL = 86400; // 24 hours
 const MAX_CODE_ATTEMPTS = 5;

@@ -34,7 +34,7 @@ import {
   LobbyRejoinPayload,
 } from '@ultimatype-monorepo/shared';
 
-const ROOM_CODE_REGEX = /^[A-Z2-9]{6}$/;
+const ROOM_CODE_REGEX = /^[A-Z2-9]{8}$/;
 const MAX_WS_CONNECTIONS_PER_USER = 3;
 const CARET_THROTTLE_MIN_INTERVAL_MS = 40; // 25 events/sec = 40ms interval
 

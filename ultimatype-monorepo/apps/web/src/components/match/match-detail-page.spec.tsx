@@ -143,11 +143,25 @@ describe('MatchDetailPage', () => {
     expect(refetchFn).toHaveBeenCalledTimes(1);
   });
 
-  it('botón volver llama navigate(-1)', () => {
+  it('botón volver llama navigate(-1) cuando hay historia previa en el browser', () => {
+    window.history.pushState({}, '', '/match/ABC123');
+
     render(<MatchDetailPage />);
 
     fireEvent.click(screen.getByLabelText('Volver'));
     expect(mockNavigate).toHaveBeenCalledWith(-1);
+  });
+
+  it('botón volver navega a / cuando no hay historia previa (link directo)', () => {
+    const originalLength = window.history.length;
+    Object.defineProperty(window.history, 'length', { value: 1, configurable: true });
+
+    render(<MatchDetailPage />);
+
+    fireEvent.click(screen.getByLabelText('Volver'));
+    expect(mockNavigate).toHaveBeenCalledWith('/');
+
+    Object.defineProperty(window.history, 'length', { value: originalLength, configurable: true });
   });
 
   it('muestra CTA para visitantes no autenticados', () => {

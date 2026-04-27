@@ -1,5 +1,20 @@
 # Deferred Work
 
+## Deferred from: code review de 5-13-profile-and-public-profile-visual-polish (2026-04-24)
+
+- **`<tr>` clicable sin a11y teclado** — 2 tablas (`public-profile-page.tsx:520`, `match-detail-page.tsx:91`) usan `<tr onClick={...}>` sin `role="button"`, `tabIndex={0}`, ni `onKeyDown`. Patrón histórico del proyecto. Resolver en story dedicada de accesibilidad.
+- ~~**`navigate(-1)` sin history fallback**~~ — RESUELTO en review (promovido de defer): guard `window.history.length > 1` con fallback a `/`.
+- ~~**Botón Guardar muestra `'_'` durante mutation**~~ — RESUELTO en review (promovido de defer): cambiado a `'Guardando...'`.
+- **`useMatchDetail(matchCode!)` non-null assertion** — `match-detail-page.tsx:25`. Sin guard para cuando param es undefined.
+- **Filter pills sin `role="radiogroup"`** — `public-profile-page.tsx:430-477`. A11y improvement pre-existing.
+- ~~**6 lint errors imports post `vi.mock`**~~ — RESUELTO en review (promovido de defer): imports movidos al tope, `as ReturnType<typeof vi.fn>` → `vi.mocked()`.
+- ~~**Test `'— 15 Partidas'` literal frágil**~~ — RESUELTO en review (promovido de defer): regex `/15\s*Partidas?/`.
+
+### Resuelto en review (no deferred)
+
+- ~~MatchHistorySection clases `font-mono font-sans` contradictorias~~ — archivo eliminado por código muerto.
+- ~~MatchHistorySection stats muestra `0` vs `—`~~ — archivo eliminado por código muerto.
+
 ## Deferred from: code review de 5-11-match-results-overlay-redesign (2026-04-13)
 
 - **Sin test de comportamiento para handleShare** — `match-results-overlay.spec.tsx`. No hay test que simule click en "Compartir", mockee navigator.share/clipboard, o verifique el estado transitorio "¡Copiado!". Los tests de la story solo cubren visibilidad del botón. Agregar cuando se amplíe cobertura de edge cases de UI.
