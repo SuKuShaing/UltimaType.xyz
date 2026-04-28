@@ -118,7 +118,8 @@
       "PowerShell(npx nx lint web 2>&1 | Select-String -Pattern \"error|warning|problems\" | Select-Object -Last 10 | Out-String)",
       "PowerShell(npx nx test web 2>&1 | Select-String -Pattern \"Tests\" | Select-Object -Last 1 | Out-String)",
       "PowerShell(npx nx test web 2>&1 | Select-String -Pattern \"passed\" | Select-Object -Last 2 | Out-String)",
-      "PowerShell(cd D:\\\\Progra\\\\Proyectos_personales\\\\UltimaType\\\\ultimatype-monorepo ; npx nx test web -- public-profile-page 2>&1 | Select-Object -Last 12 | Out-String)"
+      "PowerShell(cd D:\\\\Progra\\\\Proyectos_personales\\\\UltimaType\\\\ultimatype-monorepo ; npx nx test web -- public-profile-page 2>&1 | Select-Object -Last 12 | Out-String)",
+      "PowerShell(cd D:\\\\Progra\\\\Proyectos_personales\\\\UltimaType\\\\ultimatype-monorepo ; npx nx test web -- match-detail-page 2>&1 | Select-Object -Last 12 | Out-String)"
     ]
   }
 }

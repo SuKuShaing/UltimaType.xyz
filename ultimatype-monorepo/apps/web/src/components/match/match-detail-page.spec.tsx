@@ -6,9 +6,11 @@ import { useMatchDetail } from '../../hooks/use-match-detail';
 import { useAuth } from '../../hooks/use-auth';
 
 const mockNavigate = vi.fn();
+const mockLocation = { key: 'abc-123', pathname: '/match/ABC123' };
 vi.mock('react-router-dom', () => ({
   useParams: () => ({ matchCode: 'ABC123' }),
   useNavigate: () => mockNavigate,
+  useLocation: () => mockLocation,
   Link: ({ to, children, ...props }: any) => <a href={to} {...props}>{children}</a>,
 }));
 
@@ -65,6 +67,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockUseMatchDetail.mockReturnValue({ data: defaultMatch, isLoading: false, isError: false });
   mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
+  mockLocation.key = 'abc-123';
 });
 
 describe('MatchDetailPage', () => {
@@ -143,8 +146,8 @@ describe('MatchDetailPage', () => {
     expect(refetchFn).toHaveBeenCalledTimes(1);
   });
 
-  it('botón volver llama navigate(-1) cuando hay historia previa en el browser', () => {
-    window.history.pushState({}, '', '/match/ABC123');
+  it('botón volver llama navigate(-1) cuando viene de otra ruta del SPA', () => {
+    mockLocation.key = 'spa-nav-key-xyz';
 
     render(<MatchDetailPage />);
 
@@ -152,16 +155,13 @@ describe('MatchDetailPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 
-  it('botón volver navega a / cuando no hay historia previa (link directo)', () => {
-    const originalLength = window.history.length;
-    Object.defineProperty(window.history, 'length', { value: 1, configurable: true });
+  it('botón volver navega a / cuando es entrada inicial al SPA (link directo externo)', () => {
+    mockLocation.key = 'default';
 
     render(<MatchDetailPage />);
 
     fireEvent.click(screen.getByLabelText('Volver'));
     expect(mockNavigate).toHaveBeenCalledWith('/');
-
-    Object.defineProperty(window.history, 'length', { value: originalLength, configurable: true });
   });
 
   it('muestra CTA para visitantes no autenticados', () => {

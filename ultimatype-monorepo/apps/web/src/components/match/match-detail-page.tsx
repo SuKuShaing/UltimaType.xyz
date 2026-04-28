@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { DIFFICULTY_LEVELS } from '@ultimatype-monorepo/shared';
 import { useMatchDetail } from '../../hooks/use-match-detail';
@@ -23,6 +23,7 @@ function formatDate(isoString: string): string {
 export function MatchDetailPage() {
   const { matchCode } = useParams<{ matchCode: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const { data: match, isLoading, isError, refetch } = useMatchDetail(matchCode!);
@@ -37,10 +38,10 @@ export function MatchDetailPage() {
           type="button"
           className="mb-6 rounded-full bg-surface-container-lowest px-4 py-2 text-sm text-text-muted hover:text-text-main"
           onClick={() => {
-            if (window.history.length > 1) {
-              navigate(-1);
-            } else {
+            if (location.key === 'default') {
               navigate('/');
+            } else {
+              navigate(-1);
             }
           }}
           aria-label="Volver"
