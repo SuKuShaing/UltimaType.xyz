@@ -14,7 +14,7 @@ COPY . .
 RUN npx nx build web
 
 # ── Stage 2: Nginx ─────────────────────────────────────────────
-FROM nginx:alpine
+FROM nginx:1.31-alpine
 
 LABEL org.opencontainers.image.source=https://github.com/SuKuShaing/UltimaType.xyz
 

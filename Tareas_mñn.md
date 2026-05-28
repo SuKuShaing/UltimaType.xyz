@@ -6,6 +6,7 @@
 
 - [ ] Ver que cosas hay que eliminar frecuentemente del docker en producción para que no se caiga, una eran las redes que no se ocupan, algo con las coincidencias de nombre, con todo estas cosas a limpiar crear un CronJobs que los limpie una vez a la semana
 - [ ] ver si el proyecto ultimate se puede pasar a cloudflare
+- [ ] usar video del escritorio de ultimatype con los framework de videos la grabación del escritorio
 - [ ] Cuando alguien se une a la sala, que haga un sonido
 - [ ] Revisar que el código sea código moderno y usen context7, dejar esto en Claude
 - [ ] El espectador también debiese poder ver el tiempo regresivo de la partida
