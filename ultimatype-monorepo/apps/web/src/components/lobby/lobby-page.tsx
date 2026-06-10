@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useLobby } from '../../hooks/use-lobby';
 import { useAuth } from '../../hooks/use-auth';
@@ -29,8 +29,10 @@ let toastIdCounter = 0;
 export function LobbyPage() {
   const { code = '' } = useParams<{ code: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const localUserId = user?.id ?? getGuestId();
+  const spectateMode = searchParams.get('spectate') === 'true';
   const {
     roomState,
     error,
@@ -57,7 +59,7 @@ export function LobbyPage() {
     moveToSpectator,
     clearKickedMessage,
     clearMovedToSpectatorMessage,
-  } = useLobby(code, localUserId);
+  } = useLobby(code, localUserId, spectateMode);
 
   const [copied, setCopied] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);

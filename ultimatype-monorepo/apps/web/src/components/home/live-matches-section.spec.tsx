@@ -159,7 +159,7 @@ describe('LiveMatchesSection', () => {
     expect(screen.getByText('Minúscula')).toBeTruthy();
   });
 
-  it('botón "Observar" navega a /room/:code', () => {
+  it('botón "Observar" navega a /room/:code?spectate=true', () => {
     mockUseActiveRooms.mockReturnValue({
       data: { rooms: [waitingRoom] },
       isLoading: false,
@@ -167,7 +167,27 @@ describe('LiveMatchesSection', () => {
     render(<LiveMatchesSection />);
     const btn = screen.getByRole('button', { name: /observar/i });
     fireEvent.click(btn);
+    expect(mockNavigate).toHaveBeenCalledWith('/room/ABC123?spectate=true');
+  });
+
+  it('botón "Unirse" navega a /room/:code para unirse como jugador en rooms en estado waiting', () => {
+    mockUseActiveRooms.mockReturnValue({
+      data: { rooms: [waitingRoom] },
+      isLoading: false,
+    });
+    render(<LiveMatchesSection />);
+    const btn = screen.getByRole('button', { name: /unirse/i });
+    fireEvent.click(btn);
     expect(mockNavigate).toHaveBeenCalledWith('/room/ABC123');
+  });
+
+  it('no muestra botón "Unirse" para rooms en estado playing', () => {
+    mockUseActiveRooms.mockReturnValue({
+      data: { rooms: [playingRoom] },
+      isLoading: false,
+    });
+    render(<LiveMatchesSection />);
+    expect(screen.queryByRole('button', { name: /unirse/i })).toBeNull();
   });
 
   it('muestra WPM para rooms en estado playing con jugadores con posición > 0', () => {

@@ -88,45 +88,63 @@ function LiveMatchCard({ room }: { room: ActiveRoomDto }) {
     room.startedAt ? Math.max(Date.now() - new Date(room.startedAt).getTime(), 0) : 0;
 
   return (
-    <div className="rounded-card bg-surface-container-low p-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="min-w-0">
+    <div className="rounded-2xl bg-surface-container-low p-4 flex items-center justify-between gap-4">
+      <div className="flex-1 min-w-0">
+        <div className="mb-3">
           <p className="text-xs font-sans font-semibold text-text-main truncate">
             {levelInfo?.name ?? `Nivel ${room.level}`}
           </p>
           <p className="text-xs font-sans text-text-muted">
             {room.playerCount} jugador{room.playerCount !== 1 ? 'es' : ''}
-            {room.status === 'playing' && elapsedMs > 0 && (
-              <span className="ml-1 font-mono">· {formatElapsed(elapsedMs)}</span>
+            {room.status === 'playing' && (
+              <>
+                <span className="ml-1">· Jugando</span>
+                {elapsedMs > 0 && (
+                  <span className="ml-1 font-mono">· {formatElapsed(elapsedMs)}</span>
+                )}
+              </>
             )}
             {room.status === 'waiting' && (
               <span className="ml-1">· Esperando</span>
             )}
           </p>
         </div>
+
+        {room.players.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {room.players.map((player) => (
+              <MiniLeaderboardRow
+                key={`${player.displayName}-${player.colorIndex}`}
+                player={player}
+                status={room.status}
+                startedAt={room.startedAt}
+                textLength={room.textLength}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-1.5 shrink-0">
+        {room.status === 'waiting' && (
+          <button
+            type="button"
+            onClick={() => navigate(`/room/${room.code}`)}
+            className="rounded-full bg-primary px-3 py-1 text-xs font-sans font-semibold text-surface-base transition-opacity hover:opacity-90"
+            aria-label={`Unirse a la partida ${room.code}`}
+          >
+            Unirse
+          </button>
+        )}
         <button
           type="button"
-          onClick={() => navigate(`/room/${room.code}`)}
+          onClick={() => navigate(`/room/${room.code}?spectate=true`)}
           className="shrink-0 rounded-full bg-surface-raised px-3 py-1 text-xs font-sans font-semibold text-text-main transition-colors hover:bg-primary hover:text-surface-base"
           aria-label={`Observar partida ${room.code}`}
         >
           Observar
         </button>
       </div>
-
-      {room.players.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {room.players.map((player) => (
-            <MiniLeaderboardRow
-              key={`${player.displayName}-${player.colorIndex}`}
-              player={player}
-              status={room.status}
-              startedAt={room.startedAt}
-              textLength={room.textLength}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
