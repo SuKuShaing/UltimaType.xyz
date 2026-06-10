@@ -54,6 +54,9 @@
 
 ### FiXs
 
+- [x] Partidas en vivo en el home, se corrige el border, se añade botón de Unirse y observar lleva a ser espectador
+- [x] Espacio en blanco en la vista del espectador -> corregido
+- [x] volver no lleva a nada cuando se ingresa desde el link de match de compartido -> ahora vuelve al home
 - [x] Aumentar el número de códigos de 6 dígitos a 8 para aumentar el número de match disponibles
 - [x] Cuando volvamos al lobby usa el mismo código de sala, es decir la partida nueva reescribe la anterior?, sí jugué 3 partidas con mis amigos se guarda la última?, al ingresar a match/{code:room} qué resultado veré, el de la última partida; Cuando se juega con el mismo room se guarda solo la primera partidas, las demás no quedan guardadas
 - [x] El menú es más ancho que el contenido
