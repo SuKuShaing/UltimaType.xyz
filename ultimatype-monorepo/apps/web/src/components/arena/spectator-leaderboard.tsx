@@ -23,7 +23,7 @@ export function SpectatorLeaderboard() {
   const elapsedMinutes = matchStartTime ? Math.max((now - matchStartTime) / 60_000, 0.01) : 0;
 
   return (
-    <div className="mb-4 w-full max-w-3xl rounded-xl bg-surface-raised px-4 py-3">
+    <div className="mb-4 w-full max-w-5xl rounded-xl bg-surface-raised px-4 py-3">
       <h3 className="mb-2 text-xs font-semibold text-text-muted">Clasificación en vivo</h3>
       <div className="flex flex-col gap-1.5">
         {sorted.map(([id, player], index) => {
