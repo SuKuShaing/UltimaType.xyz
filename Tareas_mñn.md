@@ -2,6 +2,8 @@
 
 ## To Fix
 
+- [ ] estando como invitado Sacar el regristro de unirse a una partida actual, actualmente pide registrarse
+
 ## Tareas
 
 - [ ] Ver que cosas hay que eliminar frecuentemente del docker en producción para que no se caiga, una eran las redes que no se ocupan, algo con las coincidencias de nombre, con todo estas cosas a limpiar crear un CronJobs que los limpie una vez a la semana
