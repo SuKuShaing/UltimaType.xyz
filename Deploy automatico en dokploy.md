@@ -5,7 +5,7 @@ Guia paso a paso para desplegar UltimaType en un VPS con Dokploy, GitHub Actions
 ## Arquitectura del pipeline
 
 ```
-Push a main --> GitHub Actions (build) --> GHCR (imagenes) --> Webhook --> Dokploy (deploy)
+Tag vX.Y.Z --> GitHub Actions (build) --> GHCR (imagenes) --> Webhook --> Dokploy (deploy)
 ```
 
 - **GitHub Actions**: compila los Dockerfiles y sube las imagenes a GHCR
@@ -48,6 +48,8 @@ Push a main --> GitHub Actions (build) --> GHCR (imagenes) --> Webhook --> Dokpl
    - **Repository**: `<usuario>/UltimaType.xyz`
    - **Branch**: `main`
    - **Compose Path**: `./ultimatype-monorepo/docker-compose.prod.yml`
+   - **Trigger Type**: **On Tag** (para que los push a `main` no desplieguen)
+   - **Autodeploy**: activado (el webhook de GitHub Actions lo necesita)
 
 ---
 
@@ -124,15 +126,15 @@ Estos archivos ya existen en el repo. Se listan para referencia:
 ### `.github/workflows/deploy.yml`
 
 El workflow de GitHub Actions que:
-1. Se activa en push a `main` (solo si cambian archivos en `ultimatype-monorepo/`)
-2. Construye las imagenes Docker (API y Web)
-3. Las sube a GHCR con tags `:latest` y `:<commit_sha>`
+1. Se activa solo al hacer push de un tag `v*` (ej: `v1.4.0`); los push a `main` no despliegan
+2. Construye la imagen Docker de la API
+3. La sube a GHCR con tags `:latest`, `:<tag>` (ej: `:v1.4.0`) y `:<commit_sha>`
 4. Llama al webhook de Dokploy para disparar el redeploy
 
 Puntos clave del webhook:
 - Usar `http://` (puerto 3000 no tiene SSL)
 - Incluir header `X-GitHub-Event: push`
-- Incluir payload con `{"ref":"refs/heads/main"}` para que Dokploy valide el branch
+- Incluir payload con `{"ref":"refs/heads/main"}` para que Dokploy valide el branch (aunque el workflow lo dispare un tag)
 
 ### `ultimatype-monorepo/docker-compose.prod.yml`
 
@@ -178,7 +180,7 @@ Se ejecuta al arrancar el contenedor API:
 
 ## Paso 10: Primer deploy
 
-1. Hacer push a `main`
+1. Crear y subir un tag: `git tag v1.0.0 && git push origin v1.0.0`
 2. Esperar a que GitHub Actions termine (verificar en la pestana **Actions** del repo)
 3. Si es el primer push, los paquetes GHCR se crean automaticamente. Volver al **Paso 2** para hacerlos publicos
 4. En Dokploy, hacer **Deploy** manualmente la primera vez
@@ -190,15 +192,25 @@ Se ejecuta al arrancar el contenedor API:
 
 ---
 
-## Deploys posteriores (automatico)
+## Deploys posteriores (por tag)
 
-Solo hacer push a `main`. El pipeline completo se ejecuta automaticamente:
+Los push a `main` **no** despliegan. Para publicar una version, crear un tag sobre el commit de `main` que se quiere desplegar:
 
-1. GitHub Actions detecta el push y construye las imagenes (~2-3 min)
+```bash
+git checkout main && git pull
+git tag -a v1.4.0 -m "v1.4.0"
+git push origin v1.4.0
+```
+
+1. GitHub Actions detecta el tag y construye la imagen (~2-3 min)
 2. Las imagenes se suben a GHCR
 3. El webhook notifica a Dokploy
 4. Dokploy hace pull de las imagenes nuevas y recrea los contenedores
 5. El entrypoint ejecuta migraciones y seed automaticamente
+
+> Al hacer push del tag, el GitHub App de Dokploy tambien dispara un deploy inmediato ("Tag created: vX.Y.Z"). Ese primero usa la imagen anterior (la nueva aun no se construye) y no cambia nada; el deploy que importa es el del webhook, cuando Actions termina.
+>
+> Dokploy siempre lee el `docker-compose.prod.yml` del branch `main`, no del tag. Crear los tags sobre la punta de `main`.
 
 ---
 
@@ -227,5 +239,5 @@ Solo hacer push a `main`. El pipeline completo se ejecuta automaticamente:
 
 ### Agregar textos nuevos
 - Editar `ultimatype-monorepo/prisma/seed-data/texts.json`
-- Push a main. El seed se ejecuta en cada deploy y sincroniza la tabla `texts`
+- Push a main y crear un tag nuevo. El seed se ejecuta en cada deploy y sincroniza la tabla `texts`
 - No afecta usuarios ni registros historicos

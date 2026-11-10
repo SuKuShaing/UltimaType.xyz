@@ -1,11 +1,11 @@
 name: Build & Deploy
 
+# Solo se despliega al publicar un tag de versión (ej: v1.4.0).
+# Los push a main ya no construyen ni despliegan.
 on:
   push:
-    branches: [main]
-    paths:
-      - 'ultimatype-monorepo/**'
-      - '.github/workflows/deploy.yml'
+    tags:
+      - 'v*'
 
 env:
   REGISTRY: ghcr.io
@@ -36,15 +36,28 @@ jobs:
           push: true
           tags: |
             ${{ env.API_IMAGE }}:latest
+            ${{ env.API_IMAGE }}:${{ github.ref_name }}
             ${{ env.API_IMAGE }}:${{ github.sha }}
 
+      # El webhook de Dokploy valida el branch configurado (main), por eso el
+      # payload usa refs/heads/main aunque el workflow se dispare por un tag.
       - name: Trigger Dokploy redeploy
         if: success()
         continue-on-error: true
+        env:
+          WEBHOOK_URL: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
+          TAG: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
         run: |
-          echo "Triggering Dokploy webhook..."
-          curl -v -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" \
+          echo "Triggering Dokploy webhook for $TAG..."
+          payload=$(jq -n --arg tag "$TAG" --arg sha "$SHA" '{
+            ref: "refs/heads/main",
+            after: $sha,
+            head_commit: { id: $sha, message: ("Release " + $tag) },
+            repository: { full_name: "SuKuShaing/UltimaType.xyz" }
+          }')
+          curl -sS -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
-            -d '{"ref":"refs/heads/main","repository":{"full_name":"SuKuShaing/UltimaType.xyz"}}' \
+            -d "$payload" \
             --max-time 30 2>&1 || true
