@@ -48,3 +48,7 @@ vitest.config.*.timestamp*
 /generated/prisma
 
 .env*
+.nx/migrate-runs
+.nx/polygraph
+.nx/self-healing
+.vitest

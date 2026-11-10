@@ -4,18 +4,19 @@
     "outDir": "dist",
     "module": "nodenext",
     "types": ["node"],
-    
+
     "moduleResolution": "nodenext",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "target": "es2021",
     "baseUrl": ".",
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@ultimatype-monorepo/shared": ["../../libs/shared/src/index.ts"],
       "@ultimatype-monorepo/prisma-client": ["./src/generated/prisma/index.ts"]
-    }
+    },
+    "rootDir": "."
   },
   "include": ["src/**/*.ts", "generated/**/*.ts"],
   "exclude": [],

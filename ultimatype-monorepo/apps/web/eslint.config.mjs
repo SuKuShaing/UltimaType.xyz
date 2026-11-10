@@ -7,6 +7,13 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     // Override or add rules here
-    rules: {},
+    rules: {
+      // eslint-plugin-react-hooks v7 activa como "error" las reglas del React Compiler.
+      // Se dejan como advertencia para revisarlas gradualmente sin bloquear el lint.
+      'react-hooks/refs': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/globals': 'warn',
+    },
   },
 ];

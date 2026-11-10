@@ -65,7 +65,7 @@ const emptyLeaderboard: PaginatedResponse<LeaderboardEntryDto> = {
 function renderPage() {
   return render(
     <HelmetProvider>
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter>
         <LeaderboardPage />
       </MemoryRouter>
     </HelmetProvider>,
