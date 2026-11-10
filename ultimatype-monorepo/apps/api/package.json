@@ -29,7 +29,7 @@
         "executor": "@nx/js:prune-lockfile",
         "outputs": [
           "{workspaceRoot}/apps/api/dist/package.json",
-          "{workspaceRoot}/apps/api/dist/package-lock.json"
+          "{workspaceRoot}/apps/api/dist/pnpm-lock.yaml"
         ],
         "options": {
           "buildTarget": "build"
@@ -82,6 +82,7 @@
     "@nestjs/core": "12.4.2",
     "@nestjs/platform-express": "12.4.2",
     "@nestjs/serve-static": "12.1.1",
+    "@ultimatype-monorepo/shared": "workspace:*",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "tslib": "2.9.1"

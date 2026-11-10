@@ -13,7 +13,7 @@ export default defineConfig({
 EOF
 
 echo "Running database migrations..."
-npx prisma migrate deploy
+./node_modules/.bin/prisma migrate deploy
 
 echo "Syncing texts from seed data..."
 node -e "

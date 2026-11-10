@@ -43,8 +43,8 @@ Reemplazar `192.168.1.119` por tu IP real.
 ## Paso 3: Reiniciar ambos servicios
 
 ```bash
-npx nx serve api
-npx nx serve web
+pnpm nx serve api
+pnpm nx serve web
 ```
 
 ---

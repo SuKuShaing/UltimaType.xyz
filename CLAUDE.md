@@ -16,36 +16,42 @@ docker-compose up -d
 
 ### Install dependencies
 
+The project uses **pnpm** (not npm). Commands run from `ultimatype-monorepo/`.
+
 ```bash
-npm install
+pnpm install
 ```
+
+- pnpm settings live in `pnpm-workspace.yaml` (not `.npmrc`): workspace packages, `saveExact`, `allowBuilds` (dependency install scripts are blocked unless listed) and `peerDependencyRules`.
+- pnpm rejects package versions published less than 24 h ago (`minimumReleaseAge`); pin an older version instead of disabling it.
+- `node_modules` is strict: every package imported by code must be declared in `package.json`. Apps that import `@ultimatype-monorepo/shared` declare it as `"workspace:*"`.
 
 ### Database migrations
 
 ```bash
-npx prisma migrate dev
-npx prisma generate          # Regenerate Prisma client after schema changes
+pnpm prisma migrate dev
+pnpm prisma generate          # Regenerate Prisma client after schema changes
 ```
 
 ### Serve apps
 
 ```bash
-npx nx serve web             # Frontend: http://localhost:4200
-npx nx serve api             # Backend:  http://localhost:3000/api
+pnpm nx serve web             # Frontend: http://localhost:4200
+pnpm nx serve api             # Backend:  http://localhost:3000/api
 ```
 
 ### Build
 
 ```bash
-npx nx build web
-npx nx build api
+pnpm nx build web
+pnpm nx build api
 ```
 
 ### Tests
 
 ```bash
-npx nx test api              # Backend unit tests (Vitest, Node environment)
-npx nx test web              # Frontend unit tests (Vitest, jsdom environment)
+pnpm nx test api              # Backend unit tests (Vitest, Node environment)
+pnpm nx test web              # Frontend unit tests (Vitest, jsdom environment)
 ```
 
 To run a single test file, pass the path via the `--testFile` flag or use `--testNamePattern`.
@@ -53,13 +59,13 @@ To run a single test file, pass the path via the `--testFile` flag or use `--tes
 ### Lint
 
 ```bash
-npx nx lint api
-npx nx lint web
+pnpm nx lint api
+pnpm nx lint web
 ```
 
 ## Architecture
 
-### Backend (`apps/api`) — NestJS 11
+### Backend (`apps/api`) — NestJS 12
 
 - **AppModule** bootstraps `ConfigModule` (Zod-validated env vars) and `PrismaModule` (global).
 - **AuthModule** handles all authentication:

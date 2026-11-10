@@ -149,10 +149,10 @@ Puntos clave:
 ### `ultimatype-monorepo/apps/api/Dockerfile`
 
 Build multi-stage:
-- **Stage 1 (builder)**: instala dependencias, genera Prisma client, compila con Nx
+- **Stage 1 (builder)**: instala dependencias con pnpm (copiado desde `ghcr.io/pnpm/pnpm:12-alpine`), genera Prisma client, compila con Nx
 - **Stage 2 (production)**: copia dist, node_modules, prisma y entrypoint
 
-Usa `node:24-alpine` (debe coincidir con la version de Node del `package-lock.json`).
+Usa `node:24-alpine`. La version de pnpm se fija con el campo `packageManager` del `package.json` y la imagen `ghcr.io/pnpm/pnpm:12-alpine`.
 
 ### `ultimatype-monorepo/apps/web/Dockerfile`
 
@@ -220,9 +220,10 @@ Solo hacer push a `main`. El pipeline completo se ejecuta automaticamente:
 - Es porque `prisma.config.ts` no se puede ejecutar en produccion (no hay runtime TS)
 - El `entrypoint.sh` genera `prisma.config.mjs` en runtime para resolver esto
 
-### npm ci falla con dependencias faltantes
-- Verificar que la version de Node en los Dockerfiles coincida con la que genero el `package-lock.json`
-- Si el lock file se genero con npm 11 (Node 24), los Dockerfiles deben usar `node:24-alpine`
+### `pnpm install --frozen-lockfile` falla
+- `ERR_PNPM_OUTDATED_LOCKFILE`: el `pnpm-lock.yaml` no coincide con algun `package.json`. Ejecutar `pnpm install` en local y commitear el lockfile
+- `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`: alguna version tiene menos de 24 h publicada (politica de seguridad de pnpm). Esperar o fijar una version anterior
+- `ERR_PNPM_IGNORED_BUILDS`: una dependencia nueva necesita scripts de instalacion; revisarla y agregarla a `allowBuilds` en `pnpm-workspace.yaml`
 
 ### Agregar textos nuevos
 - Editar `ultimatype-monorepo/prisma/seed-data/texts.json`

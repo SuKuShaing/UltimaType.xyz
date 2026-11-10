@@ -73,21 +73,21 @@ docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
 
 ---
 
-## 5. Actualizar dependencias npm (en tu máquina local)
+## 5. Actualizar dependencias con pnpm (en tu máquina local)
 
 Estando en la carpeta `ultimatype-monorepo`:
 
 ```bash
-npm outdated        # ver qué está atrasado
-npm update          # actualizar minors/patches (seguro)
-npx prisma generate # regenerar Prisma client
+pnpm outdated        # ver qué está atrasado
+pnpm update          # actualizar minors/patches (seguro)
+pnpm prisma generate # regenerar Prisma client
 ```
 
 ### Verificar que todo compila
 
 ```bash
-npx nx build api
-npx nx build web
+pnpm nx build api
+pnpm nx build web
 ```
 
 Si falla la API con errores `TS6059` (rootDir):
@@ -96,8 +96,8 @@ Si falla la API con errores `TS6059` (rootDir):
 Verificar tests:
 
 ```bash
-npx nx test api
-npx nx test web
+pnpm nx test api
+pnpm nx test web
 ```
 
 ---
@@ -166,10 +166,10 @@ sudo systemctl restart docker
 docker ps
 
 # En local
-npm outdated
-npm update
-npx prisma generate
-npx nx build api && npx nx build web
-npx nx test api && npx nx test web
+pnpm outdated
+pnpm update
+pnpm prisma generate
+pnpm nx build api && pnpm nx build web
+pnpm nx test api && pnpm nx test web
 git add -A && git commit -m "mantenimiento" && git push
 ```

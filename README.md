@@ -33,11 +33,11 @@
 | Capa           | Tecnología                                             |
 | -------------- | ------------------------------------------------------ |
 | Frontend       | React 19, Vite, TailwindCSS 4, Zustand, TanStack Query |
-| Backend        | NestJS 11, Passport.js, JWT (access + refresh)         |
+| Backend        | NestJS 12, Passport.js, JWT (access + refresh)         |
 | Tiempo real    | Socket.IO 4.8 con Redis adapter                        |
 | Estado efímero | Redis (rooms, match state, carets) con Lua scripts     |
 | Persistencia   | PostgreSQL + Prisma 7                                  |
-| Monorepo       | Nx 22, npm workspaces                                  |
+| Monorepo       | Nx 24, pnpm workspaces                                 |
 
 ---
 
@@ -101,7 +101,7 @@ ultimatype-monorepo/
 
 1. Haz fork del repositorio
 2. Crea una rama para tu feature: `git checkout -b feature/mi-feature`
-3. Asegúrate de que todos los tests pasen: `npx nx test web && npx nx test api`
+3. Asegúrate de que todos los tests pasen: `pnpm nx test web && pnpm nx test api`
 4. Abre un Pull Request describiendo el cambio
 
 ---

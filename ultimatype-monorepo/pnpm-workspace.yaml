@@ -1,0 +1,34 @@
+packages:
+  - apps/*
+  - libs/*
+
+# Guardar versiones exactas al agregar dependencias (reemplaza save-exact de .npmrc)
+saveExact: true
+
+# @nx/nest solo se usa para generadores y aún declara compatibilidad con NestJS < 12
+peerDependencyRules:
+  allowedVersions:
+    '@nx/nest>@nestjs/common': '12'
+    '@nx/nest>@nestjs/core': '12'
+
+# pnpm bloquea los scripts de instalación por defecto; solo se permiten los necesarios
+allowBuilds:
+  '@prisma/engines': true # descarga el motor usado por `prisma migrate deploy`
+  prisma: true
+  '@swc/core': true
+  esbuild: true
+  nx: true
+  '@parcel/watcher': false # usa binarios precompilados; el script solo compila desde fuente
+
+minimumReleaseAgeExclude:
+  - '@typescript-eslint/eslint-plugin@8.72.2'
+  - '@typescript-eslint/parser@8.72.2'
+  - '@typescript-eslint/project-service@8.72.2'
+  - '@typescript-eslint/tsconfig-utils@8.72.2'
+  - '@typescript-eslint/type-utils@8.72.2'
+  - '@typescript-eslint/typescript-estree@8.72.2'
+  - '@typescript-eslint/utils@8.72.2'
+  - typescript-eslint@8.72.2
+  - '@typescript-eslint/scope-manager@8.72.2'
+  - '@typescript-eslint/types@8.72.2'
+  - '@typescript-eslint/visitor-keys@8.72.2'

@@ -5,8 +5,8 @@
       "type": "node",
       "request": "launch",
       "name": "Debug @ultimatype-monorepo/api with Nx",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "@ultimatype-monorepo/api"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "nx", "serve", "@ultimatype-monorepo/api"],
       "env": {
         "NODE_OPTIONS": "--inspect=9229"
       },

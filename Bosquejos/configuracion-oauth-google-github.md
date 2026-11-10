@@ -85,7 +85,7 @@ GOOGLE_CALLBACK_URL="http://localhost:3000/api/auth/google/callback"
 
 ### Paso 6: Verificar
 
-1. Reiniciar la API: `npx nx serve api`
+1. Reiniciar la API: `pnpm nx serve api`
 2. Ir a `http://localhost:4200`
 3. Click "Iniciar sesion con Google"
 4. Deberia redirigir a la pantalla de consentimiento de Google
@@ -123,7 +123,7 @@ GITHUB_CALLBACK_URL="http://localhost:3000/api/auth/github/callback"
 
 ### Paso 4: Verificar
 
-1. Reiniciar la API: `npx nx serve api`
+1. Reiniciar la API: `pnpm nx serve api`
 2. Ir a `http://localhost:4200`
 3. Click "Iniciar sesion con GitHub"
 4. Autorizar la app -> redirige de vuelta con sesion iniciada
