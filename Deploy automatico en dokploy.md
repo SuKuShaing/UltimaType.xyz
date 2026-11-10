@@ -44,12 +44,13 @@ Tag vX.Y.Z --> GitHub Actions (build) --> GHCR (imagenes) --> Webhook --> Dokplo
 1. En Dokploy --> **Create Project** --> nombre descriptivo
 2. Dentro del proyecto --> **Create Service** --> **Compose**
 3. En la pestana **General**:
-   - **Provider**: GitHub
-   - **Repository**: `<usuario>/UltimaType.xyz`
+   - **Provider**: **Git** (no GitHub)
+   - **Repository URL**: `https://github.com/<usuario>/UltimaType.xyz.git` (repo publico, sin llave SSH)
    - **Branch**: `main`
    - **Compose Path**: `./ultimatype-monorepo/docker-compose.prod.yml`
-   - **Trigger Type**: **On Tag** (para que los push a `main` no desplieguen)
    - **Autodeploy**: activado (el webhook de GitHub Actions lo necesita)
+
+> Se usa el provider **Git** y no **GitHub** a proposito: con el provider GitHub, el GitHub App de Dokploy despliega apenas llega un push o tag, antes de que GitHub Actions termine de construir la imagen. Con Git, el unico disparador es el webhook que Actions llama al final.
 
 ---
 
@@ -208,7 +209,7 @@ git push origin v1.4.0
 4. Dokploy hace pull de las imagenes nuevas y recrea los contenedores
 5. El entrypoint ejecuta migraciones y seed automaticamente
 
-> Al hacer push del tag, el GitHub App de Dokploy tambien dispara un deploy inmediato ("Tag created: vX.Y.Z"). Ese primero usa la imagen anterior (la nueva aun no se construye) y no cambia nada; el deploy que importa es el del webhook, cuando Actions termina.
+> Hay un solo deploy por tag: el del webhook, cuando Actions termina. Al terminar, Dokploy reemplaza el titulo del deploy por el mensaje del ultimo commit de `main`.
 >
 > Dokploy siempre lee el `docker-compose.prod.yml` del branch `main`, no del tag. Crear los tags sobre la punta de `main`.
 
