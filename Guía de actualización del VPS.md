@@ -51,7 +51,7 @@ docker ps            # verificar que los contenedores están Up
 
 ## 3. Dokploy
 
-En el panel web (`http://<IP_VPS>:3000`), hacer clic en el botón "Update available" si aparece.
+En el panel web (`https://dokploy.sanhueza.pro`; el puerto 3000 está cerrado desde el 2026-11-24), hacer clic en el botón "Update available" si aparece.
 
 También por CLI:
 

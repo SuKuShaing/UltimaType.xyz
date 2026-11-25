@@ -24,7 +24,8 @@ Tag vX.Y.Z --> GitHub Actions (build) --> GHCR (imagenes) --> Webhook --> Dokplo
    ```bash
    curl -sSL https://dokploy.com/install.sh | sh
    ```
-3. Acceder al panel de Dokploy en `http://<IP_VPS>:3000`
+3. Acceder al panel de Dokploy en `https://dokploy.sanhueza.pro`
+   > Desde el 2026-11-24 el puerto 3000 está cerrado (`http://<IP_VPS>:3000` ya no responde). Si el dominio falla, recuperar por SSH: `docker service update --publish-add published=3000,target=3000,mode=host dokploy`.
 
 ---
 
@@ -80,9 +81,19 @@ FRONTEND_URL=https://<dominio>
 1. Ir a la pestana **Domains** --> **Add Domain**
 2. Configurar:
    - **Host**: `<dominio>` (ej: `ultimatype.xyz`)
-   - **Service**: seleccionar el servicio `web`
-   - **Port**: `80`
+   - **Service**: seleccionar el servicio `api` (sirve también la SPA)
+   - **Port**: `3000`
    - **HTTPS**: activar (Let's Encrypt)
+   - **Middlewares**: `ultimatype-cloudflare-only@file`
+
+### Middleware `ultimatype-cloudflare-only`
+
+Hace que el origen solo acepte conexiones desde Cloudflare (403 a quien conecte directo al VPS). Es un `ipAllowList` de Traefik en `/etc/dokploy/traefik/dynamic/ultimatype-cloudflare-only.yml` (Dokploy → Settings → Traefik → File System → `dynamic`), con los rangos de `https://api.cloudflare.com/client/v4/ips`. Sin `ipStrategy`: compara la IP de la conexión TCP, no el `X-Forwarded-For`.
+
+- Si Cloudflare publica rangos nuevos, actualizar el archivo (y avisar al responsable del Traefik compartido para que actualice `trustedIPs`).
+- Si alguna vez se desactiva el proxy de Cloudflare (nube gris), quitar antes el middleware del dominio o el sitio dará 403 a todos.
+- Revertir: quitarlo del campo Middlewares del dominio y redesplegar el compose.
+- Traefik es compartido con otros proyectos: no editar `traefik.yml` (configuración estática) sin coordinar.
 
 ---
 
@@ -102,8 +113,9 @@ FRONTEND_URL=https://<dominio>
 1. En Dokploy, dentro del compose, buscar la seccion de deployments o settings
 2. Copiar la **Webhook URL**, tiene este formato:
    ```
-   http://<host_vps>:3000/api/deploy/compose/<compose_id>
+   https://dokploy.sanhueza.pro/api/deploy/compose/<token>
    ```
+   > Si el panel muestra la URL con `http://<IP>:3000`, cambiar solo el inicio por `https://dokploy.sanhueza.pro`; el token del final es el mismo.
 3. Guardarla para el siguiente paso
 
 ---
@@ -114,7 +126,7 @@ Ir al repositorio en GitHub --> **Settings** --> **Secrets and variables** --> *
 
 | Secreto | Valor |
 |---------|-------|
-| `DOKPLOY_WEBHOOK_URL` | La URL del webhook de Dokploy (paso 7, usar `http://`, NO `https://`) |
+| `DOKPLOY_WEBHOOK_URL` | La URL del webhook de Dokploy (paso 7, con `https://dokploy.sanhueza.pro`) |
 
 > `GITHUB_TOKEN` ya existe automaticamente, no hace falta crearlo.
 
@@ -133,7 +145,8 @@ El workflow de GitHub Actions que:
 4. Llama al webhook de Dokploy para disparar el redeploy
 
 Puntos clave del webhook:
-- Usar `http://` (puerto 3000 no tiene SSL)
+- Usar `https://dokploy.sanhueza.pro` (el puerto 3000 está cerrado desde el 2026-11-24)
+- El paso tiene `continue-on-error`: si el webhook falla, el workflow sale en verde igual. Revisar en Dokploy que aparezca el deploy "Release vX.Y.Z"
 - Incluir header `X-GitHub-Event: push`
 - Incluir payload con `{"ref":"refs/heads/main"}` para que Dokploy valide el branch (aunque el workflow lo dispare un tag)
 
@@ -225,9 +238,9 @@ git push origin v1.4.0
 - El curl debe incluir `-H "X-GitHub-Event: push"` y el payload con `"ref":"refs/heads/main"`
 - Verificar que el branch configurado en Dokploy coincida con `main`
 
-### Webhook falla con SSL error (exit code 35)
-- Usar `http://` en la URL del webhook, NO `https://`
-- El puerto 3000 de Dokploy es HTTP directo, no tiene SSL
+### El tag no despliega (workflow en verde, pero sin deploy en Dokploy)
+- El secreto `DOKPLOY_WEBHOOK_URL` probablemente apunta a `http://<IP>:3000`, que está cerrado desde el 2026-11-24
+- Cambiarlo a `https://dokploy.sanhueza.pro/api/deploy/compose/<token>`
 
 ### Prisma falla con "datasource.url property is required"
 - Es porque `prisma.config.ts` no se puede ejecutar en produccion (no hay runtime TS)

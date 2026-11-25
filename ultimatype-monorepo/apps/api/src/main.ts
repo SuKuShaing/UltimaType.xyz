@@ -32,9 +32,12 @@ async function bootstrap() {
     }),
   );
 
-  // Trust proxy only when explicitly enabled
+  // Trust proxy only when explicitly enabled.
+  // Producción: Cloudflare → Traefik → api = 2 saltos. Con 2, req.ip es la IP que
+  // añadió Cloudflare al X-Forwarded-For (no falsificable por el cliente).
+  // No usar `true` ni un número mayor: el primer valor del XFF lo controla el cliente.
   if (configService.get('TRUST_PROXY') === 'true') {
-    app.set('trust proxy', 1);
+    app.set('trust proxy', 2);
   }
 
   // Enable CORS for HTTP endpoints
